@@ -2,6 +2,10 @@
 
 Status: planning. No Firebase project exists yet and none of this is implemented.
 
+## Cost
+
+This is a hobby app, so lean toward free tiers. Stay on Firebase's free Spark plan. Cloud Functions needs the paid Blaze plan, so don't design anything that requires it. Unavoidable store costs: Apple's paid developer account (also required for Sign in with Apple) and Google Play's one-time registration fee.
+
 ## Decisions
 
 | Concern | Choice | Status |

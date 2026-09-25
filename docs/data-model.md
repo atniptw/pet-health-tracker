@@ -10,13 +10,14 @@ Status: planning. Nothing here is implemented. See [architecture.md](architectur
 
 ## Households and roles
 
-A household has members and pets. Every member can see the household's pets and symptom logs and can add symptoms. A household has one or more **admins**.
+A household has members and pets. Every member can see the household's pets and symptom logs, can add symptoms, and can edit their own symptom entries. A household has one or more **admins**. A person can belong to multiple households.
 
 | Action | Member | Admin |
 |---|---|---|
 | See the household, its pets and logs | yes | yes |
 | Add symptom logs | yes | yes |
-| Edit or delete symptom logs | no | yes |
+| Edit symptom logs | own entries only | all |
+| Delete symptom logs | not decided (open question 5) | yes |
 | Add, edit, archive pets | no | yes |
 | Add or remove members, change roles | no | yes |
 | Edit or delete the household | no | yes |
@@ -58,6 +59,7 @@ A pet belongs to exactly one household, so it is nested under it.
 |---|---|---|
 | `symptom` | string | catalog key, or `other` |
 | `customLabel` | string? | only when `symptom` is `other` |
+| `createdBy` | string | uid of the member who added it; never changes. Identifies "own entries" |
 | `severity` | int | 1 to 3 (mild, moderate, severe). See open question 4 |
 | `answers` | map? | answers to the symptom's questions, keyed by question key. See Symptom catalog |
 | `occurredAt` | timestamp | defaults to now, can be backdated; stored UTC, shown local |
@@ -73,7 +75,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
-- **Symptom logs:** read and create if in `memberIds`; update and delete if in `adminIds`.
+- **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update if the caller is `createdBy` or in `adminIds`; delete if in `adminIds`. `createdBy` cannot be changed.
 - `severity` in range; string lengths capped.
 
 ## Symptom catalog
@@ -98,13 +100,20 @@ Proposed mechanics, to be settled along with the questions themselves:
 
 - The symptoms and the questions for each symptom are defined in the app.
 - Households have members and pets. All members can see and add symptoms.
-- Households have one or more admins. Admins add and remove members and have full edit control. Non-admins can only add symptoms.
+- Households have one or more admins. Admins add and remove members and have full edit control.
+- Non-admins can add symptoms and edit their own symptom entries.
+- A person can belong to multiple households.
 
 ## Open questions
 
-1. **How do members join a household?** An admin adds and removes members, but how the person is identified and how they accept (email invite, invite code, link, something else) is not decided. This also decides whether we need a `users/{uid}` profile doc.
+1. **How do admins add and remove members?** Removing is settled: an admin removes the uid from `memberIds` and `adminIds`, and a household keeps at least one admin. Adding is proposed but not confirmed: **invite codes, redeemed with security rules only** (no Cloud Functions, since those need a paid plan; see architecture.md).
+   - An admin creates `invites/{code}`, a top-level doc with `householdId`, `createdBy`, `expiresAt` and `redeemedBy` (null until used). The code is a long random string, so it can't be guessed. Signed-in users can `get` an invite by its exact code but cannot list invites.
+   - The admin shares the code with the person, for example via the phone's share sheet. The person enters it in the app.
+   - The app redeems it with one batched write: set `redeemedBy` to the caller and add the caller to the household's `memberIds`. The household update rule allows a non-admin to do this only when the change is exactly "add my own uid to `memberIds`", the invite exists, is unredeemed and unexpired, points at this household, and the same batch marks it redeemed (using `getAfter`).
+   - The invitee joins as a member. Admins promote from there.
+   - This works the same for Google, Apple and anonymous users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
 2. **Which questions does each symptom get?** The next thing to work out, symptom by symptom, including which symptoms are in the catalog.
-3. **Household creation and count:** does a user get a household automatically on first sign-in, including anonymous users? Can a user belong to more than one household?
+3. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
 4. **Severity:** does it stay a required top-level field (default "moderate", comparable across all symptoms), or become just another question on symptoms where it makes sense?
-5. **Non-admin mistakes:** members can only add symptoms, so a member can't fix or delete a log they entered by mistake. Is that intended, or can members edit or delete their own logs?
-6. **Who logged it:** should a log record which member added it, and how are members shown by name?
+5. **Can members delete their own entries?** They can edit them. Deleting is not decided.
+6. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
