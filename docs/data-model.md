@@ -10,14 +10,14 @@ Status: planning. Nothing here is implemented. See [architecture.md](architectur
 
 ## Households and roles
 
-A household has members and pets. Every member can see the household's pets and symptom logs, can add symptoms, and can edit their own symptom entries. A household has one or more **admins**. A person can belong to multiple households.
+A household has members and pets. Every member can see the household's pets and symptom logs, can add symptoms, and can edit and delete their own symptom entries. A household has one or more **admins**. A person can belong to multiple households.
 
 | Action | Member | Admin |
 |---|---|---|
 | See the household, its pets and logs | yes | yes |
 | Add symptom logs | yes | yes |
 | Edit symptom logs | own entries only | all |
-| Delete symptom logs | not decided (open question 5) | yes |
+| Delete symptom logs | own entries only | all |
 | Add, edit, archive pets | no | yes |
 | Add or remove members, change roles | no | yes |
 | Edit or delete the household | no | yes |
@@ -75,7 +75,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
-- **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update if the caller is `createdBy` or in `adminIds`; delete if in `adminIds`. `createdBy` cannot be changed.
+- **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
 - `severity` in range; string lengths capped.
 
 ## Symptom catalog
@@ -93,7 +93,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 
 ## Conventions
 
-- **Deletes:** pets are archived; logs are hard-deleted (admins only).
+- **Deletes:** pets are archived; logs are hard-deleted (by their author or an admin).
 - **Indexes:** the main query (a pet's logs by `occurredAt` descending) needs no custom index. Filtering by symptom needs a composite index on `(symptom, occurredAt)`.
 
 ## Decided
@@ -101,7 +101,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 - The symptoms and the questions for each symptom are defined in the app.
 - Households have members and pets. All members can see and add symptoms.
 - Households have one or more admins. Admins add and remove members and have full edit control.
-- Non-admins can add symptoms and edit their own symptom entries.
+- Non-admins can add symptoms and edit and delete their own symptom entries.
 - A person can belong to multiple households.
 
 ## Open questions
@@ -115,5 +115,4 @@ Proposed mechanics, to be settled along with the questions themselves:
 2. **Which questions does each symptom get?** The next thing to work out, symptom by symptom, including which symptoms are in the catalog.
 3. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
 4. **Severity:** does it stay a required top-level field (default "moderate", comparable across all symptoms), or become just another question on symptoms where it makes sense?
-5. **Can members delete their own entries?** They can edit them. Deleting is not decided.
-6. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
+5. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
