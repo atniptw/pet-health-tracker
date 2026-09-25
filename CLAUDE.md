@@ -10,6 +10,10 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 Freshly scaffolded Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). `lib/main.dart` and `test/widget_test.dart` are still the default counter-app template. There is no real architecture yet; update this file as one emerges.
 
+## Design docs
+
+Planned stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. They describe a plan, not implemented code. Keep them updated when decisions change.
+
 ## Commands
 
 ```
