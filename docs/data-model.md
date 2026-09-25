@@ -4,7 +4,7 @@ Status: planning. Nothing here is implemented. See [architecture.md](architectur
 
 ## Scope
 
-- Households, their members, pets, and symptom logs.
+- Households, their members, pets, symptom logs, and a list of medications per pet.
 - Species: dog, cat, other.
 - Each log is a single moment. No duration or resolved state.
 
@@ -18,6 +18,7 @@ A household has members and pets. Every member can see the household's pets and 
 | Add symptom logs | yes | yes |
 | Edit symptom logs | own entries only | all |
 | Delete symptom logs | own entries only | all |
+| Add, edit, delete medications | no | yes |
 | Add, edit, archive pets | no | yes |
 | Add or remove members, change roles | no | yes |
 | Edit or delete the household | no | yes |
@@ -69,6 +70,19 @@ A pet belongs to exactly one household, so it is nested under it.
 
 One symptom per log: one tap to log, and per-symptom queries are simple. Several symptoms means several quick entries.
 
+### `households/{householdId}/pets/{petId}/medications/{medId}`
+
+A simple list of the medications a pet is on. No schedule, dose tracking, or history.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | required |
+| `notes` | string? | free text, e.g. dose and how often |
+| `createdAt`, `updatedAt` | server timestamp | |
+| `schemaVersion` | int | |
+
+Medications are hard-deleted.
+
 ## Security rules
 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
@@ -76,6 +90,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
+- **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - `severity` in range; string lengths capped.
 
 ## Symptom catalog
@@ -103,6 +118,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 - Households have one or more admins. Admins add and remove members and have full edit control.
 - Non-admins can add symptoms and edit and delete their own symptom entries.
 - A person can belong to multiple households.
+- Medications are a simple list per pet. Only admins add, edit and delete them; all members can see them.
 
 ## Open questions
 
