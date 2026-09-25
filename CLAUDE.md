@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Goal
 
-A mobile app (iOS + Android) for pet owners to track their pets' health symptoms. The first priority is **fast symptom logging**: capturing what happened, when, and how severe, with as little friction as possible. Trend views and vet-visit reports are later goals. The audience is pet owners in general, not just a single household, so accounts and onboarding will eventually matter.
+A mobile app (iOS + Android) for pet owners to track their pets' health symptoms. The first priority is **fast symptom logging**: capturing what happened, when, and how severe, with as little friction as possible. The audience is pet owners in general, not just a single household.
+
+## Working rules
+
+- Don't invent scope or a roadmap. Never label something "out of scope for v1", "planned for later", "v2", or similar unless the user has said so. When the user makes a choice, record only that choice. Don't add features, phases, or future work they didn't ask for, in docs, code comments, or replies.
 
 ## Project state
 
