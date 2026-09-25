@@ -22,8 +22,8 @@ Order of work: **Google first**, then anonymous, then Apple.
 - **Google:** enable the provider in the Firebase console. Android needs the debug SHA-1 registered (release and Play signing SHA-1s later). iOS needs the `REVERSED_CLIENT_ID` URL scheme in `Info.plist`, which `flutterfire configure` provides. Use `firebase_auth` with `google_sign_in`, written against the current API.
 - **Anonymous:** lets a user start logging without signing up. Signing in with Google or Apple later *links* the credential to the anonymous account, so the uid and data are kept.
 - **Apple:** required on iOS once any other social login is offered, so it must ship before App Store submission. Needs a paid Apple Developer account.
-- **Open: `credential-already-in-use`.** If an anonymous user signs in with a Google/Apple account that already exists (e.g. after a reinstall), the anonymous account's pets are orphaned under the old uid. Leading option: add the existing account's uid to `memberIds` on those pets. Alternative: discard them. Decide when building anonymous auth.
-- **Account deletion:** Apple requires it in-app. Deleting an account must delete the user's pets and logs.
+- **Open: `credential-already-in-use`.** If an anonymous user signs in with a Google/Apple account that already exists (e.g. after a reinstall), the anonymous account's household and pets are orphaned under the old uid. Leading option: add the existing account's uid to that household's `memberIds` and `adminIds`. Alternative: discard them. Decide when building anonymous auth.
+- **Account deletion:** Apple requires it in-app. Deleting an account must delete the user's data. The user is removed from their households. A household must always keep at least one admin, so how a sole admin leaves or hands over is not decided yet.
 
 ## Planned code layout
 
