@@ -8,10 +8,17 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 ## Project state
 
-The repository is currently a bare scaffold: it contains only `README.md`, `LICENSE`, and `.gitignore`. There is no source code, build system, or test suite yet, so there are no build/lint/test commands to document.
+Freshly scaffolded Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). `lib/main.dart` and `test/widget_test.dart` are still the default counter-app template. There is no real architecture yet; update this file as one emerges.
 
-## Stack hint
+## Commands
 
-The target is Flutter (mobile). The `.gitignore` is the standard Flutter/Dart template (ignores `.dart_tool/`, `.pub-cache/`, `build/`, `*.lock`, etc.), but no `pubspec.yaml` exists yet. Note that `*.lock` is git-ignored, meaning `pubspec.lock` would not be committed.
+```
+flutter pub get                          # install dependencies
+flutter run                              # run on a connected device/emulator
+flutter analyze                          # lint (rules in analysis_options.yaml)
+flutter test                             # run all tests
+flutter test test/widget_test.dart       # run a single test file
+flutter test --plain-name "<test name>"  # run a single test by name
+```
 
-Once code is added, update this file with the actual build, lint, and test commands (including how to run a single test) and the high-level architecture.
+`*.lock` is git-ignored, so `pubspec.lock` is not committed.
