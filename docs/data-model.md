@@ -48,7 +48,7 @@ A pet belongs to exactly one household, so it is nested under it.
 | `name` | string | required |
 | `species` | string | key: `dog`, `cat`, `other` |
 | `breed` | string? | free text |
-| `birthDate` | timestamp? | optional; owners often only know roughly |
+| `birthDate` | string? | `YYYY-MM-DD` calendar date, no timezone; optional, owners often only know roughly |
 | `sex` | string? | `female`, `male`, `unknown` |
 | `createdAt`, `updatedAt` | server timestamp | |
 | `archivedAt` | timestamp? | soft delete, keeps history |
