@@ -96,7 +96,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 The symptoms and their questions are defined in the app, not in Firestore. A log stores only the symptom key and the answers, so renaming a label never touches data.
 
-Every log has a title and notes. `seizure`, `vomit` and `diarrhea` have the questions below. Which questions the other symptoms get has not been decided yet. See open question 2.
+Every log has a title and notes. `seizure`, `vomit` and `diarrhea` have the questions below.
 
 ### Other
 
@@ -158,6 +158,5 @@ Proposed mechanics, to be settled along with the questions themselves:
    - The app redeems it with one batched write: set `redeemedBy` to the caller and add the caller to the household's `memberIds`. The household update rule allows a non-admin to do this only when the change is exactly "add my own uid to `memberIds`", the invite exists, is unredeemed and unexpired, points at this household, and the same batch marks it redeemed (using `getAfter`).
    - The invitee joins as a member. Admins promote from there.
    - This works the same for Google, Apple and anonymous users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
-2. **Which questions does each symptom get?** The next thing to work out, symptom by symptom, including which symptoms are in the catalog.
-3. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
-4. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
+2. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
+3. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
