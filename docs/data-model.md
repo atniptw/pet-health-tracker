@@ -82,6 +82,19 @@ A simple list of the medications a pet is on. No schedule, dose tracking, or his
 
 Medications are hard-deleted.
 
+### `catalog/symptoms`
+
+A single doc holding the whole symptom catalog. See Symptom catalog.
+
+| Field | Type | Notes |
+|---|---|---|
+| `catalogVersion` | int | incremented on every publish |
+| `formatVersion` | int | version of the catalog's structure and question types |
+| `symptoms` | list of maps | in display order. Each: `key`, `label`, `retired?`, `questions` |
+| `updatedAt` | server timestamp | |
+
+Each question is a map: `key`, `label`, `type`, `retired?`, and for choice types `options`, a list of `{key, label, retired?}`.
+
 ## Security rules
 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
@@ -90,13 +103,18 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
+- **Catalog:** read if signed in; no client writes.
 - String lengths capped.
 
 ## Symptom catalog
 
-The symptoms and their questions are defined in the app, not in Firestore. A log stores only the symptom key and the answers, so renaming a label never touches data.
+The symptoms and their questions live in Firestore in `catalog/symptoms`, so new symptoms, questions and options need no app release, and older app versions can show symptoms added after they shipped. A log stores only the symptom key and the answers, so renaming a label never touches data.
 
-Every log has a title and notes. `seizure`, `vomit` and `diarrhea` have the questions below.
+- **Bundled copy:** the app ships with a copy of the catalog and uses it until the Firestore doc has been fetched. After that, Firestore's offline cache keeps the fetched version available.
+- **Source of truth:** a catalog file in this repo. Tests check it: keys are unique, and no symptom, question or option key is ever removed or reused. A script publishes it to `catalog/symptoms` with the Admin SDK from a developer machine (works on the Spark plan) and the same file is copied into the app as the bundled copy.
+- **`other`** is not a catalog entry. It is handled by the app, since it is the only symptom with a stored `title`.
+
+Every log has a title and notes. The catalog currently has `seizure`, `vomit` and `diarrhea`, with the questions below.
 
 ### Other
 
@@ -143,7 +161,10 @@ A yes/no answer is stored only when true, so a missing answer means "not noted",
 Question mechanics:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.
 - **Keys are permanent:** never change a question's key, type, or option keys, and never reuse a retired key.
-- **Every question is optional at read time,** since old logs lack answers to newer questions. Answers whose key is no longer in the catalog are ignored.
+- **Retire, don't remove:** a symptom, question or option that is no longer offered stays in the catalog with `retired: true`. It is hidden when logging but still labels old logs.
+- **Every question is optional at read time,** since old logs lack answers to newer questions.
+- **New question types need an app update.** Adding one bumps `formatVersion`. An app that sees a question type it doesn't know skips that question.
+- **Edits keep unknown answers:** editing a log writes only the changed answer fields, so answers the app doesn't know about are kept.
 
 ## Conventions
 
