@@ -140,7 +140,7 @@ Example: `answers: { consistency: "watery", mucus: true }`.
 
 A yes/no answer is stored only when true, so a missing answer means "not noted", not "no".
 
-Proposed mechanics, to be settled along with the questions themselves:
+Question mechanics:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.
 - **Keys are permanent:** never change a question's key, type, or option keys, and never reuse a retired key.
 - **Every question is optional at read time,** since old logs lack answers to newer questions. Answers whose key is no longer in the catalog are ignored.
