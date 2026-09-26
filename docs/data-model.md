@@ -58,11 +58,10 @@ A pet belongs to exactly one household, so it is nested under it.
 
 | Field | Type | Notes |
 |---|---|---|
-| `symptom` | string | catalog key, or `other` |
-| `customLabel` | string? | only when `symptom` is `other` |
+| `symptom` | string | catalog key (e.g. `seizure`, `vomit`), or `other` |
+| `title` | string? | short title, only when `symptom` is `other`. For every other symptom the title is the catalog label, so it isn't stored |
 | `createdBy` | string | uid of the member who added it; never changes. Identifies "own entries" |
-| `severity` | int | 1 to 3 (mild, moderate, severe). See open question 4 |
-| `answers` | map? | answers to the symptom's questions, keyed by question key. See Symptom catalog |
+| `answers` | map? | type-specific fields, keyed by question key. See Symptom catalog |
 | `occurredAt` | timestamp | defaults to now, can be backdated; stored UTC, shown local |
 | `notes` | string? | |
 | `createdAt`, `updatedAt` | server timestamp | `occurredAt` is when it happened, `createdAt` is when it was logged |
@@ -91,13 +90,13 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
-- `severity` in range; string lengths capped.
+- String lengths capped.
 
 ## Symptom catalog
 
 The symptoms, and the questions asked for each symptom, are defined in the app (in code), not by users and not in Firestore. Each catalog entry has a stable key, an icon, a label, applicable species (e.g. hairballs are cat-only), and an ordered list of questions. Firestore stores only symptom keys and answers, so renaming a label never touches data.
 
-Which questions each symptom gets has not been decided yet. See open question 2.
+Every log has a title and notes. `other` has no questions: the user gives it a title and writes the details in the notes. `seizure` has one: its duration, entered after the fact (`answers: { durationSeconds: 90 }`). Which questions the other symptoms get has not been decided yet. See open question 2.
 
 Illustrative example only: `vomiting` might ask how many times (number), whether blood is present (yes/no), and what it looked like (single choice), stored as `answers: { times: 3, blood: true, appearance: "foamy" }`.
 
@@ -118,6 +117,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 - Households have one or more admins. Admins add and remove members and have full edit control.
 - Non-admins can add symptoms and edit and delete their own symptom entries.
 - A person can belong to multiple households.
+- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure's only field is its duration, entered afterwards.
 - Medications are a simple list per pet. Only admins add, edit and delete them; all members can see them.
 
 ## Open questions
@@ -130,5 +130,4 @@ Proposed mechanics, to be settled along with the questions themselves:
    - This works the same for Google, Apple and anonymous users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
 2. **Which questions does each symptom get?** The next thing to work out, symptom by symptom, including which symptoms are in the catalog.
 3. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
-4. **Severity:** does it stay a required top-level field (default "moderate", comparable across all symptoms), or become just another question on symptoms where it makes sense?
-5. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
+4. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).

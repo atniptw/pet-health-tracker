@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Goal
 
-A mobile app (iOS + Android) for pet owners to track their pets' health symptoms. The first priority is **fast symptom logging**: capturing what happened, when, and how severe, with as little friction as possible. The audience is pet owners in general, not just a single household.
+A mobile app (iOS + Android) for pet owners to track their pets' health symptoms. The first priority is **fast symptom logging**: capturing what happened and when, with as little friction as possible. The audience is pet owners in general, not just a single household.
 
 ## Working rules
 
