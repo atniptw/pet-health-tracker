@@ -62,12 +62,12 @@ A pet belongs to exactly one household, so it is nested under it.
 | `title` | string? | short title, only when `symptom` is `other`. For every other symptom the title is the catalog label, so it isn't stored |
 | `createdBy` | string | uid of the member who added it; never changes. Identifies "own entries" |
 | `answers` | map? | type-specific fields, keyed by question key. See Symptom catalog |
-| `occurredAt` | timestamp | defaults to now, can be backdated; stored UTC, shown local |
+| `occurredAt` | timestamp | when it happened; stored UTC |
 | `notes` | string? | |
 | `createdAt`, `updatedAt` | server timestamp | `occurredAt` is when it happened, `createdAt` is when it was logged |
 | `schemaVersion` | int | |
 
-One symptom per log: one tap to log, and per-symptom queries are simple. Several symptoms means several quick entries.
+One symptom per log, so per-symptom queries are simple. Several symptoms means several entries.
 
 ### `households/{householdId}/pets/{petId}/medications/{medId}`
 
@@ -94,15 +94,19 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 ## Symptom catalog
 
-The symptoms, and the questions asked for each symptom, are defined in the app (in code), not by users and not in Firestore. Each catalog entry has a stable key, an icon, a label, applicable species (e.g. hairballs are cat-only), and an ordered list of questions. Firestore stores only symptom keys and answers, so renaming a label never touches data.
+The symptoms and their questions are defined in the app, not in Firestore. A log stores only the symptom key and the answers, so renaming a label never touches data.
 
-Every log has a title and notes. `other` has no questions: the user gives it a title and writes the details in the notes. `seizure`, `vomit` and `diarrhea` have the questions below. Which questions the other symptoms get has not been decided yet. See open question 2.
+Every log has a title and notes. `seizure`, `vomit` and `diarrhea` have the questions below. Which questions the other symptoms get has not been decided yet. See open question 2.
+
+### Other
+
+Example log, with a stored `title` and no `answers`: `symptom: "other", title: "Ate a sock", notes: "Found chewing it around 2pm, some fabric missing"`.
 
 ### Seizure questions
 
 | Key | Type | Notes |
 |---|---|---|
-| `durationSeconds` | number | entered after the fact, not timed live |
+| `durationSeconds` | number | seconds |
 | `type` | single choice | `focal` (one area), `generalized` (full body), `notSure` |
 | `lostConsciousness` | yes/no | unresponsive, not reacting |
 | `urinated` | yes/no | |
@@ -122,8 +126,6 @@ Example: `answers: { durationSeconds: 90, type: "generalized", urinated: true, f
 
 Example: `answers: { content: "foamOrBile", timing: "emptyStomach" }`.
 
-Eating something that isn't food is logged as `other`, with the details in the title and notes.
-
 ### Diarrhea questions
 
 | Key | Type | Notes |
@@ -136,12 +138,12 @@ Eating something that isn't food is logged as `other`, with the details in the t
 
 Example: `answers: { consistency: "watery", mucus: true }`.
 
-Yes/no questions are toggles in the UI. A toggle is stored only when switched on, so a missing answer means "not noted", not "no".
+A yes/no answer is stored only when true, so a missing answer means "not noted", not "no".
 
 Proposed mechanics, to be settled along with the questions themselves:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.
 - **Keys are permanent:** never change a question's key, type, or option keys, and never reuse a retired key.
-- **Every question is optional at read time,** since old logs lack answers to newer questions. The UI ignores answers whose key is no longer in the catalog.
+- **Every question is optional at read time,** since old logs lack answers to newer questions. Answers whose key is no longer in the catalog are ignored.
 
 ## Conventions
 
@@ -155,7 +157,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 - Households have one or more admins. Admins add and remove members and have full edit control.
 - Non-admins can add symptoms and edit and delete their own symptom entries.
 - A person can belong to multiple households.
-- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure asks for its duration (entered afterwards), its type (focal, generalized or not sure), and four yes/no toggles: lost consciousness, urinated, defecated, foaming. A vomit asks what came up, blood, retching only, and timing after eating. A diarrhea asks consistency (soft or watery) and four yes/no toggles: red blood, black or tarry, mucus, straining.
+- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure asks for its duration, its type (focal, generalized or not sure), and four yes/no questions: lost consciousness, urinated, defecated, foaming. A vomit asks what came up, blood, retching only, and timing after eating. A diarrhea asks consistency (soft or watery) and four yes/no questions: red blood, black or tarry, mucus, straining.
 - Medications are a simple list per pet. Only admins add, edit and delete them; all members can see them.
 
 ## Open questions
