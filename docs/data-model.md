@@ -96,7 +96,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 The symptoms, and the questions asked for each symptom, are defined in the app (in code), not by users and not in Firestore. Each catalog entry has a stable key, an icon, a label, applicable species (e.g. hairballs are cat-only), and an ordered list of questions. Firestore stores only symptom keys and answers, so renaming a label never touches data.
 
-Every log has a title and notes. `other` has no questions: the user gives it a title and writes the details in the notes. `seizure` has the questions below. Which questions the other symptoms get has not been decided yet. See open question 2.
+Every log has a title and notes. `other` has no questions: the user gives it a title and writes the details in the notes. `seizure` and `vomit` have the questions below. Which questions the other symptoms get has not been decided yet. See open question 2.
 
 ### Seizure questions
 
@@ -109,11 +109,22 @@ Every log has a title and notes. `other` has no questions: the user gives it a t
 | `defecated` | yes/no | |
 | `foaming` | yes/no | foaming or drooling |
 
-The yes/no questions are toggles in the UI. A toggle is stored only when switched on, so a missing answer means "not noted", not "no".
-
 Example: `answers: { durationSeconds: 90, type: "generalized", urinated: true, foaming: true }`.
 
-Illustrative example only: `vomiting` might ask how many times (number), whether blood is present (yes/no), and what it looked like (single choice), stored as `answers: { times: 3, blood: true, appearance: "foamy" }`.
+### Vomit questions
+
+| Key | Type | Notes |
+|---|---|---|
+| `content` | single choice | `food`, `foamOrBile`, `clearLiquid`, `other` |
+| `blood` | yes/no | |
+| `retchingOnly` | yes/no | retching, nothing came up |
+| `timing` | single choice | `rightAfterEating`, `hoursAfterEating`, `emptyStomach` |
+
+Example: `answers: { content: "foamOrBile", timing: "emptyStomach" }`.
+
+Eating something that isn't food is logged as `other`, with the details in the title and notes.
+
+Yes/no questions are toggles in the UI. A toggle is stored only when switched on, so a missing answer means "not noted", not "no".
 
 Proposed mechanics, to be settled along with the questions themselves:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.
@@ -132,7 +143,7 @@ Proposed mechanics, to be settled along with the questions themselves:
 - Households have one or more admins. Admins add and remove members and have full edit control.
 - Non-admins can add symptoms and edit and delete their own symptom entries.
 - A person can belong to multiple households.
-- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure asks for its duration (entered afterwards), its type (focal, generalized or not sure), and four yes/no toggles: lost consciousness, urinated, defecated, foaming.
+- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure asks for its duration (entered afterwards), its type (focal, generalized or not sure), and four yes/no toggles: lost consciousness, urinated, defecated, foaming. A vomit asks what came up, blood, retching only, and timing after eating.
 - Medications are a simple list per pet. Only admins add, edit and delete them; all members can see them.
 
 ## Open questions
