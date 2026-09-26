@@ -150,16 +150,6 @@ Proposed mechanics, to be settled along with the questions themselves:
 - **Deletes:** pets are archived; logs are hard-deleted (by their author or an admin).
 - **Indexes:** the main query (a pet's logs by `occurredAt` descending) needs no custom index. Filtering by symptom needs a composite index on `(symptom, occurredAt)`.
 
-## Decided
-
-- The symptoms and the questions for each symptom are defined in the app.
-- Households have members and pets. All members can see and add symptoms.
-- Households have one or more admins. Admins add and remove members and have full edit control.
-- Non-admins can add symptoms and edit and delete their own symptom entries.
-- A person can belong to multiple households.
-- A symptom log has a type, a timestamp, notes and an author. Type-specific fields go in `answers`. There is no severity field. `other` has a user-written title and notes; every other type is titled by its catalog label. A seizure asks for its duration, its type (focal, generalized or not sure), and four yes/no questions: lost consciousness, urinated, defecated, foaming. A vomit asks what came up, blood, retching only, and timing after eating. A diarrhea asks consistency (soft or watery) and four yes/no questions: red blood, black or tarry, mucus, straining.
-- Medications are a simple list per pet. Only admins add, edit and delete them; all members can see them.
-
 ## Open questions
 
 1. **How do admins add and remove members?** Removing is settled: an admin removes the uid from `memberIds` and `adminIds`, and a household keeps at least one admin. Adding is proposed but not confirmed: **invite codes, redeemed with security rules only** (no Cloud Functions, since those need a paid plan; see architecture.md).
