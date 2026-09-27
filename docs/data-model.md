@@ -178,6 +178,6 @@ Question mechanics:
    - The admin shares the code with the person, for example via the phone's share sheet. The person enters it in the app.
    - The app redeems it with one batched write: set `redeemedBy` to the caller and add the caller to the household's `memberIds`. The household update rule allows a non-admin to do this only when the change is exactly "add my own uid to `memberIds`", the invite exists, is unredeemed and unexpired, points at this household, and the same batch marks it redeemed (using `getAfter`).
    - The invitee joins as a member. Admins promote from there.
-   - This works the same for Google, Apple and anonymous users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
-2. **Household creation:** does a user get a household automatically on first sign-in, including anonymous users?
+   - This works the same for Google and Apple users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
+2. **Household creation:** does a user get a household automatically on first sign-in?
 3. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
