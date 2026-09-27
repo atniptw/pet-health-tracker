@@ -25,6 +25,8 @@ A household has members and pets. Every member can see the household's pets and 
 
 A household always has at least one admin.
 
+A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its sole admin, with a default name of `{display name}'s Household`.
+
 ## Collections
 
 ### `households/{householdId}`
@@ -179,5 +181,4 @@ Question mechanics:
    - The app redeems it with one batched write: set `redeemedBy` to the caller and add the caller to the household's `memberIds`. The household update rule allows a non-admin to do this only when the change is exactly "add my own uid to `memberIds`", the invite exists, is unredeemed and unexpired, points at this household, and the same batch marks it redeemed (using `getAfter`).
    - The invitee joins as a member. Admins promote from there.
    - This works the same for Google and Apple users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
-2. **Household creation:** does a user get a household automatically on first sign-in?
-3. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
+2. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
