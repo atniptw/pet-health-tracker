@@ -12,7 +12,20 @@
           "package_name": "com.pootzandboogie.pet_health_tracker"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "890809865754-la7779jbic820ptbtnic5lrts66dj0n0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pootzandboogie.pet_health_tracker",
+            "certificate_hash": "e08c7328b0f9f548c8a5dcb77f593d34e633b5f0"
+          }
+        },
+        {
+          "client_id": "890809865754-cmdgut2ekkmp32mjpointb82a78b550d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB6mxUlKLMfyGoOlnLz_2WGSImQQHP1pzQ"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "890809865754-cmdgut2ekkmp32mjpointb82a78b550d.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "890809865754-90ue3j5p8d9p84sgdhbbld3nf88sndca.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.pootzandboogie.petHealthTracker"
+              }
+            }
+          ]
         }
       }
     }

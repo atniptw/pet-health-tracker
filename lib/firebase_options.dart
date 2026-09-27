@@ -56,13 +56,14 @@ class DefaultFirebaseOptions {
     projectId: 'pet-health-tracker-2eed5',
     storageBucket: 'pet-health-tracker-2eed5.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDkfdmkChVqn3SEY_l1ntnHMv7VkynEOVY',
     appId: '1:890809865754:ios:adde1a8a210dfbd399e3a3',
     messagingSenderId: '890809865754',
     projectId: 'pet-health-tracker-2eed5',
     storageBucket: 'pet-health-tracker-2eed5.firebasestorage.app',
+    androidClientId: '890809865754-la7779jbic820ptbtnic5lrts66dj0n0.apps.googleusercontent.com',
+    iosClientId: '890809865754-90ue3j5p8d9p84sgdhbbld3nf88sndca.apps.googleusercontent.com',
     iosBundleId: 'com.pootzandboogie.petHealthTracker',
   );
 }
