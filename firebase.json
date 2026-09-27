@@ -1,0 +1,20 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
+    "singleProjectMode": true
+  },
+  "flutter":{"platforms":{"android":{"default":{"projectId":"pet-health-tracker-2eed5","appId":"1:890809865754:android:8a1a1d06ba8d166499e3a3","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"pet-health-tracker-2eed5","appId":"1:890809865754:ios:adde1a8a210dfbd399e3a3","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"pet-health-tracker-2eed5","configurations":{"android":"1:890809865754:android:8a1a1d06ba8d166499e3a3","ios":"1:890809865754:ios:adde1a8a210dfbd399e3a3"}}}}}
+}

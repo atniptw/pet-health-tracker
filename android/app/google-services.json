@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "890809865754",
+    "project_id": "pet-health-tracker-2eed5",
+    "storage_bucket": "pet-health-tracker-2eed5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:890809865754:android:8a1a1d06ba8d166499e3a3",
+        "android_client_info": {
+          "package_name": "com.pootzandboogie.pet_health_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6mxUlKLMfyGoOlnLz_2WGSImQQHP1pzQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
