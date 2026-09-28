@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "890809865754-45hlh53m7v3fgcdhhms7do57muh8p3lc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pootzandboogie.pet_health_tracker",
+            "certificate_hash": "45b8dafbf10d83f5ca720bd2d746c400d6592c8b"
+          }
+        },
+        {
           "client_id": "890809865754-la7779jbic820ptbtnic5lrts66dj0n0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
