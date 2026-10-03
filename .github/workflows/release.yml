@@ -22,8 +22,41 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # Java and Node run the Firestore emulator for the rules tests.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
       - run: flutter pub get --enforce-lockfile
+      - run: npm --prefix firestore-tests ci
       - run: ./scripts/check.sh
+
+  deploy-firestore-rules:
+    needs: test
+    runs-on: ubuntu-latest
+    # Off until the rules-deploy service account and its key secret exist.
+    if: vars.FIRESTORE_RULES_DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: firestore-tests/package-lock.json
+      - run: npm --prefix firestore-tests ci
+      - name: Deploy Firestore rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_RULES_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" \
+            firestore-tests/node_modules/.bin/firebase deploy --only firestore:rules \
+            --project pet-health-tracker-2eed5 --non-interactive
 
   deploy-android:
     needs: test

@@ -14,3 +14,7 @@ flutter analyze --fatal-infos
 
 echo '==> test'
 flutter test --coverage
+
+echo '==> firestore rules'
+[ -d firestore-tests/node_modules ] || npm --prefix firestore-tests ci --no-fund --no-audit
+npm --prefix firestore-tests test
