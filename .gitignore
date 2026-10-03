@@ -118,6 +118,8 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 !/Gemfile.lock
+# Apps commit pubspec.lock so every build uses the dependency versions that were tested.
+!/pubspec.lock
 # IntelliJ / Android Studio
 .idea/
 *.iml

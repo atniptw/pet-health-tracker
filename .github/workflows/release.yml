@@ -22,9 +22,8 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
+      - run: flutter pub get --enforce-lockfile
+      - run: ./scripts/check.sh
 
   deploy-android:
     needs: test
@@ -37,6 +36,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -59,6 +59,7 @@ jobs:
           keyPassword=$ANDROID_KEY_PASSWORD
           keyAlias=$ANDROID_KEY_ALIAS
           PROPS
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build appbundle --release --build-number=${{ github.run_number }}
       - name: Upload to Play internal testing
         working-directory: android
@@ -79,5 +80,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
       # Signing and TestFlight upload go here once the Apple account is set up.
