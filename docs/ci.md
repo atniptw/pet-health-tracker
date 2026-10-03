@@ -11,31 +11,41 @@ test (ubuntu) ──┬──> deploy-android (ubuntu)  → Play internal testin
 - **deploy-android**: builds a signed AAB and uploads it with fastlane (`android/fastlane/Fastfile`, lane `internal`).
 - **deploy-ios**: builds without code signing to confirm iOS still compiles. Signing and the TestFlight upload are not written yet; they need the Apple Developer account.
 
-Both deploy jobs are off until a repository variable switches them on (Settings → Secrets and variables → Actions → Variables). While off, they show as skipped, not failed.
+Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Android is on (`ANDROID_DEPLOY_ENABLED=true`); iOS is off.
 
-Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`.
+Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`. Don't re-run an old workflow run to deploy: a re-run keeps its run number, so Play rejects the build number as already used. Push a new commit instead.
 
-## Turning on Android deploys
+## Android deploys
 
-1. **Play Console**: finish identity verification, create the app (package `com.pootzandboogie.pet_health_tracker`), and set up the internal testing track with your tester list.
-2. **First upload by hand.** The Play API can't upload to an app that has never had a build. Build locally with `flutter build appbundle --release` and upload `build/app/outputs/bundle/release/app-release.aab` to the internal track in the Console. CI build numbers start at the workflow's run number. If you ever upload a build by hand with a higher number, CI uploads will be rejected until the run number passes it.
-3. **Service account**:
-   - In Google Cloud (the Firebase project `pet-health-tracker-2eed5` works), enable the **Google Play Android Developer API**.
-   - Create a service account and download a JSON key for it.
-   - In Play Console → Users and permissions, invite the service account's email. Give it access to this app with the **Release to testing tracks** permission.
-4. **Secrets** (Settings → Secrets and variables → Actions → Secrets), or use `gh secret set` from the repo root:
-   ```
-   base64 -i ~/upload-keystore-pet-health-tracker.jks | gh secret set ANDROID_KEYSTORE_BASE64
-   gh secret set ANDROID_KEYSTORE_PASSWORD   # storePassword from android/key.properties
-   gh secret set ANDROID_KEY_PASSWORD        # keyPassword from android/key.properties
-   gh secret set ANDROID_KEY_ALIAS           # "upload"
-   gh secret set PLAY_SERVICE_ACCOUNT_JSON < path/to/service-account.json
-   ```
-5. **Variables**:
-   ```
-   gh variable set ANDROID_DEPLOY_ENABLED --body true
-   ```
-   While the app is still a draft in Play Console (not all app content declarations done), the API only accepts draft releases. If the upload fails with "Only releases with status draft may be created on draft app", run `gh variable set PLAY_RELEASE_STATUS --body draft`. Draft releases have to be rolled out to testers by hand in the Console. Delete the variable once the app is out of draft, and uploads will go straight to testers (`completed`).
+Live since 2026-10-03. Every push to `main` uploads to the internal testing track and rolls out to testers straight away (release status `completed`).
+
+What's set up:
+
+- **Play Console app**: package `com.pootzandboogie.pet_health_tracker`, internal testing track with a tester email list. The first build (0.0.1, build number 2) was uploaded by hand, because the Play API can't upload to an app that has never had a build. Build number 1 was used up by an earlier upload, and CI run #2 used up build number 2 while deploys were off, so CI deploys started at run #4.
+- **Play App Signing**: Google re-signs builds with its own key, so installed apps carry Google's certificate, not the upload key's. Play Console → Test and release → App integrity → App signing has a download of the certificates. The SHA-1s of all three certificates in it are registered for Google Sign-In (see `docs/architecture.md`).
+- **Service account**: `play-deploy@pet-health-tracker-2eed5.iam.gserviceaccount.com` in the Firebase project's Google Cloud project, with the **Google Play Android Developer API** enabled. In Play Console → Users and permissions (account level, not inside the app) it has **Release to testing tracks** on this app.
+- **Secrets** (Settings → Secrets and variables → Actions → Secrets):
+  | Secret | Value |
+  |---|---|
+  | `ANDROID_KEYSTORE_BASE64` | `~/upload-keystore-pet-health-tracker.jks`, base64 |
+  | `ANDROID_KEYSTORE_PASSWORD` | `storePassword` from `android/key.properties` |
+  | `ANDROID_KEY_PASSWORD` | `keyPassword` from `android/key.properties` |
+  | `ANDROID_KEY_ALIAS` | `upload` |
+  | `PLAY_SERVICE_ACCOUNT_JSON` | JSON key for the service account |
+- **Ruby**: `setup-ruby` reads the version from `.ruby-version` (4.0.7). fastlane is pinned in the root `Gemfile` / `Gemfile.lock`.
+
+To set the secrets again, for example after rotating the service account key, run from the repo root:
+
+```
+gcloud iam service-accounts keys create /tmp/play-deploy.json --iam-account play-deploy@pet-health-tracker-2eed5.iam.gserviceaccount.com
+gh secret set PLAY_SERVICE_ACCOUNT_JSON < /tmp/play-deploy.json && rm -P /tmp/play-deploy.json
+base64 -i ~/upload-keystore-pet-health-tracker.jks | gh secret set ANDROID_KEYSTORE_BASE64
+grep '^storePassword=' android/key.properties | cut -d= -f2- | tr -d '\n' | gh secret set ANDROID_KEYSTORE_PASSWORD
+grep '^keyPassword=' android/key.properties | cut -d= -f2- | tr -d '\n' | gh secret set ANDROID_KEY_PASSWORD
+gh secret set ANDROID_KEY_ALIAS --body upload
+```
+
+**Draft releases.** While an app is still a draft in Play Console (App content declarations not finished), the API only accepts draft releases, and uploads fail with "Only releases with status draft may be created on draft app". `gh variable set PLAY_RELEASE_STATUS --body draft` makes CI upload drafts, which then have to be rolled out to testers by hand in the Console. The variable is not set now.
 
 ## Turning on iOS deploys
 
@@ -50,10 +60,10 @@ Until step 3 is done, turning on the variable only runs the unsigned build check
 
 ## Running the Android lane locally
 
-fastlane is pinned in the root `Gemfile` / `Gemfile.lock`.
+Needs a JSON key for the service account (`gcloud iam service-accounts keys create`, as above). Use a build number higher than any already in Play.
 
 ```
 bundle install
-flutter build appbundle --release
+flutter build appbundle --release --build-number=<n>
 cd android && PLAY_SERVICE_ACCOUNT_JSON="$(cat path/to/service-account.json)" bundle exec fastlane internal
 ```

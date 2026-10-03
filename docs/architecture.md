@@ -23,7 +23,7 @@ This is a hobby app, so lean toward free tiers. Stay on Firebase's free Spark pl
 
 Order of work: **Google first**, then Apple.
 
-- **Google:** enable the provider in the Firebase console. Android needs the debug SHA-1 registered (release and Play signing SHA-1s later). iOS needs the `REVERSED_CLIENT_ID` URL scheme in `Info.plist`, which `flutterfire configure` provides. Use `firebase_auth` with `google_sign_in`, written against the current API.
+- **Google:** enable the provider in the Firebase console. Android SHA-1s are registered for the debug keystore, the upload keystore, and the three Play App Signing certificates. Each is registered twice: on the Firebase Android app (`firebase apps:android:sha:create`, which creates the Android OAuth client) and in the Android API key's allowed apps (`gcloud services api-keys update --allowed-application`, which replaces the whole list, so pass every fingerprint each time). iOS needs the `REVERSED_CLIENT_ID` URL scheme in `Info.plist`, which `flutterfire configure` provides. Use `firebase_auth` with `google_sign_in`, written against the current API.
 - **Apple:** required on iOS once any other social login is offered, so it must ship before App Store submission. Needs a paid Apple Developer account.
 - **Account deletion:** Apple requires it in-app. Deleting an account must delete the user's data. The user is removed from their households. A household must always keep at least one admin, so how a sole admin leaves or hands over is not decided yet.
 

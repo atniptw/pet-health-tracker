@@ -16,7 +16,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## CI
 
-`.github/workflows/release.yml` runs `flutter analyze` and `flutter test` on every push to `main`, then deploys to the Play internal testing track (fastlane, `android/fastlane/`). Deploy jobs are gated by repo variables (`ANDROID_DEPLOY_ENABLED`, `IOS_DEPLOY_ENABLED`); iOS is a build check only until the Apple Developer account exists. Setup steps and secrets are in `docs/ci.md`.
+`.github/workflows/release.yml` runs `flutter analyze` and `flutter test` on every push to `main`, then deploys to the Play internal testing track (fastlane, `android/fastlane/`). Deploy jobs are gated by repo variables (`ANDROID_DEPLOY_ENABLED`, `IOS_DEPLOY_ENABLED`). Android deploys are on and roll out straight to internal testers; iOS is a build check only until the Apple Developer account exists. Setup steps and secrets are in `docs/ci.md`.
 
 ## Design docs
 
