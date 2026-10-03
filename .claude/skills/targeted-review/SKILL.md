@@ -66,8 +66,8 @@ target, give the subagent:
   pattern-match ("walk through what happens when X" beats "check for bugs").
 - An explicit instruction to report only real, concrete findings (a genuine
   exploit path, crash, data-loss, or documented-behavior violation) and skip
-  style nits — and a word limit (250–350 words works well) so findings stay
-  scannable.
+  style nits, returning just the findings (file:line, what goes wrong, how it's
+  triggered) without preamble, so they stay scannable.
 - For a hobby/POC project, an explicit note not to flag missing
   polish/features as bugs, so the agent doesn't pad the report with noise.
 
@@ -92,14 +92,3 @@ After the punch list, ask whether to apply fixes now (bundle the small,
 well-understood ones) versus leaving something as a noted follow-up (an
 unconfirmed/hard-to-verify finding is worth a manual test rather than a
 guessed fix).
-
-## Example
-
-This pattern was run live once already: for a login + create-household thin
-slice, targets were Firestore rules, auth/data/provider layer, and UI widget
-lifecycle (three forks, since the session had just written the code) — then a
-follow-up "modern mobile-app practices" target after a demo viewer flagged a
-notch/safe-area issue (a fourth fork, added because the diff review revealed a
-new concern, not because four is the standard number). All four converged
-into one punch list, with two independent agents corroborating the same
-double-submit bug from different angles.
