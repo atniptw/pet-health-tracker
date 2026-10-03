@@ -16,16 +16,10 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Pet Health Tracker',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.light,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.dark,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark),
       ),
       themeMode: ThemeMode.system,
       home: const AuthGate(),
@@ -72,9 +66,8 @@ class HouseholdGate extends ConsumerWidget {
     final householdState = ref.watch(myHouseholdProvider(user.uid));
 
     return householdState.when(
-      data: (household) => household == null
-          ? CreateHouseholdScreen(user: user)
-          : HomeScreen(household: household),
+      data: (household) =>
+          household == null ? CreateHouseholdScreen(user: user) : HomeScreen(household: household),
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(

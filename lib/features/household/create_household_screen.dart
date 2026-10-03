@@ -24,7 +24,7 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
     final displayName = widget.user.displayName;
     _nameController = TextEditingController(
       text: displayName == null || displayName.isEmpty
-          ? "My Household"
+          ? 'My Household'
           : "$displayName's Household",
     );
   }
@@ -44,10 +44,9 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
       _error = null;
     });
     try {
-      await ref.read(householdRepositoryProvider).createHousehold(
-            name: name,
-            ownerUid: widget.user.uid,
-          );
+      await ref
+          .read(householdRepositoryProvider)
+          .createHousehold(name: name, ownerUid: widget.user.uid);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {

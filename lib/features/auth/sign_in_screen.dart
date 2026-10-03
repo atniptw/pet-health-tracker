@@ -46,10 +46,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               if (_signingIn)
                 const CircularProgressIndicator()
               else
-                FilledButton(
-                  onPressed: _signIn,
-                  child: const Text('Sign in with Google'),
-                ),
+                FilledButton(onPressed: _signIn, child: const Text('Sign in with Google')),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),

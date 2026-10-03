@@ -23,10 +23,7 @@ class Household {
     );
   }
 
-  static Map<String, dynamic> toFirestore({
-    required String name,
-    required String ownerUid,
-  }) {
+  static Map<String, dynamic> toFirestore({required String name, required String ownerUid}) {
     return {
       'name': name,
       'memberIds': [ownerUid],

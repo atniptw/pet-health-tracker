@@ -8,9 +8,7 @@ void main() {
   testWidgets('shows the sign-in screen when signed out', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          authStateChangesProvider.overrideWith((ref) => Stream.value(null)),
-        ],
+        overrides: [authStateChangesProvider.overrideWith((ref) => Stream.value(null))],
         child: const App(),
       ),
     );
@@ -25,9 +23,7 @@ void main() {
         // Riverpod retries failing providers by default, which would hold the
         // gate in its loading state instead of surfacing the error.
         retry: (retryCount, error) => null,
-        overrides: [
-          authStateChangesProvider.overrideWith((ref) => Stream.error('auth failed')),
-        ],
+        overrides: [authStateChangesProvider.overrideWith((ref) => Stream.error('auth failed'))],
         child: const App(),
       ),
     );
