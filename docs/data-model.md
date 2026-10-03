@@ -1,6 +1,6 @@
 # Data model
 
-Status: planning. Nothing here is implemented. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one) and the security rules in `firestore.rules` are built; pets, symptom logs, medications and the catalog are not. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 

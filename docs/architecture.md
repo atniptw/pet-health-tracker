@@ -1,6 +1,6 @@
 # Architecture
 
-Status: planning. No Firebase project exists yet and none of this is implemented.
+Status: partly implemented. The Firebase project is set up, and Google sign-in and household creation are built. The rest is still a plan.
 
 ## Cost
 
@@ -14,7 +14,7 @@ This is a hobby app, so lean toward free tiers. Stay on Firebase's free Spark pl
 | Backend / DB | Firebase Firestore, cloud-backed from day one | Decided |
 | Local DB | None. Firestore's built-in offline cache covers logging without signal | Decided |
 | Auth | Firebase Auth: Google, Apple | Decided |
-| State management | Riverpod | Proposed, not yet confirmed |
+| State management | Riverpod | In use |
 | Navigation | `go_router` | Proposed |
 | Model classes | Hand-written, immutable, `fromFirestore`/`toFirestore` | Decided. Can move to `freezed` later without changing stored data |
 | Tests | `fake_cloud_firestore`, `mocktail`, Firestore rules tests on the emulator | Proposed |
@@ -27,21 +27,23 @@ Order of work: **Google first**, then Apple.
 - **Apple:** required on iOS once any other social login is offered, so it must ship before App Store submission. Needs a paid Apple Developer account.
 - **Account deletion:** Apple requires it in-app. Deleting an account must delete the user's data. The user is removed from their households. A household must always keep at least one admin, so how a sole admin leaves or hands over is not decided yet.
 
-## Planned code layout
+## Code layout
 
 ```
 lib/
-  core/            # theme, router, Firebase init
+  core/            # app shell, Firebase providers
   data/            # Firestore repositories, model classes
   features/
-    pets/          # add/edit/list pets
-    symptoms/      # quick-log flow, history list
+    auth/          # Google sign-in (built)
+    household/     # create household, home screen (built)
+    pets/          # add/edit/list pets (planned)
+    symptoms/      # quick-log flow, history list (planned)
 ```
 
 ## Order of work
 
-1. Create the Firebase project, run `flutterfire configure`, add `firebase_core`, `firebase_auth`, `cloud_firestore`, `flutter_riverpod`. Not started; deliberately deferred.
-2. Google sign-in, then models, repositories, and security rules (rules and rules tests first).
+1. Create the Firebase project, run `flutterfire configure`, add `firebase_core`, `firebase_auth`, `cloud_firestore`, `flutter_riverpod`. Done.
+2. Google sign-in, then models, repositories, and security rules (rules and rules tests first). Google sign-in, the household model and repository, and `firestore.rules` are done; rules tests are not written yet.
 3. Pets screens, then the quick-log flow.
 4. Apple sign-in.
 
