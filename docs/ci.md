@@ -3,15 +3,21 @@
 `.github/workflows/release.yml` runs on every push to `main`:
 
 ```
-test (ubuntu) ──┬──> deploy-android (ubuntu)  → Play internal testing track
-                └──> deploy-ios     (macos)   → build check only, no upload yet
+test ──────────┐
+               ├──> deploy-firestore-rules → production Firestore rules
+smoke-android ─┼──> deploy-android         → Play internal testing track
+               └──> deploy-ios (macos)     → build check only, no upload yet
 ```
 
-- **test**: `flutter analyze` and `flutter test`. Both deploy jobs wait for it.
+- **test**: `scripts/check.sh` — formatting (`dart format`, 100 columns), `flutter analyze --fatal-infos` with strict casts, inference and raw types, `flutter test` with a line-coverage minimum (`scripts/coverage.sh`), and the security rules tests in `firestore-tests/` on the Firestore emulator. Dependencies install from the committed lockfiles (`flutter pub get --enforce-lockfile`, `npm ci`).
+- **smoke-android**: boots the debug app on an Android emulator against the Firebase emulators and checks it reaches the sign-in screen (`integration_test/`). This catches startup crashes the widget tests can't see.
+- **deploy-firestore-rules**: publishes `firestore.rules` through the Firebase Rules API (`scripts/deploy-firestore-rules.sh`), as the `firestore-rules-deploy` service account (Firebase Rules Admin; key in the `FIREBASE_RULES_SERVICE_ACCOUNT_JSON` secret).
 - **deploy-android**: builds a signed AAB and uploads it with fastlane (`android/fastlane/Fastfile`, lane `internal`).
 - **deploy-ios**: builds without code signing to confirm iOS still compiles. Signing and the TestFlight upload are not written yet; they need the Apple Developer account.
 
-Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Android is on (`ANDROID_DEPLOY_ENABLED=true`); iOS is off.
+Every deploy job waits for both **test** and **smoke-android**. The `.githooks/pre-push` hook runs `scripts/check.sh` before every push (enable it once per clone with `git config core.hooksPath .githooks`), so a broken commit normally never reaches CI.
+
+Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Firestore rules (`FIRESTORE_RULES_DEPLOY_ENABLED=true`) and Android (`ANDROID_DEPLOY_ENABLED=true`) are on; iOS is off.
 
 Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`. Don't re-run an old workflow run to deploy: a re-run keeps its run number, so Play rejects the build number as already used. Push a new commit instead.
 
