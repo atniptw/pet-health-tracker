@@ -8,6 +8,7 @@ analyzer:
     - build/**
     - android/**
     - ios/**
+    - firestore-tests/**
     - lib/firebase_options.dart
   language:
     strict-casts: true

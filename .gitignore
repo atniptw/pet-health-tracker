@@ -123,3 +123,6 @@ app.*.symbols
 # IntelliJ / Android Studio
 .idea/
 *.iml
+
+# Firestore rules tests
+node_modules/
