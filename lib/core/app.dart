@@ -17,13 +17,13 @@ class App extends StatelessWidget {
       title: 'Pet Health Tracker',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.teal,
           brightness: Brightness.light,
         ),
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.teal,
           brightness: Brightness.dark,
         ),
       ),
