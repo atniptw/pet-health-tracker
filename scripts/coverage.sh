@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Raise this as coverage goes up; never lower it.
-MIN=95
+MIN=97
 
 # main.dart only boots Firebase and runApp; firebase_options.dart is generated.
 EXCLUDE='^lib/(main|firebase_options)\.dart$'

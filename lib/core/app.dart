@@ -66,8 +66,9 @@ class HouseholdGate extends ConsumerWidget {
     final householdState = ref.watch(myHouseholdProvider(user.uid));
 
     return householdState.when(
-      data: (household) =>
-          household == null ? CreateHouseholdScreen(user: user) : HomeScreen(household: household),
+      data: (household) => household == null
+          ? CreateHouseholdScreen(user: user)
+          : HomeScreen(household: household, uid: user.uid),
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(

@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household (not joining one) and the security rules in `firestore.rules` are built; pets, symptom logs, medications and the catalog are not. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one), adding and listing pets, and the security rules in `firestore.rules` are built; editing and archiving pets, symptom logs, medications and the catalog are not. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 

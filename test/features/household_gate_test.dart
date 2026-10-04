@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/app.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
+import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/create_household_screen.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
 
@@ -45,7 +46,10 @@ void main() {
 
     await tester.pumpScoped(
       HouseholdGate(user: user),
-      overrides: [householdRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        householdRepositoryProvider.overrideWithValue(repository),
+        petRepositoryProvider.overrideWithValue(PetRepository(FakeFirebaseFirestore())),
+      ],
     );
     await tester.pumpAndSettle();
 
