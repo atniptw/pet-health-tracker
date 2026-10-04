@@ -59,7 +59,7 @@ async function seed(docs) {
 async function seedHousehold() {
   await seed({
     [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER], adminIds: [ADMIN] },
-    [PET]: { name: 'Boogie' },
+    [PET]: { name: 'Boogie', species: 'dog', createdAt: new Date(0), schemaVersion: 1 },
   });
 }
 
@@ -74,6 +74,24 @@ function newHousehold(uid, overrides = {}) {
     schemaVersion: 1,
     ...overrides,
   };
+}
+
+/** What the app writes when adding a pet (lib/data/pet.dart). */
+function newPet(overrides = {}) {
+  return {
+    name: 'Pootz',
+    species: 'cat',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    schemaVersion: 1,
+    ...overrides,
+  };
+}
+
+/** [data] without [key], since the SDK rejects fields set to undefined. */
+function without(data, key) {
+  const { [key]: _, ...rest } = data;
+  return rest;
 }
 
 describe('households', () => {
@@ -149,12 +167,85 @@ describe('pets', () => {
 
   test('only admins can add, change, or remove pets', async () => {
     await seedHousehold();
-    await assertFails(setDoc(doc(db(MEMBER), `${HOUSEHOLD}/pets/p2`), { name: 'Pootz' }));
-    await assertFails(updateDoc(doc(db(MEMBER), PET), { name: 'x' }));
+    const rename = { name: 'x', updatedAt: serverTimestamp() };
+    await assertFails(setDoc(doc(db(MEMBER), `${HOUSEHOLD}/pets/p2`), newPet()));
+    await assertFails(updateDoc(doc(db(MEMBER), PET), rename));
     await assertFails(deleteDoc(doc(db(MEMBER), PET)));
-    await assertSucceeds(setDoc(doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`), { name: 'Pootz' }));
-    await assertSucceeds(updateDoc(doc(db(ADMIN), PET), { name: 'x' }));
+    await assertSucceeds(setDoc(doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`), newPet()));
+    await assertSucceeds(updateDoc(doc(db(ADMIN), PET), rename));
     await assertSucceeds(deleteDoc(doc(db(ADMIN), PET)));
+  });
+
+  test('outsiders cannot add pets', async () => {
+    await seedHousehold();
+    await assertFails(setDoc(doc(db(OUTSIDER), `${HOUSEHOLD}/pets/p2`), newPet()));
+  });
+
+  test('a new pet can have every optional field', async () => {
+    await seedHousehold();
+    await assertSucceeds(
+      setDoc(
+        doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`),
+        newPet({ breed: 'Tabby', birthDate: '2019-04-01', sex: 'female' }),
+      ),
+    );
+  });
+
+  test('a new pet needs a name of 1 to 100 characters', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`);
+    await assertFails(setDoc(ref, newPet({ name: '' })));
+    await assertFails(setDoc(ref, newPet({ name: 'x'.repeat(101) })));
+    await assertFails(setDoc(ref, newPet({ name: 42 })));
+    await assertFails(setDoc(ref, without(newPet(), 'name')));
+    await assertSucceeds(setDoc(ref, newPet({ name: 'x'.repeat(100) })));
+  });
+
+  test('a new pet needs a known species', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`);
+    await assertFails(setDoc(ref, newPet({ species: 'horse' })));
+    await assertFails(setDoc(ref, without(newPet(), 'species')));
+    await assertSucceeds(setDoc(ref, newPet({ species: 'other' })));
+  });
+
+  test('optional pet fields must be well formed', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`);
+    await assertFails(setDoc(ref, newPet({ breed: 'x'.repeat(101) })));
+    await assertFails(setDoc(ref, newPet({ breed: 7 })));
+    await assertFails(setDoc(ref, newPet({ birthDate: '2019-4-1' })));
+    await assertFails(setDoc(ref, newPet({ birthDate: new Date(0) })));
+    await assertFails(setDoc(ref, newPet({ sex: 'neutered' })));
+  });
+
+  test('a new pet must use server timestamps, schema version 1, and not be archived', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`);
+    await assertFails(setDoc(ref, newPet({ createdAt: new Date(0) })));
+    await assertFails(setDoc(ref, newPet({ updatedAt: new Date(0) })));
+    await assertFails(setDoc(ref, newPet({ schemaVersion: 2 })));
+    await assertFails(setDoc(ref, newPet({ archivedAt: serverTimestamp() })));
+  });
+
+  test('a new pet cannot carry extra fields', async () => {
+    await seedHousehold();
+    await assertFails(setDoc(doc(db(ADMIN), `${HOUSEHOLD}/pets/p2`), newPet({ extra: true })));
+  });
+
+  test('a pet update must stamp updatedAt and keep createdAt', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), PET);
+    await assertFails(updateDoc(ref, { name: 'x' }));
+    await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { species: 'horse', updatedAt: serverTimestamp() }));
+  });
+
+  test('admins can archive a pet', async () => {
+    await seedHousehold();
+    await assertSucceeds(
+      updateDoc(doc(db(ADMIN), PET), { archivedAt: serverTimestamp(), updatedAt: serverTimestamp() }),
+    );
   });
 });
 

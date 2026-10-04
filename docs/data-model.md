@@ -102,7 +102,7 @@ Each question is a map: `key`, `label`, `type`, `retired?`, and for choice types
 Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
-- **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`.
+- **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`. Creates and updates must match the pet schema above: `name` 1 to 100 characters, a known `species` and `sex`, `breed` up to 100 characters, `birthDate` as `YYYY-MM-DD`, server timestamps, no other fields. A new pet can't be archived, and updates keep `createdAt`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - **Catalog:** read if signed in; no client writes.
