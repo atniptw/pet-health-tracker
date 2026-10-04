@@ -12,6 +12,7 @@ This is a hobby app, so lean toward free tiers. Stay on Firebase's free Spark pl
 |---|---|---|
 | Platforms | iOS + Android (Flutter) | Decided |
 | Backend / DB | Firebase Firestore, cloud-backed from day one | Decided |
+| Firestore location | `nam5` (United States multi-region), `(default)` database, Standard edition. Can't be changed | In use |
 | Local DB | None. Firestore's built-in offline cache covers logging without signal | Decided |
 | Auth | Firebase Auth: Google, Apple | Decided |
 | State management | Riverpod | In use |

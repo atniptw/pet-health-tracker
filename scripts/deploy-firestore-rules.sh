@@ -17,8 +17,18 @@ ruleset=$(jq -n --rawfile rules firestore.rules \
   | jq -r .name)
 echo "created $ruleset"
 
-jq -n --arg name "projects/$PROJECT/releases/cloud.firestore" --arg ruleset "$ruleset" \
-  '{release: {name: $name, rulesetName: $ruleset}}' \
-  | curl -sSf -X PATCH "$API/releases/cloud.firestore" \
-      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @- \
-  | jq -r '"released \(.rulesetName) as \(.name)"'
+release=$(jq -n --arg name "projects/$PROJECT/releases/cloud.firestore" --arg ruleset "$ruleset" \
+  '{name: $name, rulesetName: $ruleset}')
+
+# Update the release; a database that never had rules has none yet, so create it.
+status=$(jq '{release: .}' <<<"$release" \
+  | curl -sS -o /dev/null -w '%{http_code}' -X PATCH "$API/releases/cloud.firestore" \
+      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @-)
+if [ "$status" = 404 ]; then
+  curl -sSf -o /dev/null -X POST "$API/releases" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d "$release"
+elif [ "$status" != 200 ]; then
+  echo "updating the release failed with HTTP $status" >&2
+  exit 1
+fi
+echo "released $ruleset as cloud.firestore"
