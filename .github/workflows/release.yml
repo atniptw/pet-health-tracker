@@ -38,6 +38,7 @@ jobs:
 
   smoke-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -69,7 +70,7 @@ jobs:
           api-level: 35
           arch: x86_64
           target: google_apis
-          script: firestore-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore --project pet-health-tracker-2eed5 "flutter test integration_test"
+          script: firestore-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore --project pet-health-tracker-2eed5 ./scripts/smoke-android.sh
 
   deploy-firestore-rules:
     needs: [test, smoke-android]
