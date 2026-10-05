@@ -7,7 +7,7 @@ import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
-import 'package:pet_health_tracker/features/pets/add_pet_screen.dart';
+import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 
 import '../helpers.dart';
 
@@ -115,7 +115,7 @@ void main() {
     await tester.tap(find.text('Add pet'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AddPetScreen), findsOneWidget);
+    expect(find.byType(PetFormScreen), findsOneWidget);
   });
 
   testWidgets('members who are not admins cannot add pets', (tester) async {
@@ -123,5 +123,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(FloatingActionButton), findsNothing);
+  });
+
+  testWidgets('admins can open a pet to edit it', (tester) async {
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+
+    await pumpHome(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Boogie'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PetFormScreen), findsOneWidget);
+    expect(find.text('Edit Boogie'), findsOneWidget);
+  });
+
+  testWidgets('members who are not admins cannot edit pets', (tester) async {
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+
+    await pumpHome(tester, uid: 'member');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Boogie'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PetFormScreen), findsNothing);
   });
 }

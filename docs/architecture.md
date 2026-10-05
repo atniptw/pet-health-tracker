@@ -1,6 +1,6 @@
 # Architecture
 
-Status: partly implemented. The Firebase project is set up, and Google sign-in, household creation, and adding pets are built. The rest is still a plan.
+Status: partly implemented. The Firebase project is set up, and Google sign-in, household creation, and adding and editing pets are built. The rest is still a plan.
 
 ## Cost
 
@@ -38,7 +38,7 @@ lib/
   features/
     auth/          # Google sign-in (built)
     household/     # create household, home screen (built)
-    pets/          # add and list pets (built); edit (planned)
+    pets/          # add, edit, list pets (built)
     symptoms/      # quick-log flow, history list (planned)
 ```
 
@@ -46,7 +46,7 @@ lib/
 
 1. Create the Firebase project, run `flutterfire configure`, add `firebase_core`, `firebase_auth`, `cloud_firestore`, `flutter_riverpod`. Done.
 2. Google sign-in, then models, repositories, and security rules (rules and rules tests first). Google sign-in, the household model and repository, and `firestore.rules` are done; rules tests are not written yet.
-3. Pets screens, then the quick-log flow. Adding and listing pets is done; only admins see "Add pet".
+3. Pets screens, then the quick-log flow. Adding, listing and editing pets is done; only admins can add or edit.
 4. Apple sign-in.
 
 See [data-model.md](data-model.md) for the Firestore schema.

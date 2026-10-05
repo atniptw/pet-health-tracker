@@ -4,21 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/firebase_providers.dart';
 import '../../data/pet.dart';
 
-class AddPetScreen extends ConsumerStatefulWidget {
-  const AddPetScreen({required this.householdId, super.key});
+/// Adds a pet, or edits [pet] when one is given.
+class PetFormScreen extends ConsumerStatefulWidget {
+  const PetFormScreen({required this.householdId, this.pet, super.key});
 
   final String householdId;
+  final Pet? pet;
 
   @override
-  ConsumerState<AddPetScreen> createState() => _AddPetScreenState();
+  ConsumerState<PetFormScreen> createState() => _PetFormScreenState();
 }
 
-class _AddPetScreenState extends ConsumerState<AddPetScreen> {
-  final _nameController = TextEditingController();
-  final _breedController = TextEditingController();
-  Species? _species;
-  Sex? _sex;
-  DateTime? _birthDate;
+class _PetFormScreenState extends ConsumerState<PetFormScreen> {
+  late final _nameController = TextEditingController(text: widget.pet?.name);
+  late final _breedController = TextEditingController(text: widget.pet?.breed);
+  late Species? _species = widget.pet?.species;
+  late Sex? _sex = widget.pet?.sex;
+  late DateTime? _birthDate = widget.pet?.birthDate;
   bool _saving = false;
   bool _showMissing = false;
   String? _error;
@@ -54,17 +56,30 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
       _saving = true;
       _error = null;
     });
+    final repository = ref.read(petRepositoryProvider);
+    final breed = _breedController.text.trim();
+    final pet = widget.pet;
     try {
-      await ref
-          .read(petRepositoryProvider)
-          .addPet(
-            householdId: widget.householdId,
-            name: name,
-            species: species,
-            breed: _breedController.text.trim(),
-            birthDate: _birthDate,
-            sex: _sex,
-          );
+      if (pet == null) {
+        await repository.addPet(
+          householdId: widget.householdId,
+          name: name,
+          species: species,
+          breed: breed,
+          birthDate: _birthDate,
+          sex: _sex,
+        );
+      } else {
+        await repository.updatePet(
+          householdId: widget.householdId,
+          petId: pet.id,
+          name: name,
+          species: species,
+          breed: breed,
+          birthDate: _birthDate,
+          sex: _sex,
+        );
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -77,15 +92,16 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
   Widget build(BuildContext context) {
     final errorColor = Theme.of(context).colorScheme.error;
     final birthDate = _birthDate;
+    final editing = widget.pet != null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add a pet')),
+      appBar: AppBar(title: Text(editing ? 'Edit ${widget.pet!.name}' : 'Add a pet')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _nameController,
-            autofocus: true,
+            autofocus: !editing,
             maxLength: 100,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
@@ -139,7 +155,7 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
             subtitle: Text(
               birthDate == null
                   ? 'Not set'
-                  : MaterialLocalizations.of(context).formatMediumDate(birthDate),
+                  : MaterialLocalizations.of(context).formatFullDate(birthDate),
             ),
             onTap: _pickBirthDate,
             trailing: birthDate == null
@@ -154,7 +170,7 @@ class _AddPetScreenState extends ConsumerState<AddPetScreen> {
           if (_saving)
             const Center(child: CircularProgressIndicator())
           else
-            FilledButton(onPressed: _save, child: const Text('Add pet')),
+            FilledButton(onPressed: _save, child: Text(editing ? 'Save' : 'Add pet')),
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(_error!, style: TextStyle(color: errorColor)),

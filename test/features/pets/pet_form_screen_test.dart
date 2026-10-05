@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
-import 'package:pet_health_tracker/features/pets/add_pet_screen.dart';
+import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 
 import '../../helpers.dart';
 
@@ -48,15 +48,31 @@ void main() {
     stubAdd(() async {});
   });
 
+  void stubUpdate(Future<void> Function() answer) {
+    when(
+      () => repository.updatePet(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        name: any(named: 'name'),
+        species: any(named: 'species'),
+        breed: any(named: 'breed'),
+        birthDate: any(named: 'birthDate'),
+        sex: any(named: 'sex'),
+      ),
+    ).thenAnswer((_) => answer());
+  }
+
   /// Pushes the screen from a host page, so popping it can be seen.
-  Future<void> pumpScreen(WidgetTester tester) async {
+  Future<void> pumpScreen(WidgetTester tester, {Pet? pet}) async {
     await tester.pumpScoped(
       Builder(
         builder: (context) => Scaffold(
           body: TextButton(
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute<void>(builder: (_) => const AddPetScreen(householdId: 'h1'))),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => PetFormScreen(householdId: 'h1', pet: pet),
+              ),
+            ),
             child: const Text('open'),
           ),
         ),
@@ -130,7 +146,7 @@ void main() {
         sex: null,
       ),
     ).called(1);
-    expect(find.byType(AddPetScreen), findsNothing);
+    expect(find.byType(PetFormScreen), findsNothing);
   });
 
   testWidgets('adds a pet with every optional field', (tester) async {
@@ -196,7 +212,7 @@ void main() {
 
     completer.complete();
     await tester.pumpAndSettle();
-    expect(find.byType(AddPetScreen), findsNothing);
+    expect(find.byType(PetFormScreen), findsNothing);
   });
 
   testWidgets('shows the error and stays open when saving fails', (tester) async {
@@ -208,7 +224,91 @@ void main() {
     await tapAdd(tester);
 
     expect(find.textContaining('permission denied'), findsOneWidget);
-    expect(find.byType(AddPetScreen), findsOneWidget);
+    expect(find.byType(PetFormScreen), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Add pet'), findsOneWidget);
+  });
+
+  group('editing', () {
+    final pootz = Pet(
+      id: 'p1',
+      name: 'Pootz',
+      species: Species.cat,
+      breed: 'Tabby',
+      birthDate: DateTime(2019, 4, 1),
+      sex: Sex.female,
+    );
+
+    setUp(() => stubUpdate(() async {}));
+
+    testWidgets("starts with the pet's details", (tester) async {
+      await pumpScreen(tester, pet: pootz);
+
+      expect(find.text('Edit Pootz'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+      expect(tester.widget<TextField>(nameField()).controller!.text, 'Pootz');
+      expect(tester.widget<TextField>(breedField()).controller!.text, 'Tabby');
+      expect(
+        tester.widget<SegmentedButton<Species>>(find.byType(SegmentedButton<Species>)).selected,
+        {Species.cat},
+      );
+      expect(tester.widget<SegmentedButton<Sex>>(find.byType(SegmentedButton<Sex>)).selected, {
+        Sex.female,
+      });
+      expect(find.text('Monday, April 1, 2019'), findsOneWidget);
+    });
+
+    testWidgets('saves changes to the pet, then closes', (tester) async {
+      await pumpScreen(tester, pet: pootz);
+      await tester.enterText(nameField(), ' Pootz Jr ');
+      await tester.tap(find.text('Other'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.updatePet(
+          householdId: 'h1',
+          petId: 'p1',
+          name: 'Pootz Jr',
+          species: Species.other,
+          breed: 'Tabby',
+          birthDate: DateTime(2019, 4, 1),
+          sex: Sex.female,
+        ),
+      ).called(1);
+      verifyNoAdd();
+      expect(find.byType(PetFormScreen), findsNothing);
+    });
+
+    testWidgets('clears optional fields', (tester) async {
+      await pumpScreen(tester, pet: pootz);
+      await tester.enterText(breedField(), '');
+      await tester.tap(find.text('Female'));
+      await tester.tap(find.byTooltip('Clear birth date'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.updatePet(
+          householdId: 'h1',
+          petId: 'p1',
+          name: 'Pootz',
+          species: Species.cat,
+          breed: '',
+          birthDate: null,
+          sex: null,
+        ),
+      ).called(1);
+    });
+
+    testWidgets('shows the error and stays open when saving fails', (tester) async {
+      stubUpdate(() async => throw Exception('permission denied'));
+
+      await pumpScreen(tester, pet: pootz);
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('permission denied'), findsOneWidget);
+      expect(find.byType(PetFormScreen), findsOneWidget);
+    });
   });
 }

@@ -16,7 +16,7 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 ## Project state
 
-Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, household creation, and adding pets are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
+Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, household creation, and adding and editing pets are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
 
 ## CI
 
@@ -24,7 +24,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Design docs
 
-Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Google sign-in, household creation, and adding pets are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
+Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Google sign-in, household creation, and adding and editing pets are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 

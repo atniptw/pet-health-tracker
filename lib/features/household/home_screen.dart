@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
-import '../pets/add_pet_screen.dart';
+import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -11,11 +11,12 @@ class HomeScreen extends ConsumerWidget {
 
   final Household household;
 
-  /// The signed-in user. Only admins can add pets.
+  /// The signed-in user. Only admins can add and edit pets.
   final String uid;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = household.adminIds.contains(uid);
     return Scaffold(
       appBar: AppBar(
         title: Text(household.name),
@@ -27,14 +28,14 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: PetList(householdId: household.id),
-      floatingActionButton: household.adminIds.contains(uid)
+      body: PetList(householdId: household.id, canEdit: isAdmin),
+      floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
               label: const Text('Add pet'),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (context) => AddPetScreen(householdId: household.id),
+                  builder: (context) => PetFormScreen(householdId: household.id),
                 ),
               ),
             )
