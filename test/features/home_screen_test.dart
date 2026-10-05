@@ -8,6 +8,7 @@ import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
+import 'package:pet_health_tracker/features/settings/settings_screen.dart';
 
 import '../helpers.dart';
 
@@ -25,14 +26,10 @@ void main() {
 
   setUp(() => pets = PetRepository(FakeFirebaseFirestore()));
 
-  Future<void> pumpHome(
-    WidgetTester tester, {
-    String uid = 'admin',
-    List<Object> extra = const [],
-  }) {
+  Future<void> pumpHome(WidgetTester tester) {
     return tester.pumpScoped(
-      HomeScreen(household: household, uid: uid),
-      overrides: [petRepositoryProvider.overrideWithValue(pets), ...extra.cast()],
+      const HomeScreen(household: household, uid: 'admin'),
+      overrides: [petRepositoryProvider.overrideWithValue(pets)],
     );
   }
 
@@ -42,21 +39,12 @@ void main() {
     expect(find.text('The Den'), findsOneWidget);
   });
 
-  testWidgets('signs out from the app bar', (tester) async {
-    final auth = MockAuthRepository();
-    when(auth.signOut).thenAnswer((_) async {});
+  testWidgets('opens settings from the app bar', (tester) async {
+    await pumpHome(tester);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
 
-    await tester.pumpScoped(
-      const HomeScreen(household: household, uid: 'admin'),
-      overrides: [
-        petRepositoryProvider.overrideWithValue(pets),
-        authRepositoryProvider.overrideWithValue(auth),
-      ],
-    );
-    await tester.tap(find.byTooltip('Sign out'));
-    await tester.pump();
-
-    verify(auth.signOut).called(1);
+    expect(find.byType(SettingsScreen), findsOneWidget);
   });
 
   testWidgets('says so when the household has no pets', (tester) async {
@@ -110,37 +98,18 @@ void main() {
     expect(find.text('No pets yet'), findsOneWidget);
   });
 
-  testWidgets('admins can open the add-pet screen', (tester) async {
+  testWidgets('has no add-pet button', (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Add pet'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PetFormScreen), findsOneWidget);
-  });
-
-  testWidgets('members who are not admins cannot add pets', (tester) async {
-    await pumpHome(tester, uid: 'member');
     await tester.pumpAndSettle();
 
     expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.text('Add pet'), findsNothing);
   });
 
-  testWidgets('admins can open a pet to edit it', (tester) async {
+  testWidgets('tapping a pet does not open it for editing', (tester) async {
     await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
 
     await pumpHome(tester);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Boogie'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PetFormScreen), findsOneWidget);
-    expect(find.text('Edit Boogie'), findsOneWidget);
-  });
-
-  testWidgets('members who are not admins cannot edit pets', (tester) async {
-    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
-
-    await pumpHome(tester, uid: 'member');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Boogie'));
     await tester.pumpAndSettle();

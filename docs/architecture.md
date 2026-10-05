@@ -38,7 +38,8 @@ lib/
   features/
     auth/          # Google sign-in (built)
     household/     # create household, home screen (built)
-    pets/          # add, edit, list pets (built)
+    settings/      # settings: add and edit pets, sign out (built)
+    pets/          # pet form and list (built)
     symptoms/      # quick-log flow, history list (planned)
 ```
 
