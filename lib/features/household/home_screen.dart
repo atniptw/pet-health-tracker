@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/household.dart';
 import '../pets/pet_list.dart';
 import '../settings/settings_screen.dart';
+import '../symptoms/pet_logs_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({required this.household, required this.uid, super.key});
@@ -29,7 +30,14 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: PetList(householdId: household.id, canEdit: false),
+      body: PetList(
+        householdId: household.id,
+        onTap: (pet) => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => PetLogsScreen(householdId: household.id, pet: pet, uid: uid),
+          ),
+        ),
+      ),
     );
   }
 }

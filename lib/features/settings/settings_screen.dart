@@ -37,7 +37,16 @@ class SettingsScreen extends ConsumerWidget {
                 : null,
           ),
           Expanded(
-            child: PetList(householdId: household.id, canEdit: isAdmin),
+            child: PetList(
+              householdId: household.id,
+              onTap: isAdmin
+                  ? (pet) => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => PetFormScreen(householdId: household.id, pet: pet),
+                      ),
+                    )
+                  : null,
+            ),
           ),
           const Divider(height: 1),
           SafeArea(

@@ -6,9 +6,11 @@ import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
+import 'package:pet_health_tracker/data/symptom_log_repository.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/pet_logs_screen.dart';
 
 import '../helpers.dart';
 
@@ -29,7 +31,12 @@ void main() {
   Future<void> pumpHome(WidgetTester tester) {
     return tester.pumpScoped(
       const HomeScreen(household: household, uid: 'admin'),
-      overrides: [petRepositoryProvider.overrideWithValue(pets)],
+      overrides: [
+        petRepositoryProvider.overrideWithValue(pets),
+        symptomLogRepositoryProvider.overrideWithValue(
+          SymptomLogRepository(FakeFirebaseFirestore()),
+        ),
+      ],
     );
   }
 
@@ -106,7 +113,7 @@ void main() {
     expect(find.text('Add pet'), findsNothing);
   });
 
-  testWidgets('tapping a pet does not open it for editing', (tester) async {
+  testWidgets('tapping a pet opens its logs, not the edit form', (tester) async {
     await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
 
     await pumpHome(tester);
@@ -115,5 +122,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PetFormScreen), findsNothing);
+    final screen = tester.widget<PetLogsScreen>(find.byType(PetLogsScreen));
+    expect((screen.householdId, screen.pet.name, screen.uid), ('h1', 'Boogie', 'admin'));
   });
 }

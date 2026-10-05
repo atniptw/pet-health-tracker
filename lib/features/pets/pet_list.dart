@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/pet.dart';
-import 'pet_form_screen.dart';
 import 'pet_providers.dart';
 
 class PetList extends ConsumerWidget {
-  const PetList({required this.householdId, required this.canEdit, super.key});
+  const PetList({required this.householdId, this.onTap, super.key});
 
   final String householdId;
 
-  /// Whether tapping a pet opens it for editing. Only admins can edit pets.
-  final bool canEdit;
+  /// Called when a pet is tapped. Pets aren't tappable when null.
+  final ValueChanged<Pet>? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,17 +22,7 @@ class PetList extends ConsumerWidget {
           : ListView(
               children: [
                 for (final pet in pets)
-                  _PetTile(
-                    pet: pet,
-                    onTap: canEdit
-                        ? () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (context) =>
-                                  PetFormScreen(householdId: householdId, pet: pet),
-                            ),
-                          )
-                        : null,
-                  ),
+                  _PetTile(pet: pet, onTap: onTap == null ? null : () => onTap!(pet)),
               ],
             ),
       loading: () => const Center(child: CircularProgressIndicator()),

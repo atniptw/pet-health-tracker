@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/household_repository.dart';
 import '../data/pet_repository.dart';
+import '../data/symptom_log_repository.dart';
 import '../features/auth/auth_repository.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -24,4 +25,8 @@ final authStateChangesProvider = StreamProvider<User?>((ref) {
 
 final petRepositoryProvider = Provider<PetRepository>((ref) {
   return PetRepository(ref.watch(firestoreProvider));
+});
+
+final symptomLogRepositoryProvider = Provider<SymptomLogRepository>((ref) {
+  return SymptomLogRepository(ref.watch(firestoreProvider));
 });
