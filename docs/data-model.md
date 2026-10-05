@@ -103,7 +103,7 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`. Creates and updates must match the pet schema above: `name` 1 to 100 characters, a known `species` and `sex`, `breed` up to 100 characters, `birthDate` as `YYYY-MM-DD`, server timestamps, no other fields. A new pet can't be archived, and updates keep `createdAt`.
-- **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` cannot be changed.
+- **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` and `createdAt` cannot be changed. Creates and updates must match the log schema above: a `symptom` key of 1 to 50 characters, a `title` of 1 to 100 characters when `symptom` is `other` and no `title` otherwise, `answers` a map, `occurredAt` a timestamp, `notes` up to 2000 characters, server timestamps, no other fields.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
 - **Catalog:** read if signed in; no client writes.
 - String lengths capped.

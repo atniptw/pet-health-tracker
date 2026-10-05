@@ -38,6 +38,27 @@ service cloud.firestore {
         && data.schemaVersion == 1;
     }
 
+    // Fields every symptom log write must leave valid. Optional fields are omitted when
+    // unset. Only `other` logs store a title; catalog symptoms take theirs from the catalog.
+    function isValidLog(data) {
+      return data.keys().hasOnly(['symptom', 'title', 'createdBy', 'answers', 'occurredAt',
+          'notes', 'createdAt', 'updatedAt', 'schemaVersion'])
+        && data.symptom is string
+        && data.symptom.size() > 0
+        && data.symptom.size() <= 50
+        && (data.symptom == 'other'
+          ? (data.get('title', null) is string
+            && data.title.size() > 0
+            && data.title.size() <= 100)
+          : !('title' in data))
+        && data.createdBy is string
+        && (!('answers' in data) || data.answers is map)
+        && data.occurredAt is timestamp
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
+        && data.updatedAt == request.time
+        && data.schemaVersion == 1;
+    }
+
     match /households/{householdId} {
       allow read: if isMember(resource);
       allow create: if isSignedIn()
@@ -70,9 +91,13 @@ service cloud.firestore {
         match /symptomLogs/{logId} {
           allow read: if isMember(get(/databases/$(database)/documents/households/$(householdId)));
           allow create: if isMember(get(/databases/$(database)/documents/households/$(householdId)))
-            && request.resource.data.createdBy == request.auth.uid;
+            && isValidLog(request.resource.data)
+            && request.resource.data.createdBy == request.auth.uid
+            && request.resource.data.createdAt == request.time;
           allow update: if canChangeLog(householdId)
-            && request.resource.data.createdBy == resource.data.createdBy;
+            && isValidLog(request.resource.data)
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.createdAt == resource.data.createdAt;
           allow delete: if canChangeLog(householdId);
         }
 

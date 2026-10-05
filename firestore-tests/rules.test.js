@@ -278,10 +278,36 @@ describe('pets', () => {
 
 describe('symptom logs', () => {
   const LOG = `${PET}/symptomLogs/l1`;
+  const NEW_LOG = `${PET}/symptomLogs/new`;
+  const edit = { notes: 'Ate grass first', updatedAt: serverTimestamp() };
 
   async function seedLog(createdBy) {
     await seedHousehold();
-    await seed({ [LOG]: { createdBy, type: 'vomit' } });
+    await seed({
+      [LOG]: {
+        symptom: 'other',
+        title: 'Ate a sock',
+        createdBy,
+        occurredAt: new Date(0),
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        schemaVersion: 1,
+      },
+    });
+  }
+
+  /** What the app writes when logging a symptom (lib/data/symptom_log.dart). */
+  function newLog(createdBy, overrides = {}) {
+    return {
+      symptom: 'other',
+      title: 'Ate a sock',
+      createdBy,
+      occurredAt: new Date(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      schemaVersion: 1,
+      ...overrides,
+    };
   }
 
   test('members can read logs, outsiders cannot', async () => {
@@ -292,40 +318,106 @@ describe('symptom logs', () => {
 
   test('members can create logs as themselves only', async () => {
     await seedHousehold();
-    const ref = doc(db(MEMBER), `${PET}/symptomLogs/new`);
-    await assertSucceeds(setDoc(ref, { createdBy: MEMBER, type: 'vomit' }));
-    await assertFails(setDoc(ref, { createdBy: ADMIN, type: 'vomit' }));
+    const ref = doc(db(MEMBER), NEW_LOG);
+    await assertFails(setDoc(ref, newLog(ADMIN)));
+    await assertSucceeds(setDoc(ref, newLog(MEMBER)));
   });
 
   test('outsiders cannot create logs', async () => {
     await seedHousehold();
-    await assertFails(
-      setDoc(doc(db(OUTSIDER), `${PET}/symptomLogs/new`), { createdBy: OUTSIDER, type: 'vomit' }),
+    await assertFails(setDoc(doc(db(OUTSIDER), NEW_LOG), newLog(OUTSIDER)));
+  });
+
+  test('a new log can have notes and answers', async () => {
+    await seedHousehold();
+    await assertSucceeds(
+      setDoc(
+        doc(db(MEMBER), NEW_LOG),
+        newLog(MEMBER, { notes: 'Found chewing it around 2pm' }),
+      ),
     );
+    await assertSucceeds(
+      setDoc(
+        doc(db(MEMBER), `${PET}/symptomLogs/vomit`),
+        without(newLog(MEMBER, { symptom: 'vomit', answers: { blood: true } }), 'title'),
+      ),
+    );
+  });
+
+  test('a new log needs a symptom key', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), NEW_LOG);
+    await assertFails(setDoc(ref, without(newLog(MEMBER), 'symptom')));
+    await assertFails(setDoc(ref, newLog(MEMBER, { symptom: '' })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { symptom: 'x'.repeat(51) })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { symptom: 3 })));
+  });
+
+  test('a title of 1 to 100 characters is required for other, and only for other', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), NEW_LOG);
+    await assertFails(setDoc(ref, without(newLog(MEMBER), 'title')));
+    await assertFails(setDoc(ref, newLog(MEMBER, { title: '' })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { title: 'x'.repeat(101) })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { symptom: 'vomit' })));
+    await assertSucceeds(setDoc(ref, newLog(MEMBER, { title: 'x'.repeat(100) })));
+  });
+
+  test('optional log fields must be well formed', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), NEW_LOG);
+    await assertFails(setDoc(ref, newLog(MEMBER, { notes: 'x'.repeat(2001) })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { notes: 7 })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { answers: 'blood' })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { occurredAt: '2026-10-05' })));
+    await assertFails(setDoc(ref, without(newLog(MEMBER), 'occurredAt')));
+    await assertSucceeds(setDoc(ref, newLog(MEMBER, { notes: 'x'.repeat(2000) })));
+  });
+
+  test('a new log must use server timestamps and schema version 1', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), NEW_LOG);
+    await assertFails(setDoc(ref, newLog(MEMBER, { createdAt: new Date(0) })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { updatedAt: new Date(0) })));
+    await assertFails(setDoc(ref, newLog(MEMBER, { schemaVersion: 2 })));
+  });
+
+  test('a new log cannot carry extra fields', async () => {
+    await seedHousehold();
+    await assertFails(setDoc(doc(db(MEMBER), NEW_LOG), newLog(MEMBER, { extra: true })));
   });
 
   test('members can edit and delete their own logs', async () => {
     await seedLog(MEMBER);
-    await assertSucceeds(updateDoc(doc(db(MEMBER), LOG), { type: 'seizure' }));
+    await assertSucceeds(updateDoc(doc(db(MEMBER), LOG), edit));
     await assertSucceeds(deleteDoc(doc(db(MEMBER), LOG)));
   });
 
   test("members cannot edit or delete someone else's log", async () => {
     await seedLog(ADMIN);
-    await assertFails(updateDoc(doc(db(MEMBER), LOG), { type: 'seizure' }));
+    await assertFails(updateDoc(doc(db(MEMBER), LOG), edit));
     await assertFails(deleteDoc(doc(db(MEMBER), LOG)));
   });
 
   test("admins can edit and delete anyone's log", async () => {
     await seedLog(MEMBER);
-    await assertSucceeds(updateDoc(doc(db(ADMIN), LOG), { type: 'seizure' }));
+    await assertSucceeds(updateDoc(doc(db(ADMIN), LOG), edit));
     await assertSucceeds(deleteDoc(doc(db(ADMIN), LOG)));
   });
 
   test('nobody can change who created a log', async () => {
     await seedLog(MEMBER);
-    await assertFails(updateDoc(doc(db(MEMBER), LOG), { createdBy: ADMIN }));
-    await assertFails(updateDoc(doc(db(ADMIN), LOG), { createdBy: ADMIN }));
+    const takeOver = { createdBy: ADMIN, updatedAt: serverTimestamp() };
+    await assertFails(updateDoc(doc(db(MEMBER), LOG), takeOver));
+    await assertFails(updateDoc(doc(db(ADMIN), LOG), takeOver));
+  });
+
+  test('a log update must stamp updatedAt, keep createdAt, and stay valid', async () => {
+    await seedLog(MEMBER);
+    const ref = doc(db(MEMBER), LOG);
+    await assertFails(updateDoc(ref, { notes: 'x' }));
+    await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { title: deleteField(), updatedAt: serverTimestamp() }));
   });
 });
 
