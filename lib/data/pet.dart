@@ -76,6 +76,25 @@ class Pet {
     };
   }
 
+  /// The fields an edit writes. Cleared optional fields are deleted, and
+  /// `createdAt` is left alone, as the security rules expect.
+  static Map<String, dynamic> toFirestoreUpdate({
+    required String name,
+    required Species species,
+    String? breed,
+    DateTime? birthDate,
+    Sex? sex,
+  }) {
+    return {
+      'name': name,
+      'species': species.name,
+      'breed': breed == null || breed.isEmpty ? FieldValue.delete() : breed,
+      'birthDate': birthDate == null ? FieldValue.delete() : _formatDate(birthDate),
+      'sex': sex == null ? FieldValue.delete() : sex.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
   static final _datePattern = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
 
   static DateTime? _parseDate(String? value) {

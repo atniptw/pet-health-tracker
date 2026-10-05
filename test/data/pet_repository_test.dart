@@ -56,6 +56,63 @@ void main() {
     });
   });
 
+  group('updatePet', () {
+    Future<String> addPootz() async {
+      await repository.addPet(
+        householdId: 'h1',
+        name: 'Pootz',
+        species: Species.cat,
+        breed: 'Tabby',
+        birthDate: DateTime(2019, 4, 1),
+        sex: Sex.female,
+      );
+      return (await pets('h1').get()).docs.single.id;
+    }
+
+    test('changes the fields and keeps createdAt', () async {
+      final id = await addPootz();
+      final createdAt = (await pets('h1').doc(id).get()).data()!['createdAt'];
+
+      await repository.updatePet(
+        householdId: 'h1',
+        petId: id,
+        name: 'Pootz Jr',
+        species: Species.other,
+        breed: 'Ferret',
+        birthDate: DateTime(2020, 12, 31),
+        sex: Sex.male,
+      );
+
+      final data = (await pets('h1').doc(id).get()).data()!;
+      expect(data['name'], 'Pootz Jr');
+      expect(data['species'], 'other');
+      expect(data['breed'], 'Ferret');
+      expect(data['birthDate'], '2020-12-31');
+      expect(data['sex'], 'male');
+      expect(data['createdAt'], createdAt);
+      expect(data['updatedAt'], isA<Timestamp>());
+      expect(data['schemaVersion'], 1);
+    });
+
+    test('removes optional fields that are cleared', () async {
+      final id = await addPootz();
+
+      await repository.updatePet(
+        householdId: 'h1',
+        petId: id,
+        name: 'Pootz',
+        species: Species.cat,
+        breed: '',
+      );
+
+      final data = (await pets('h1').doc(id).get()).data()!;
+      expect(
+        data.keys,
+        unorderedEquals(<String>['name', 'species', 'createdAt', 'updatedAt', 'schemaVersion']),
+      );
+    });
+  });
+
   group('watchPets', () {
     test('emits an empty list when the household has no pets', () async {
       expect(await repository.watchPets('h1').first, isEmpty);

@@ -35,4 +35,26 @@ class PetRepository {
       Pet.toFirestore(name: name, species: species, breed: breed, birthDate: birthDate, sex: sex),
     );
   }
+
+  Future<void> updatePet({
+    required String householdId,
+    required String petId,
+    required String name,
+    required Species species,
+    String? breed,
+    DateTime? birthDate,
+    Sex? sex,
+  }) {
+    return _pets(householdId)
+        .doc(petId)
+        .update(
+          Pet.toFirestoreUpdate(
+            name: name,
+            species: species,
+            breed: breed,
+            birthDate: birthDate,
+            sex: sex,
+          ),
+        );
+  }
 }

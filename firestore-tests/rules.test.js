@@ -10,6 +10,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   serverTimestamp,
@@ -239,6 +240,32 @@ describe('pets', () => {
     await assertFails(updateDoc(ref, { name: 'x' }));
     await assertFails(updateDoc(ref, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(ref, { species: 'horse', updatedAt: serverTimestamp() }));
+  });
+
+  test('an admin edit can change every field and clear optional ones', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), PET);
+    // What the app writes when editing a pet (lib/data/pet.dart).
+    await assertSucceeds(
+      updateDoc(ref, {
+        name: 'Boogie Woogie',
+        species: 'other',
+        breed: 'Mutt',
+        birthDate: '2018-02-03',
+        sex: 'male',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(ref, {
+        name: 'Boogie',
+        species: 'dog',
+        breed: deleteField(),
+        birthDate: deleteField(),
+        sex: deleteField(),
+        updatedAt: serverTimestamp(),
+      }),
+    );
   });
 
   test('admins can archive a pet', async () => {
