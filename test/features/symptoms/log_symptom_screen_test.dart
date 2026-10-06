@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
+import 'package:pet_health_tracker/data/symptom_log.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
 import 'package:pet_health_tracker/features/symptoms/log_symptom_screen.dart';
 
@@ -31,19 +32,33 @@ void main() {
     ).thenAnswer((_) => answer());
   }
 
+  void stubUpdate(Future<void> Function() answer) {
+    when(
+      () => repository.updateOtherLog(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        logId: any(named: 'logId'),
+        title: any(named: 'title'),
+        occurredAt: any(named: 'occurredAt'),
+        notes: any(named: 'notes'),
+      ),
+    ).thenAnswer((_) => answer());
+  }
+
   /// Pumps a button that opens the log screen, so popping it can be observed.
-  Future<void> openLogScreen(WidgetTester tester) async {
+  Future<void> openLogScreen(WidgetTester tester, {SymptomLog? log}) async {
     await tester.pumpScoped(
       Builder(
         builder: (context) => Scaffold(
           body: TextButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (context) => const LogSymptomScreen(
+                builder: (context) => LogSymptomScreen(
                   householdId: 'h1',
                   petId: 'p1',
                   petName: 'Boogie',
                   uid: 'u1',
+                  log: log,
                 ),
               ),
             ),
@@ -186,5 +201,79 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Now'), findsOneWidget);
+  });
+
+  group('editing', () {
+    final sock = SymptomLog(
+      id: 'l1',
+      symptom: SymptomLog.otherSymptom,
+      title: 'Ate a sock',
+      createdBy: 'u2',
+      occurredAt: DateTime(2026, 10, 4, 14, 30),
+      notes: 'Some fabric missing',
+    );
+
+    testWidgets('fills in the log', (tester) async {
+      await openLogScreen(tester, log: sock);
+
+      expect(find.text('Edit log'), findsOneWidget);
+      expect(find.text('Ate a sock'), findsOneWidget);
+      expect(find.text('Some fabric missing'), findsOneWidget);
+      expect(find.text('Sunday, October 4, 2026 · 2:30 PM'), findsOneWidget);
+      expect(find.text('Now'), findsNothing);
+    });
+
+    testWidgets('saves changes to the log, keeping its time', (tester) async {
+      stubUpdate(() async {});
+
+      await openLogScreen(tester, log: sock);
+      await tester.enterText(field('Title'), ' Ate two socks ');
+      await tester.enterText(field('Notes (optional)'), '');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.updateOtherLog(
+          householdId: 'h1',
+          petId: 'p1',
+          logId: 'l1',
+          title: 'Ate two socks',
+          occurredAt: DateTime(2026, 10, 4, 14, 30),
+          notes: '',
+        ),
+      ).called(1);
+      verifyNever(
+        () => repository.addOtherLog(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          createdBy: any(named: 'createdBy'),
+          title: any(named: 'title'),
+          occurredAt: any(named: 'occurredAt'),
+          notes: any(named: 'notes'),
+        ),
+      );
+      expect(find.byType(LogSymptomScreen), findsNothing);
+    });
+
+    testWidgets('closes without waiting for the server', (tester) async {
+      final pending = Completer<void>();
+      stubUpdate(() => pending.future);
+
+      await openLogScreen(tester, log: sock);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LogSymptomScreen), findsNothing);
+    });
+
+    testWidgets('says so when the server rejects the change', (tester) async {
+      stubUpdate(() => Future.error('permission-denied'));
+
+      await openLogScreen(tester, log: sock);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Couldn't save the log: permission-denied"), findsOneWidget);
+    });
   });
 }

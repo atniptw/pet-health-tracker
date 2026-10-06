@@ -123,6 +123,28 @@ void main() {
 
     expect(find.byType(PetFormScreen), findsNothing);
     final screen = tester.widget<PetLogsScreen>(find.byType(PetLogsScreen));
-    expect((screen.householdId, screen.pet.name, screen.uid), ('h1', 'Boogie', 'admin'));
+    expect(
+      (screen.householdId, screen.pet.name, screen.uid, screen.isAdmin),
+      ('h1', 'Boogie', 'admin', true),
+    );
+  });
+
+  testWidgets("a member's pet logs know they aren't an admin", (tester) async {
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+
+    await tester.pumpScoped(
+      const HomeScreen(household: household, uid: 'member'),
+      overrides: [
+        petRepositoryProvider.overrideWithValue(pets),
+        symptomLogRepositoryProvider.overrideWithValue(
+          SymptomLogRepository(FakeFirebaseFirestore()),
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Boogie'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<PetLogsScreen>(find.byType(PetLogsScreen)).isAdmin, isFalse);
   });
 }

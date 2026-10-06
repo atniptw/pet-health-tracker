@@ -4,15 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
+import '../../data/symptom_log.dart';
 import 'occurred_at.dart';
 
 /// Logs a symptom for a pet: a title, when it happened, and optional notes.
+/// Edits [log] when one is given.
 class LogSymptomScreen extends ConsumerStatefulWidget {
   const LogSymptomScreen({
     required this.householdId,
     required this.petId,
     required this.petName,
     required this.uid,
+    this.log,
     super.key,
   });
 
@@ -20,19 +23,22 @@ class LogSymptomScreen extends ConsumerStatefulWidget {
   final String petId;
   final String petName;
 
-  /// The signed-in user, recorded as the log's author.
+  /// The signed-in user, recorded as a new log's author.
   final String uid;
+
+  /// An [SymptomLog.otherSymptom] log to edit.
+  final SymptomLog? log;
 
   @override
   ConsumerState<LogSymptomScreen> createState() => _LogSymptomScreenState();
 }
 
 class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
-  final _titleController = TextEditingController();
-  final _notesController = TextEditingController();
+  late final _titleController = TextEditingController(text: widget.log?.title);
+  late final _notesController = TextEditingController(text: widget.log?.notes);
 
   /// When it happened. Null means now, taken at the moment of saving.
-  DateTime? _occurredAt;
+  late DateTime? _occurredAt = widget.log?.occurredAt;
   bool _showMissing = false;
 
   @override
@@ -68,23 +74,34 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
-    // Not awaited: Firestore completes the write only once the server has it,
-    // and logging has to work without signal. The local cache shows the log
-    // straight away.
-    unawaited(
-      ref
-          .read(symptomLogRepositoryProvider)
-          .addOtherLog(
+    final repository = ref.read(symptomLogRepositoryProvider);
+    final occurredAt = _occurredAt ?? DateTime.now();
+    final notes = _notesController.text.trim();
+    final log = widget.log;
+    final write = log == null
+        ? repository.addOtherLog(
             householdId: widget.householdId,
             petId: widget.petId,
             createdBy: widget.uid,
             title: title,
-            occurredAt: _occurredAt ?? DateTime.now(),
-            notes: _notesController.text.trim(),
+            occurredAt: occurredAt,
+            notes: notes,
           )
-          .catchError((Object e) {
-            messenger.showSnackBar(SnackBar(content: Text("Couldn't save the log: $e")));
-          }),
+        : repository.updateOtherLog(
+            householdId: widget.householdId,
+            petId: widget.petId,
+            logId: log.id,
+            title: title,
+            occurredAt: occurredAt,
+            notes: notes,
+          );
+    // Not awaited: Firestore completes the write only once the server has it,
+    // and logging has to work without signal. The local cache shows the log
+    // straight away.
+    unawaited(
+      write.catchError((Object e) {
+        messenger.showSnackBar(SnackBar(content: Text("Couldn't save the log: $e")));
+      }),
     );
     Navigator.of(context).pop();
   }
@@ -92,15 +109,16 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
   @override
   Widget build(BuildContext context) {
     final occurredAt = _occurredAt;
+    final editing = widget.log != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Log for ${widget.petName}')),
+      appBar: AppBar(title: Text(editing ? 'Edit log' : 'Log for ${widget.petName}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _titleController,
-            autofocus: true,
+            autofocus: !editing,
             maxLength: 100,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(

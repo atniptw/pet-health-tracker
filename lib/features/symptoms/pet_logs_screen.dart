@@ -7,15 +7,44 @@ import 'log_symptom_screen.dart';
 import 'occurred_at.dart';
 import 'symptom_providers.dart';
 
-/// A pet's symptom logs, with a button to log a new one.
+/// A pet's symptom logs, with a button to log a new one. Tapping a log the
+/// user may change opens it for editing.
 class PetLogsScreen extends ConsumerWidget {
-  const PetLogsScreen({required this.householdId, required this.pet, required this.uid, super.key});
+  const PetLogsScreen({
+    required this.householdId,
+    required this.pet,
+    required this.uid,
+    required this.isAdmin,
+    super.key,
+  });
 
   final String householdId;
   final Pet pet;
 
   /// The signed-in user.
   final String uid;
+
+  /// Whether the signed-in user is a household admin, who can edit anyone's logs.
+  final bool isAdmin;
+
+  /// Members can edit their own logs, admins anyone's. Only `other` logs, as
+  /// the form has fields only for those.
+  bool _canEdit(SymptomLog log) =>
+      log.symptom == SymptomLog.otherSymptom && (isAdmin || log.createdBy == uid);
+
+  void _openForm(BuildContext context, {SymptomLog? log}) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => LogSymptomScreen(
+          householdId: householdId,
+          petId: pet.id,
+          petName: pet.name,
+          uid: uid,
+          log: log,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,16 +56,7 @@ class PetLogsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Log symptom'),
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (context) => LogSymptomScreen(
-              householdId: householdId,
-              petId: pet.id,
-              petName: pet.name,
-              uid: uid,
-            ),
-          ),
-        ),
+        onPressed: () => _openForm(context),
       ),
       body: logsState.when(
         data: (logs) => logs.isEmpty
@@ -44,7 +64,13 @@ class PetLogsScreen extends ConsumerWidget {
             : ListView(
                 // Room for the floating button over the last entry.
                 padding: const EdgeInsets.only(bottom: 88),
-                children: [for (final log in logs) _LogTile(log: log)],
+                children: [
+                  for (final log in logs)
+                    _LogTile(
+                      log: log,
+                      onTap: _canEdit(log) ? () => _openForm(context, log: log) : null,
+                    ),
+                ],
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
@@ -66,9 +92,10 @@ class PetLogsScreen extends ConsumerWidget {
 }
 
 class _LogTile extends StatelessWidget {
-  const _LogTile({required this.log});
+  const _LogTile({required this.log, this.onTap});
 
   final SymptomLog log;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +105,7 @@ class _LogTile extends StatelessWidget {
       title: Text(log.title ?? log.symptom),
       subtitle: Text(notes == null ? when : '$when\n$notes'),
       isThreeLine: notes != null,
+      onTap: onTap,
     );
   }
 }

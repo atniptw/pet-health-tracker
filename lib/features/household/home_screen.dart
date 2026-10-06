@@ -34,7 +34,12 @@ class HomeScreen extends StatelessWidget {
         householdId: household.id,
         onTap: (pet) => Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (context) => PetLogsScreen(householdId: household.id, pet: pet, uid: uid),
+            builder: (context) => PetLogsScreen(
+              householdId: household.id,
+              pet: pet,
+              uid: uid,
+              isAdmin: household.adminIds.contains(uid),
+            ),
           ),
         ),
       ),

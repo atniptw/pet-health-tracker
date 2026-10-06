@@ -20,9 +20,13 @@ void main() {
 
   setUp(() => logs = SymptomLogRepository(FakeFirebaseFirestore()));
 
-  Future<void> pumpLogs(WidgetTester tester, {SymptomLogRepository? repository}) {
+  Future<void> pumpLogs(
+    WidgetTester tester, {
+    SymptomLogRepository? repository,
+    bool isAdmin = false,
+  }) {
     return tester.pumpScoped(
-      const PetLogsScreen(householdId: 'h1', pet: boogie, uid: 'u1'),
+      PetLogsScreen(householdId: 'h1', pet: boogie, uid: 'u1', isAdmin: isAdmin),
       overrides: [symptomLogRepositoryProvider.overrideWithValue(repository ?? logs)],
     );
   }
@@ -119,5 +123,66 @@ void main() {
       (screen.householdId, screen.petId, screen.petName, screen.uid),
       ('h1', 'p1', 'Boogie', 'u1'),
     );
+    expect(screen.log, isNull);
+  });
+
+  group('editing', () {
+    Future<void> addLog(String title, {required String createdBy}) => logs.addOtherLog(
+      householdId: 'h1',
+      petId: 'p1',
+      createdBy: createdBy,
+      title: title,
+      occurredAt: DateTime(2026, 10, 5),
+    );
+
+    testWidgets('tapping your own log opens it for editing', (tester) async {
+      await addLog('Ate a sock', createdBy: 'u1');
+
+      await pumpLogs(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ate a sock'));
+      await tester.pumpAndSettle();
+
+      final screen = tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen));
+      expect((screen.householdId, screen.petId, screen.log?.title), ('h1', 'p1', 'Ate a sock'));
+    });
+
+    testWidgets("members can't open someone else's log", (tester) async {
+      await addLog('Limping', createdBy: 'u2');
+
+      await pumpLogs(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Limping'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LogSymptomScreen), findsNothing);
+    });
+
+    testWidgets("admins can open anyone's log", (tester) async {
+      await addLog('Limping', createdBy: 'u2');
+
+      await pumpLogs(tester, isAdmin: true);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Limping'));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen)).log?.title, 'Limping');
+    });
+
+    testWidgets('catalog logs, which the form has no fields for, do not open', (tester) async {
+      final repository = MockSymptomLogRepository();
+      when(() => repository.watchLogs(householdId: 'h1', petId: 'p1')).thenAnswer(
+        (_) => Stream.value([
+          SymptomLog(id: 'l1', symptom: 'vomit', createdBy: 'u1', occurredAt: DateTime(2026)),
+        ]),
+      );
+
+      await pumpLogs(tester, repository: repository, isAdmin: true);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('vomit'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LogSymptomScreen), findsNothing);
+    });
   });
 }
