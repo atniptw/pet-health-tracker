@@ -39,4 +39,19 @@ class SymptomLogRepository {
       ),
     );
   }
+
+  Future<void> updateOtherLog({
+    required String householdId,
+    required String petId,
+    required String logId,
+    required String title,
+    required DateTime occurredAt,
+    String? notes,
+  }) {
+    return _logs(householdId, petId)
+        .doc(logId)
+        .update(
+          SymptomLog.otherToFirestoreUpdate(title: title, occurredAt: occurredAt, notes: notes),
+        );
+  }
 }

@@ -78,6 +78,59 @@ void main() {
     });
   });
 
+  group('updateOtherLog', () {
+    Future<String> addLog({String? notes}) async {
+      await repository.addOtherLog(
+        householdId: 'h1',
+        petId: 'p1',
+        createdBy: 'user-1',
+        title: 'Ate a sock',
+        occurredAt: DateTime.utc(2026, 10, 5, 14, 30),
+        notes: notes,
+      );
+      return (await logs().get()).docs.single.id;
+    }
+
+    test('changes the title, time and notes, and keeps the author and createdAt', () async {
+      final logId = await addLog();
+      final createdAt = (await logs().doc(logId).get()).data()!['createdAt'];
+
+      await repository.updateOtherLog(
+        householdId: 'h1',
+        petId: 'p1',
+        logId: logId,
+        title: 'Ate two socks',
+        occurredAt: DateTime.utc(2026, 10, 4, 9),
+        notes: 'Both from the laundry',
+      );
+
+      final data = (await logs().doc(logId).get()).data()!;
+      expect(data['title'], 'Ate two socks');
+      expect((data['occurredAt'] as Timestamp).toDate().toUtc(), DateTime.utc(2026, 10, 4, 9));
+      expect(data['notes'], 'Both from the laundry');
+      expect(data['symptom'], 'other');
+      expect(data['createdBy'], 'user-1');
+      expect(data['createdAt'], createdAt);
+      expect(data['updatedAt'], isA<Timestamp>());
+      expect(data['schemaVersion'], 1);
+    });
+
+    test('deletes notes that were cleared', () async {
+      final logId = await addLog(notes: 'Some fabric missing');
+
+      await repository.updateOtherLog(
+        householdId: 'h1',
+        petId: 'p1',
+        logId: logId,
+        title: 'Ate a sock',
+        occurredAt: DateTime(2026, 10, 5),
+        notes: '',
+      );
+
+      expect((await logs().doc(logId).get()).data()!.containsKey('notes'), isFalse);
+    });
+  });
+
   group('watchLogs', () {
     test("emits the pet's logs, most recent first", () async {
       Future<void> add(String title, DateTime occurredAt) => repository.addOtherLog(

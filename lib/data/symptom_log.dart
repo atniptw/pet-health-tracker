@@ -65,4 +65,20 @@ class SymptomLog {
       'schemaVersion': 1,
     };
   }
+
+  /// The fields an edit of an [otherSymptom] log writes. Cleared notes are
+  /// deleted, and `createdBy` and `createdAt` are left alone, as the security
+  /// rules expect.
+  static Map<String, dynamic> otherToFirestoreUpdate({
+    required String title,
+    required DateTime occurredAt,
+    String? notes,
+  }) {
+    return {
+      'title': title,
+      'occurredAt': Timestamp.fromDate(occurredAt),
+      'notes': notes == null || notes.isEmpty ? FieldValue.delete() : notes,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+  }
 }
