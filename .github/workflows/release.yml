@@ -63,6 +63,29 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # The system image and a booted snapshot of the emulator are cached: the
+      # image download has failed a run, and booting from a snapshot is faster.
+      # sdkmanager skips an image that is already installed.
+      - name: Cache the Android emulator
+        uses: actions/cache@v6
+        id: emulator-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+            /usr/local/lib/android/sdk/system-images/android-35/google_apis/x86_64
+          key: emulator-35-google_apis-x86_64
+      - name: Create the emulator snapshot to cache
+        if: steps.emulator-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Created the emulator snapshot."
       # Debug builds talk to the Firebase emulators (lib/main.dart), so the app
       # boots without touching production.
       - uses: reactivecircus/android-emulator-runner@v2
@@ -70,6 +93,9 @@ jobs:
           api-level: 35
           arch: x86_64
           target: google_apis
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
           script: firestore-tests/node_modules/.bin/firebase emulators:exec --only auth,firestore --project pet-health-tracker-2eed5 ./scripts/smoke-android.sh
 
   deploy-firestore-rules:
