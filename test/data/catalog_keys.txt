@@ -1,0 +1,30 @@
+diarrhea
+diarrhea.blackTarry yesNo
+diarrhea.consistency singleChoice
+diarrhea.consistency.soft
+diarrhea.consistency.watery
+diarrhea.mucus yesNo
+diarrhea.redBlood yesNo
+diarrhea.straining yesNo
+seizure
+seizure.defecated yesNo
+seizure.durationSeconds number
+seizure.foaming yesNo
+seizure.lostConsciousness yesNo
+seizure.type singleChoice
+seizure.type.focal
+seizure.type.generalized
+seizure.type.notSure
+seizure.urinated yesNo
+vomit
+vomit.blood yesNo
+vomit.content singleChoice
+vomit.content.clearLiquid
+vomit.content.foamOrBile
+vomit.content.food
+vomit.content.other
+vomit.retchingOnly yesNo
+vomit.timing singleChoice
+vomit.timing.emptyStomach
+vomit.timing.hoursAfterEating
+vomit.timing.rightAfterEating

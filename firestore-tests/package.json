@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-pet-health-tracker 'node --test'"
+    "test": "firebase emulators:exec --only firestore --project demo-pet-health-tracker 'node --test --test-concurrency=1'"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.2",
     "firebase": "12.19.0",
+    "firebase-admin": "14.5.0",
     "firebase-tools": "15.32.1"
   },
   "overrides": {

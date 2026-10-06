@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging and editing `other` symptoms (title, time, notes) and listing a pet's logs, and the security rules in `firestore.rules` are built; archiving pets, deleting logs, medications and the catalog are not. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging and editing `other` symptoms (title, time, notes) and listing a pet's logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), and the security rules in `firestore.rules` are built; archiving pets, deleting logs, logging catalog symptoms and medications are not. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -112,8 +112,10 @@ Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 The symptoms and their questions live in Firestore in `catalog/symptoms`, so new symptoms, questions and options need no app release, and older app versions can show symptoms added after they shipped. A log stores only the symptom key and the answers, so renaming a label never touches data.
 
-- **Bundled copy:** the app ships with a copy of the catalog and uses it until the Firestore doc has been fetched. After that, Firestore's offline cache keeps the fetched version available.
-- **Source of truth:** a catalog file in this repo. Tests check it: keys are unique, and no symptom, question or option key is ever removed or reused. A script publishes it to `catalog/symptoms` with the Admin SDK from a developer machine (works on the Spark plan) and the same file is copied into the app as the bundled copy.
+- **Source of truth:** `assets/catalog/symptoms.json` (`formatVersion` and `symptoms`). The app bundles this same file.
+- **Bundled copy:** the app uses it until the Firestore doc has been read, and when no catalog is published or it can't be read. After that, Firestore's offline cache keeps the fetched version available.
+- **Key checks:** `test/data/catalog_file_test.dart` checks that keys are unique and have labels, that question types are known, and that the file's keys match `test/data/catalog_keys.txt`. That list records every symptom, question (with its type) and option key; new keys get a line, and lines are never removed or changed, so a key can't be removed, reused or change type.
+- **Publishing:** `scripts/publish-catalog.sh` writes the committed file to `catalog/symptoms` with the Admin SDK from a developer machine (works on the Spark plan), using Application Default Credentials (`gcloud auth application-default login`). It runs the key checks first, bumps `catalogVersion`, and refuses if any already-published key is missing or has changed type, for example when publishing from an out-of-date checkout. Publish after the change is on `main`.
 - **`other`** is not a catalog entry. It is handled by the app, since it is the only symptom with a stored `title`.
 
 Every log has a title and notes. The catalog currently has `seizure`, `vomit` and `diarrhea`, with the questions below.

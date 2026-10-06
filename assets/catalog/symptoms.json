@@ -1,0 +1,74 @@
+{
+  "formatVersion": 1,
+  "symptoms": [
+    {
+      "key": "seizure",
+      "label": "Seizure",
+      "questions": [
+        { "key": "durationSeconds", "label": "Duration", "type": "number" },
+        {
+          "key": "type",
+          "label": "Type",
+          "type": "singleChoice",
+          "options": [
+            { "key": "focal", "label": "Focal" },
+            { "key": "generalized", "label": "Generalized" },
+            { "key": "notSure", "label": "Not sure" }
+          ]
+        },
+        { "key": "lostConsciousness", "label": "Lost consciousness", "type": "yesNo" },
+        { "key": "urinated", "label": "Urinated", "type": "yesNo" },
+        { "key": "defecated", "label": "Defecated", "type": "yesNo" },
+        { "key": "foaming", "label": "Foaming or drooling", "type": "yesNo" }
+      ]
+    },
+    {
+      "key": "vomit",
+      "label": "Vomit",
+      "questions": [
+        {
+          "key": "content",
+          "label": "What came up",
+          "type": "singleChoice",
+          "options": [
+            { "key": "food", "label": "Food" },
+            { "key": "foamOrBile", "label": "Foam or bile" },
+            { "key": "clearLiquid", "label": "Clear liquid" },
+            { "key": "other", "label": "Other" }
+          ]
+        },
+        { "key": "blood", "label": "Blood", "type": "yesNo" },
+        { "key": "retchingOnly", "label": "Retching, nothing came up", "type": "yesNo" },
+        {
+          "key": "timing",
+          "label": "When",
+          "type": "singleChoice",
+          "options": [
+            { "key": "rightAfterEating", "label": "Right after eating" },
+            { "key": "hoursAfterEating", "label": "Hours after eating" },
+            { "key": "emptyStomach", "label": "Empty stomach" }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "diarrhea",
+      "label": "Diarrhea",
+      "questions": [
+        {
+          "key": "consistency",
+          "label": "Consistency",
+          "type": "singleChoice",
+          "options": [
+            { "key": "soft", "label": "Soft" },
+            { "key": "watery", "label": "Watery" }
+          ]
+        },
+        { "key": "redBlood", "label": "Red blood", "type": "yesNo" },
+        { "key": "blackTarry", "label": "Black, tarry", "type": "yesNo" },
+        { "key": "mucus", "label": "Mucus", "type": "yesNo" },
+        { "key": "straining", "label": "Straining", "type": "yesNo" }
+      ]
+    }
+  ]
+}

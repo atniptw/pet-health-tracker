@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/catalog_repository.dart';
 import '../data/household_repository.dart';
 import '../data/pet_repository.dart';
 import '../data/symptom_log_repository.dart';
@@ -29,4 +31,8 @@ final petRepositoryProvider = Provider<PetRepository>((ref) {
 
 final symptomLogRepositoryProvider = Provider<SymptomLogRepository>((ref) {
   return SymptomLogRepository(ref.watch(firestoreProvider));
+});
+
+final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
+  return CatalogRepository(ref.watch(firestoreProvider), rootBundle);
 });

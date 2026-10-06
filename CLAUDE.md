@@ -16,7 +16,7 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 ## Project state
 
-Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, household creation, adding and editing pets, and logging and editing `other` symptoms with a per-pet history are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
+Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, household creation, adding and editing pets, logging and editing `other` symptoms with a per-pet history, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
 
 ## CI
 
@@ -24,7 +24,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Design docs
 
-Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Google sign-in, household creation, adding and editing pets, and logging and editing `other` symptoms are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
+Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Google sign-in, household creation, adding and editing pets, logging and editing `other` symptoms, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 
@@ -36,7 +36,8 @@ flutter run                              # run on a connected device/emulator
 flutter test                             # run all Flutter tests
 flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
-npm --prefix firestore-tests test        # security rules tests (starts the Firestore emulator on 8180)
+npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
+./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 flutter test integration_test            # smoke test on a running device; needs the Firebase emulators up
 ```
 

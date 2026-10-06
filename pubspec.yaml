@@ -68,6 +68,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/catalog/symptoms.json
     - assets/fonts/Figtree-OFL.txt
 
   # Figtree is a variable font: FontWeight sets its weight axis.

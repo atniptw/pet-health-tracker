@@ -1,6 +1,6 @@
 # Architecture
 
-Status: partly implemented. The Firebase project is set up, and Google sign-in, household creation, adding and editing pets, and logging and editing `other` symptoms are built. The rest is still a plan.
+Status: partly implemented. The Firebase project is set up, and Google sign-in, household creation, adding and editing pets, and logging and editing `other` symptoms, and the symptom catalog (bundled, published and read, with catalog labels on logs) are built. The rest is still a plan.
 
 ## Cost
 

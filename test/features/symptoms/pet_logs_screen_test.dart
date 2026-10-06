@@ -4,10 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/pet.dart';
+import 'package:pet_health_tracker/data/symptom_catalog.dart';
 import 'package:pet_health_tracker/data/symptom_log.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
 import 'package:pet_health_tracker/features/symptoms/log_symptom_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/pet_logs_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/symptom_providers.dart';
 
 import '../../helpers.dart';
 
@@ -15,6 +17,7 @@ class MockSymptomLogRepository extends Mock implements SymptomLogRepository {}
 
 void main() {
   const boogie = Pet(id: 'p1', name: 'Boogie', species: Species.dog);
+  const catalog = SymptomCatalog([CatalogSymptom(key: 'vomit', label: 'Vomit')]);
 
   late SymptomLogRepository logs;
 
@@ -27,7 +30,10 @@ void main() {
   }) {
     return tester.pumpScoped(
       PetLogsScreen(householdId: 'h1', pet: boogie, uid: 'u1', isAdmin: isAdmin),
-      overrides: [symptomLogRepositoryProvider.overrideWithValue(repository ?? logs)],
+      overrides: [
+        symptomLogRepositoryProvider.overrideWithValue(repository ?? logs),
+        symptomCatalogProvider.overrideWith((ref) => Stream.value(catalog)),
+      ],
     );
   }
 
@@ -72,7 +78,7 @@ void main() {
     expect(find.text('Nothing logged yet'), findsNothing);
   });
 
-  testWidgets('falls back to the symptom key for a log with no title', (tester) async {
+  testWidgets('titles a catalog log with its catalog label', (tester) async {
     final repository = MockSymptomLogRepository();
     when(() => repository.watchLogs(householdId: 'h1', petId: 'p1')).thenAnswer(
       (_) => Stream.value([
@@ -83,7 +89,21 @@ void main() {
     await pumpLogs(tester, repository: repository);
     await tester.pumpAndSettle();
 
-    expect(find.text('vomit'), findsOneWidget);
+    expect(find.text('Vomit'), findsOneWidget);
+  });
+
+  testWidgets('falls back to the symptom key for a symptom the catalog lacks', (tester) async {
+    final repository = MockSymptomLogRepository();
+    when(() => repository.watchLogs(householdId: 'h1', petId: 'p1')).thenAnswer(
+      (_) => Stream.value([
+        SymptomLog(id: 'l1', symptom: 'bloat', createdBy: 'u2', occurredAt: DateTime(2026)),
+      ]),
+    );
+
+    await pumpLogs(tester, repository: repository);
+    await tester.pumpAndSettle();
+
+    expect(find.text('bloat'), findsOneWidget);
   });
 
   testWidgets('shows a spinner while logs load', (tester) async {
@@ -179,7 +199,7 @@ void main() {
 
       await pumpLogs(tester, repository: repository, isAdmin: true);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('vomit'));
+      await tester.tap(find.text('Vomit'));
       await tester.pumpAndSettle();
 
       expect(find.byType(LogSymptomScreen), findsNothing);

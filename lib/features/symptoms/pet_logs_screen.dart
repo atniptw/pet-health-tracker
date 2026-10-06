@@ -50,6 +50,7 @@ class PetLogsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final key = (householdId: householdId, petId: pet.id);
     final logsState = ref.watch(symptomLogsProvider(key));
+    final catalog = ref.watch(symptomCatalogProvider).value;
 
     return Scaffold(
       appBar: AppBar(title: Text(pet.name)),
@@ -68,6 +69,7 @@ class PetLogsScreen extends ConsumerWidget {
                   for (final log in logs)
                     _LogTile(
                       log: log,
+                      title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
                       onTap: _canEdit(log) ? () => _openForm(context, log: log) : null,
                     ),
                 ],
@@ -92,9 +94,12 @@ class PetLogsScreen extends ConsumerWidget {
 }
 
 class _LogTile extends StatelessWidget {
-  const _LogTile({required this.log, this.onTap});
+  const _LogTile({required this.log, required this.title, this.onTap});
 
   final SymptomLog log;
+
+  /// The `other` title, or the catalog label.
+  final String title;
   final VoidCallback? onTap;
 
   @override
@@ -102,7 +107,7 @@ class _LogTile extends StatelessWidget {
     final when = formatOccurredAt(context, log.occurredAt);
     final notes = log.notes;
     return ListTile(
-      title: Text(log.title ?? log.symptom),
+      title: Text(title),
       subtitle: Text(notes == null ? when : '$when\n$notes'),
       isThreeLine: notes != null,
       onTap: onTap,
