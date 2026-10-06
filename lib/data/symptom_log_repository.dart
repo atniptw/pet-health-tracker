@@ -96,6 +96,19 @@ class SymptomLogRepository {
     });
   }
 
+  /// Sets the log's notes, or deletes them when [notes] is empty.
+  Future<void> updateNotes({
+    required String householdId,
+    required String petId,
+    required String logId,
+    required String notes,
+  }) {
+    return _logs(householdId, petId).doc(logId).update({
+      'notes': notes.isEmpty ? FieldValue.delete() : notes,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> deleteLog({
     required String householdId,
     required String petId,

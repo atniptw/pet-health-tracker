@@ -63,15 +63,18 @@ void main() {
     expect(theme.textTheme.titleLarge!.fontFamily, 'Figtree');
   });
 
-  test('the Figtree license is registered', () async {
+  test('the bundled fonts\' licenses are registered', () async {
     registerFontLicenses();
 
     final licenses = await LicenseRegistry.licenses.toList();
-    final figtree = licenses.where((license) => license.packages.contains('Figtree'));
-    expect(figtree, isNotEmpty);
-    expect(
-      figtree.first.paragraphs.map((paragraph) => paragraph.text).join('\n'),
-      contains('SIL Open Font License'),
-    );
+    for (final font in ['Figtree', monoFontFamily]) {
+      final license = licenses.where((license) => license.packages.contains(font));
+      expect(license, isNotEmpty, reason: font);
+      expect(
+        license.first.paragraphs.map((paragraph) => paragraph.text).join('\n'),
+        contains('SIL Open Font License'),
+        reason: font,
+      );
+    }
   });
 }

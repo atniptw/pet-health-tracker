@@ -9,6 +9,7 @@ import 'package:pet_health_tracker/data/symptom_log.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
 import 'package:pet_health_tracker/features/symptoms/log_symptom_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/pet_logs_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/symptom_details_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/symptom_providers.dart';
 
 import '../../helpers.dart';
@@ -189,20 +190,35 @@ void main() {
       expect(tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen)).log?.title, 'Limping');
     });
 
-    testWidgets('catalog logs, which the form has no fields for, do not open', (tester) async {
+    Future<void> tapCatalogLog(WidgetTester tester, {required bool isAdmin}) async {
       final repository = MockSymptomLogRepository();
       when(() => repository.watchLogs(householdId: 'h1', petId: 'p1')).thenAnswer(
         (_) => Stream.value([
-          SymptomLog(id: 'l1', symptom: 'vomit', createdBy: 'u1', occurredAt: DateTime(2026)),
+          SymptomLog(id: 'l1', symptom: 'vomit', createdBy: 'u2', occurredAt: DateTime(2026)),
         ]),
       );
 
-      await pumpLogs(tester, repository: repository, isAdmin: true);
+      await pumpLogs(tester, repository: repository, isAdmin: isAdmin);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Vomit'));
       await tester.pumpAndSettle();
+    }
 
+    testWidgets('catalog logs open their details', (tester) async {
+      await tapCatalogLog(tester, isAdmin: true);
+
+      final screen = tester.widget<SymptomDetailsScreen>(find.byType(SymptomDetailsScreen));
+      expect(
+        (screen.householdId, screen.petId, screen.petName, screen.log.id),
+        ('h1', 'p1', 'Boogie', 'l1'),
+      );
       expect(find.byType(LogSymptomScreen), findsNothing);
+    });
+
+    testWidgets("members can't open someone else's catalog log", (tester) async {
+      await tapCatalogLog(tester, isAdmin: false);
+
+      expect(find.byType(SymptomDetailsScreen), findsNothing);
     });
   });
 }

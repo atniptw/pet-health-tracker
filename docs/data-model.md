@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging and editing `other` symptoms (title, time, notes) and listing a pet's logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), and the security rules in `firestore.rules` are built; creating catalog logs, updating single answers and deleting logs exist in the data layer (`SymptomLogRepository`) but no screen uses them yet; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging and editing `other` symptoms (title, time, notes) and listing a pet's logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note from a pet's log history, and the security rules in `firestore.rules` are built; creating catalog logs and deleting logs exist in the data layer (`SymptomLogRepository`) but no screen uses them yet; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -160,7 +160,7 @@ Example: `answers: { content: "foamOrBile", timing: "emptyStomach" }`.
 
 Example: `answers: { consistency: "watery", mucus: true }`.
 
-A yes/no answer is stored only when true, so a missing answer means "not noted", not "no".
+A yes/no answer is stored only when true, so a missing answer means "not noted", not "no". Other answers are stored as: single choice, the option key; multiple choice, a list of option keys; number, a whole number; free text, a string. An answer that is cleared is removed.
 
 Question mechanics:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.

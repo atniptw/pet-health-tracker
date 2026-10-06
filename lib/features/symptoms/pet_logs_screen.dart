@@ -5,6 +5,7 @@ import '../../data/pet.dart';
 import '../../data/symptom_log.dart';
 import 'log_symptom_screen.dart';
 import 'occurred_at.dart';
+import 'symptom_details_screen.dart';
 import 'symptom_providers.dart';
 
 /// A pet's symptom logs, with a button to log a new one. Tapping a log the
@@ -27,10 +28,26 @@ class PetLogsScreen extends ConsumerWidget {
   /// Whether the signed-in user is a household admin, who can edit anyone's logs.
   final bool isAdmin;
 
-  /// Members can edit their own logs, admins anyone's. Only `other` logs, as
-  /// the form has fields only for those.
-  bool _canEdit(SymptomLog log) =>
-      log.symptom == SymptomLog.otherSymptom && (isAdmin || log.createdBy == uid);
+  /// Members can edit their own logs, admins anyone's.
+  bool _canEdit(SymptomLog log) => isAdmin || log.createdBy == uid;
+
+  /// The form for an `other` log, or the catalog questions for any other.
+  void _open(BuildContext context, SymptomLog log) {
+    if (log.symptom == SymptomLog.otherSymptom) {
+      _openForm(context, log: log);
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => SymptomDetailsScreen(
+          householdId: householdId,
+          petId: pet.id,
+          petName: pet.name,
+          log: log,
+        ),
+      ),
+    );
+  }
 
   void _openForm(BuildContext context, {SymptomLog? log}) {
     Navigator.of(context).push(
@@ -70,7 +87,7 @@ class PetLogsScreen extends ConsumerWidget {
                     _LogTile(
                       log: log,
                       title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
-                      onTap: _canEdit(log) ? () => _openForm(context, log: log) : null,
+                      onTap: _canEdit(log) ? () => _open(context, log) : null,
                     ),
                 ],
               ),

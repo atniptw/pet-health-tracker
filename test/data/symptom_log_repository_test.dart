@@ -208,6 +208,22 @@ void main() {
     });
   });
 
+  group('updateNotes', () {
+    test('sets notes, and deletes them when cleared', () async {
+      await logs().doc('log-1').set({'symptom': 'vomit', 'notes': 'Old'});
+
+      await repository.updateNotes(householdId: 'h1', petId: 'p1', logId: 'log-1', notes: 'Grass');
+      var data = (await logs().doc('log-1').get()).data()!;
+      expect(data['notes'], 'Grass');
+      expect(data['updatedAt'], isA<Timestamp>());
+
+      await repository.updateNotes(householdId: 'h1', petId: 'p1', logId: 'log-1', notes: '');
+      data = (await logs().doc('log-1').get()).data()!;
+      expect(data.containsKey('notes'), isFalse);
+      expect(data['symptom'], 'vomit');
+    });
+  });
+
   group('deleteLog', () {
     test('deletes only that log', () async {
       await logs().doc('log-1').set({'symptom': 'vomit'});

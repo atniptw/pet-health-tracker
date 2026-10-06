@@ -60,6 +60,9 @@ const _dark = _Tokens(
   accText: Color(0xFF93E3D8),
 );
 
+/// For times, which the design sets in a monospaced font.
+const monoFontFamily = 'IBM Plex Mono';
+
 ThemeData appTheme(Brightness brightness) {
   final t = brightness == Brightness.light ? _light : _dark;
   // Colours the design doesn't set, such as error, come from the accent.
@@ -85,7 +88,12 @@ ThemeData appTheme(Brightness brightness) {
 /// Adds the bundled fonts' licenses to the app's license page.
 void registerFontLicenses() {
   LicenseRegistry.addLicense(() async* {
-    final license = await rootBundle.loadString('assets/fonts/Figtree-OFL.txt');
-    yield LicenseEntryWithLineBreaks(['Figtree'], license);
+    for (final (font, file) in [
+      ('Figtree', 'Figtree-OFL.txt'),
+      (monoFontFamily, 'IBMPlexMono-OFL.txt'),
+    ]) {
+      final license = await rootBundle.loadString('assets/fonts/$file');
+      yield LicenseEntryWithLineBreaks([font], license);
+    }
   });
 }

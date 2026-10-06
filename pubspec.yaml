@@ -70,9 +70,13 @@ flutter:
   assets:
     - assets/catalog/symptoms.json
     - assets/fonts/Figtree-OFL.txt
+    - assets/fonts/IBMPlexMono-OFL.txt
 
   # Figtree is a variable font: FontWeight sets its weight axis.
   fonts:
     - family: Figtree
       fonts:
         - asset: assets/fonts/Figtree.ttf
+    - family: IBM Plex Mono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
