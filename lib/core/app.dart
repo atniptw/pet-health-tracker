@@ -7,6 +7,7 @@ import '../features/household/create_household_screen.dart';
 import '../features/household/home_screen.dart';
 import '../features/household/household_providers.dart';
 import 'firebase_providers.dart';
+import 'theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -15,12 +16,8 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Pet Health Tracker',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark),
-      ),
+      theme: appTheme(Brightness.light),
+      darkTheme: appTheme(Brightness.dark),
       themeMode: ThemeMode.system,
       home: const AuthGate(),
     );
