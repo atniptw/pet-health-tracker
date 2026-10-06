@@ -66,6 +66,23 @@ class SymptomLog {
     };
   }
 
+  /// A new catalog log, with no answers yet.
+  static Map<String, dynamic> catalogToFirestore({
+    required String createdBy,
+    required String symptom,
+    required DateTime occurredAt,
+  }) {
+    return {
+      'symptom': symptom,
+      'createdBy': createdBy,
+      'answers': <String, dynamic>{},
+      'occurredAt': Timestamp.fromDate(occurredAt),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'schemaVersion': 1,
+    };
+  }
+
   /// The fields an edit of an [otherSymptom] log writes. Cleared notes are
   /// deleted, and `createdBy` and `createdAt` are left alone, as the security
   /// rules expect.

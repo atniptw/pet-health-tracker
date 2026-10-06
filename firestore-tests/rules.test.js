@@ -387,6 +387,37 @@ describe('symptom logs', () => {
     await assertFails(setDoc(doc(db(MEMBER), NEW_LOG), newLog(MEMBER, { extra: true })));
   });
 
+  test('a catalog log can start with no answers', async () => {
+    await seedHousehold();
+    await assertSucceeds(
+      setDoc(
+        doc(db(MEMBER), NEW_LOG),
+        without(newLog(MEMBER, { symptom: 'seizure', answers: {} }), 'title'),
+      ),
+    );
+  });
+
+  test('the author can set and remove single answers', async () => {
+    await seedHousehold();
+    await seed({
+      [LOG]: {
+        symptom: 'seizure',
+        createdBy: MEMBER,
+        answers: { urinated: true },
+        occurredAt: new Date(0),
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+        schemaVersion: 1,
+      },
+    });
+    const answer = { 'answers.type': 'generalized', updatedAt: serverTimestamp() };
+    const removal = { 'answers.urinated': deleteField(), updatedAt: serverTimestamp() };
+    await assertFails(updateDoc(doc(db(OUTSIDER), LOG), answer));
+    await assertSucceeds(updateDoc(doc(db(MEMBER), LOG), answer));
+    await assertSucceeds(updateDoc(doc(db(MEMBER), LOG), removal));
+    await assertFails(updateDoc(doc(db(MEMBER), LOG), { 'answers.type': 'focal' }));
+  });
+
   test('members can edit and delete their own logs', async () => {
     await seedLog(MEMBER);
     await assertSucceeds(updateDoc(doc(db(MEMBER), LOG), edit));

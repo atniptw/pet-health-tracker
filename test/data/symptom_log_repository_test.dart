@@ -131,6 +131,94 @@ void main() {
     });
   });
 
+  group('newLogId', () {
+    test('gives a different id each time and writes nothing', () async {
+      final first = repository.newLogId(householdId: 'h1', petId: 'p1');
+      final second = repository.newLogId(householdId: 'h1', petId: 'p1');
+
+      expect(first, isNotEmpty);
+      expect(second, isNot(first));
+      expect((await logs().get()).docs, isEmpty);
+    });
+  });
+
+  group('addCatalogLog', () {
+    test('writes a catalog log with no title and no answers at the given id', () async {
+      await repository.addCatalogLog(
+        householdId: 'h1',
+        petId: 'p1',
+        logId: 'log-1',
+        createdBy: 'user-1',
+        symptom: 'seizure',
+        occurredAt: DateTime.utc(2026, 10, 6, 6, 40),
+      );
+
+      final data = (await logs().doc('log-1').get()).data()!;
+      expect(
+        data.keys,
+        unorderedEquals(<String>[
+          'symptom',
+          'createdBy',
+          'answers',
+          'occurredAt',
+          'createdAt',
+          'updatedAt',
+          'schemaVersion',
+        ]),
+      );
+      expect(data['symptom'], 'seizure');
+      expect(data['createdBy'], 'user-1');
+      expect(data['answers'], isEmpty);
+      expect((data['occurredAt'] as Timestamp).toDate().toUtc(), DateTime.utc(2026, 10, 6, 6, 40));
+      expect(data['createdAt'], isA<Timestamp>());
+      expect(data['updatedAt'], isA<Timestamp>());
+      expect(data['schemaVersion'], 1);
+    });
+  });
+
+  group('updateAnswers', () {
+    test('sets and removes only the answers given, keeping the rest', () async {
+      await logs().doc('log-1').set({
+        'symptom': 'seizure',
+        'createdBy': 'user-1',
+        'answers': {'urinated': true, 'foaming': true, 'fromNewerApp': 'kept'},
+        'occurredAt': Timestamp.fromDate(DateTime.utc(2026, 10, 6)),
+        'createdAt': Timestamp.fromDate(DateTime.utc(2026, 10, 6)),
+        'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 10, 6)),
+        'schemaVersion': 1,
+      });
+
+      await repository.updateAnswers(
+        householdId: 'h1',
+        petId: 'p1',
+        logId: 'log-1',
+        answers: {'durationSeconds': 90, 'type': 'generalized', 'urinated': null},
+      );
+
+      final data = (await logs().doc('log-1').get()).data()!;
+      expect(data['answers'], {
+        'foaming': true,
+        'fromNewerApp': 'kept',
+        'durationSeconds': 90,
+        'type': 'generalized',
+      });
+      expect(data['createdBy'], 'user-1');
+      expect(data['createdAt'], Timestamp.fromDate(DateTime.utc(2026, 10, 6)));
+      expect(data['updatedAt'], isNot(Timestamp.fromDate(DateTime.utc(2026, 10, 6))));
+    });
+  });
+
+  group('deleteLog', () {
+    test('deletes only that log', () async {
+      await logs().doc('log-1').set({'symptom': 'vomit'});
+      await logs().doc('log-2').set({'symptom': 'vomit'});
+
+      await repository.deleteLog(householdId: 'h1', petId: 'p1', logId: 'log-1');
+
+      expect((await logs().get()).docs.map((doc) => doc.id), ['log-2']);
+    });
+  });
+
   group('watchLogs', () {
     test("emits the pet's logs, most recent first", () async {
       Future<void> add(String title, DateTime occurredAt) => repository.addOtherLog(
