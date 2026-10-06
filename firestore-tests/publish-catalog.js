@@ -9,14 +9,16 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 export const CATALOG_FILE = new URL('../assets/catalog/symptoms.json', import.meta.url);
 
 /**
- * Every key in the catalog, in the same form as test/data/catalog_keys.txt:
- * `vomit`, `vomit.content singleChoice`, `vomit.content.food`.
+ * Every key and unit in the catalog, in the same form as
+ * test/data/catalog_keys.txt: `vomit`, `vomit.content singleChoice`,
+ * `vomit.content.food`, `seizure.durationSeconds unit seconds`.
  */
 function keys(catalog) {
   return catalog.symptoms.flatMap((symptom) => [
     symptom.key,
     ...(symptom.questions ?? []).flatMap((question) => [
       `${symptom.key}.${question.key} ${question.type}`,
+      ...(question.unit ? [`${symptom.key}.${question.key} unit ${question.unit}`] : []),
       ...(question.options ?? []).map((option) => `${symptom.key}.${question.key}.${option.key}`),
     ]),
   ]);
@@ -24,8 +26,9 @@ function keys(catalog) {
 
 /**
  * Writes [catalog] to catalog/symptoms with the next catalog version, and
- * returns that version. Refuses if a key that is already published is
- * missing, which happens when publishing from an out-of-date checkout.
+ * returns that version. Refuses if a key or unit that is already published
+ * is missing or changed, which happens when publishing from an out-of-date
+ * checkout.
  */
 export async function publishCatalog(db, catalog) {
   const ref = db.doc('catalog/symptoms');

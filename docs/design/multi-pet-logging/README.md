@@ -56,7 +56,7 @@ See **1b**, screen 3 (Seizure). This screen opens after the log is already saved
 - One question control per catalog question:
   - yes/no → switch rows
   - single choice → segmented button or chips
-  - number (seconds) → a stopwatch with "Stop" and "Enter manually"
+  - number → a number field, labelled with the question's `unit` when it has one (e.g. seconds). No stopwatch: the user decided against it, so ignore the stopwatch in the 1b mockup.
 - "Add a note" field.
 - Every change is written as an update to the saved log.
 
@@ -114,7 +114,7 @@ The source oklch values are in the HTML. Dark-mode values for the avatar and dot
   - Scale: 22 (app bar), 17 (button), 16 (sheet rows), 15 (names, list titles), 13 (meta, labels), 12 (small).
 - **Radii:** 30 (primary button), 28 (sheet top), 24 (pills), 20 (cards), 17 (chips), 14 (inputs).
 - **Spacing:** 4/6/8/10/12/14/16/20/22.
-- **Icons:** Material Symbols Rounded, weight 400, fill 0. Icons used: `add`, `settings`, `chevron_right`, `check`, `edit`, `close`, `stop`.
+- **Icons:** Material Symbols Rounded, weight 400, fill 0. Icons used: `add`, `settings`, `chevron_right`, `check`, `edit`, `close`.
 
 ## Files
 - `Pet Health Tracker.dc.html`: all screens. Sections 2a and 2b are the target; 1b, 1d and 0 are context.

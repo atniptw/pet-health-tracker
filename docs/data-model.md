@@ -95,7 +95,7 @@ A single doc holding the whole symptom catalog. See Symptom catalog.
 | `symptoms` | list of maps | in display order. Each: `key`, `label`, `retired?`, `questions` |
 | `updatedAt` | server timestamp | |
 
-Each question is a map: `key`, `label`, `type`, `retired?`, and for choice types `options`, a list of `{key, label, retired?}`.
+Each question is a map: `key`, `label`, `type`, `retired?`, for number types an optional `unit` (`seconds`), and for choice types `options`, a list of `{key, label, retired?}`.
 
 ## Security rules
 
@@ -114,8 +114,8 @@ The symptoms and their questions live in Firestore in `catalog/symptoms`, so new
 
 - **Source of truth:** `assets/catalog/symptoms.json` (`formatVersion` and `symptoms`). The app bundles this same file.
 - **Bundled copy:** the app uses it until the Firestore doc has been read, and when no catalog is published or it can't be read. After that, Firestore's offline cache keeps the fetched version available.
-- **Key checks:** `test/data/catalog_file_test.dart` checks that keys are unique and have labels, that question types are known, and that the file's keys match `test/data/catalog_keys.txt`. That list records every symptom, question (with its type) and option key; new keys get a line, and lines are never removed or changed, so a key can't be removed, reused or change type.
-- **Publishing:** `scripts/publish-catalog.sh` writes the committed file to `catalog/symptoms` with the Admin SDK from a developer machine (works on the Spark plan), using Application Default Credentials (`gcloud auth application-default login`). It runs the key checks first, bumps `catalogVersion`, and refuses if any already-published key is missing or has changed type, for example when publishing from an out-of-date checkout. Publish after the change is on `main`.
+- **Key checks:** `test/data/catalog_file_test.dart` checks that keys are unique and have labels, that question types are known, and that the file's keys match `test/data/catalog_keys.txt`. That list records every symptom, question (with its type), unit and option key; new keys and units get a line, and lines are never removed or changed, so a key can't be removed, reused or change type.
+- **Publishing:** `scripts/publish-catalog.sh` writes the committed file to `catalog/symptoms` with the Admin SDK from a developer machine (works on the Spark plan), using Application Default Credentials (`gcloud auth application-default login`). It runs the key checks first, bumps `catalogVersion`, and refuses if any already-published key or unit is missing or has changed, for example when publishing from an out-of-date checkout. Publish after the change is on `main`.
 - **`other`** is not a catalog entry. It is handled by the app, since it is the only symptom with a stored `title`.
 
 Every log has a title and notes. The catalog currently has `seizure`, `vomit` and `diarrhea`, with the questions below.
@@ -128,7 +128,7 @@ Example log, with a stored `title` and no `answers`: `symptom: "other", title: "
 
 | Key | Type | Notes |
 |---|---|---|
-| `durationSeconds` | number | seconds |
+| `durationSeconds` | number | unit `seconds` |
 | `type` | single choice | `focal` (one area), `generalized` (full body), `notSure` |
 | `lostConsciousness` | yes/no | unresponsive, not reacting |
 | `urinated` | yes/no | |
@@ -164,7 +164,7 @@ A yes/no answer is stored only when true, so a missing answer means "not noted",
 
 Question mechanics:
 - **Question types:** yes/no, single choice, multiple choice, number, free text. Each question has a stable `key`, a label, a type, and for choices a list of options with stable keys.
-- **Keys are permanent:** never change a question's key, type, or option keys, and never reuse a retired key.
+- **Keys are permanent:** never change a question's key, type, unit or option keys, and never reuse a retired key. A number question with no unit can be given one.
 - **Retire, don't remove:** a symptom, question or option that is no longer offered stays in the catalog with `retired: true`. It is hidden when logging but still labels old logs.
 - **Every question is optional at read time,** since old logs lack answers to newer questions.
 - **New question types need an app update.** Adding one bumps `formatVersion`. An app that sees a question type it doesn't know skips that question.

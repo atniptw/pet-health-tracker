@@ -22,6 +22,7 @@ void main() {
           {'key': 'blood', 'label': 'Blood', 'type': 'yesNo', 'retired': true},
           {'key': 'photo', 'label': 'Photo', 'type': 'image'},
           {'key': 'count', 'label': 'How many times', 'type': 'number'},
+          {'key': 'duration', 'label': 'Duration', 'type': 'number', 'unit': 'seconds'},
         ],
       },
       {'key': 'cough', 'label': 'Cough', 'retired': true, 'questions': <Object>[]},
@@ -43,15 +44,17 @@ void main() {
   test('reads questions and options, skipping question types it does not know', () {
     final questions = catalog.symptom('vomit')!.questions;
 
-    expect(questions.map((question) => question.key), ['content', 'blood', 'count']);
+    expect(questions.map((question) => question.key), ['content', 'blood', 'count', 'duration']);
     expect(questions.map((question) => question.type), [
       QuestionType.singleChoice,
       QuestionType.yesNo,
       QuestionType.number,
+      QuestionType.number,
     ]);
-    expect(questions.map((question) => question.retired), [false, true, false]);
+    expect(questions.map((question) => question.retired), [false, true, false, false]);
+    expect(questions.map((question) => question.unit), [null, null, null, 'seconds']);
     expect(questions.first.label, 'What came up');
-    expect(questions.last.options, isEmpty);
+    expect(questions[2].options, isEmpty);
 
     final options = questions.first.options;
     expect(options.map((option) => option.key), ['food', 'grass']);

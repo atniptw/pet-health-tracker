@@ -65,6 +65,18 @@ test('refuses to drop keys that are already published', async () => {
   assert.equal((await ref.get()).data().catalogVersion, 1);
 });
 
+test('a number question can gain a unit, which then cannot change', async () => {
+  const count = { key: 'count', label: 'How many times', type: 'number' };
+  await publishCatalog(db, catalog([count]));
+
+  assert.equal(await publishCatalog(db, catalog([{ ...count, unit: 'seconds' }])), 2);
+  await assert.rejects(
+    publishCatalog(db, catalog([{ ...count, unit: 'minutes' }])),
+    /vomit\.count unit seconds/,
+  );
+  await assert.rejects(publishCatalog(db, catalog([count])), /vomit\.count unit seconds/);
+});
+
 test("refuses to change a published question's type", async () => {
   await publishCatalog(db, catalog([blood]));
 

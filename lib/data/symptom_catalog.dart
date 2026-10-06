@@ -59,6 +59,7 @@ class CatalogQuestion {
     required this.label,
     required this.type,
     this.retired = false,
+    this.unit,
     this.options = const [],
   });
 
@@ -67,6 +68,9 @@ class CatalogQuestion {
   final String label;
   final QuestionType type;
   final bool retired;
+
+  /// What a [QuestionType.number] answer counts, such as `seconds`.
+  final String? unit;
 
   /// The choices, for [QuestionType.singleChoice] and
   /// [QuestionType.multipleChoice].
@@ -78,6 +82,7 @@ class CatalogQuestion {
       label: data['label'] as String,
       type: type,
       retired: data['retired'] == true,
+      unit: data['unit'] as String?,
       options: [for (final option in _maps(data['options'])) CatalogOption._fromMap(option)],
     );
   }

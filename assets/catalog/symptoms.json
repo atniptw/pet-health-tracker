@@ -5,7 +5,7 @@
       "key": "seizure",
       "label": "Seizure",
       "questions": [
-        { "key": "durationSeconds", "label": "Duration", "type": "number" },
+        { "key": "durationSeconds", "label": "Duration", "type": "number", "unit": "seconds" },
         {
           "key": "type",
           "label": "Type",

@@ -9,6 +9,9 @@ import 'package:pet_health_tracker/data/symptom_catalog.dart';
 
 typedef Entry = Map<String, dynamic>;
 
+/// The units a number question can have.
+const knownUnits = {'seconds'};
+
 List<Entry> entries(Object? list) => ((list as List?) ?? const []).cast<Entry>();
 
 void main() {
@@ -81,15 +84,29 @@ void main() {
     }
   });
 
+  test('only number questions have a unit, and it is one the app knows', () {
+    for (final symptom in symptoms) {
+      for (final question in questionsOf(symptom)) {
+        final where = '${symptom['key']}.${question['key']}';
+        if (question['type'] == 'number' && question.containsKey('unit')) {
+          expect(knownUnits, contains(question['unit']), reason: 'unit of $where');
+        } else {
+          expect(question.containsKey('unit'), isFalse, reason: 'unit of $where');
+        }
+      }
+    }
+  });
+
   test('keys match test/data/catalog_keys.txt', () {
     // Logs store keys, so a key can never be removed, reused, or change its
-    // type: retire it instead. New keys get a line in catalog_keys.txt, and
-    // existing lines are never removed or changed.
+    // type or unit: retire it instead. New keys and units get a line in
+    // catalog_keys.txt, and existing lines are never removed or changed.
     final keys = <String>{
       for (final symptom in symptoms) ...[
         symptom['key'] as String,
         for (final question in questionsOf(symptom)) ...[
           '${symptom['key']}.${question['key']} ${question['type']}',
+          if (question['unit'] case final unit?) '${symptom['key']}.${question['key']} unit $unit',
           for (final option in optionsOf(question))
             '${symptom['key']}.${question['key']}.${option['key']}',
         ],
@@ -100,7 +117,11 @@ void main() {
         .where((line) => line.isNotEmpty)
         .toSet();
 
-    expect(recorded.difference(keys), isEmpty, reason: 'removed or changed keys');
-    expect(keys.difference(recorded), isEmpty, reason: 'new keys missing from catalog_keys.txt');
+    expect(recorded.difference(keys), isEmpty, reason: 'removed or changed keys or units');
+    expect(
+      keys.difference(recorded),
+      isEmpty,
+      reason: 'new keys or units missing from catalog_keys.txt',
+    );
   });
 }

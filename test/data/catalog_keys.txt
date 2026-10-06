@@ -9,6 +9,7 @@ diarrhea.straining yesNo
 seizure
 seizure.defecated yesNo
 seizure.durationSeconds number
+seizure.durationSeconds unit seconds
 seizure.foaming yesNo
 seizure.lostConsciousness yesNo
 seizure.type singleChoice
