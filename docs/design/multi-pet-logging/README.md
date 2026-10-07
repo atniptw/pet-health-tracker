@@ -56,7 +56,7 @@ See **1b**, screen 3 (Seizure). This screen opens after the log is already saved
 - One question control per catalog question:
   - yes/no → switch rows
   - single choice → segmented button or chips
-  - number → a number field, labelled with the question's `unit` when it has one (e.g. seconds). No stopwatch: the user decided against it, so ignore the stopwatch in the 1b mockup.
+  - number → a number field, labelled with the question's `unit` when it has one (e.g. seconds).
 - "Add a note" field.
 - Every change is written as an update to the saved log.
 
