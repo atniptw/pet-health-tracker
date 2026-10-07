@@ -13,6 +13,7 @@ import 'package:pet_health_tracker/features/household/home_screen.dart';
 import 'package:pet_health_tracker/features/pets/all_pets_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/log_sheet.dart';
 import 'package:pet_health_tracker/features/symptoms/pet_logs_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/symptom_providers.dart';
 
@@ -110,6 +111,27 @@ void main() {
 
     final form = tester.widget<PetFormScreen>(find.byType(PetFormScreen));
     expect((form.householdId, form.pet), ('h1', null));
+  });
+
+  testWidgets('"Log a symptom" opens the sheet for the household\'s pets', (tester) async {
+    await addPet('Boogie');
+    await addPet('Pootz');
+
+    await pumpHome(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log a symptom'));
+    await tester.pumpAndSettle();
+
+    final sheet = tester.widget<LogSheet>(find.byType(LogSheet));
+    expect((sheet.household.id, sheet.uid), ('h1', 'admin'));
+    expect([for (final pet in sheet.pets) pet.name], ['Boogie', 'Pootz']);
+  });
+
+  testWidgets('hides "Log a symptom" until there is a pet', (tester) async {
+    await pumpHome(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Log a symptom'), findsNothing);
   });
 
   testWidgets('a member with no pets is told to ask an admin', (tester) async {

@@ -64,6 +64,20 @@ void main() {
       expect((await logs().get()).docs.single.data()['notes'], 'Some fabric missing');
     });
 
+    test('saves under the id it is given', () async {
+      final logId = repository.newLogId(householdId: 'h1', petId: 'p1');
+      await repository.addOtherLog(
+        householdId: 'h1',
+        petId: 'p1',
+        createdBy: 'user-1',
+        title: 'Ate a sock',
+        occurredAt: DateTime(2026, 10, 5),
+        logId: logId,
+      );
+
+      expect((await logs().get()).docs.single.id, logId);
+    });
+
     test('leaves out blank notes', () async {
       await repository.addOtherLog(
         householdId: 'h1',

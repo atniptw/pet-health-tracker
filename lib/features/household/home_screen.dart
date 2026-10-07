@@ -11,6 +11,7 @@ import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
 import '../pets/pet_providers.dart';
 import '../settings/settings_screen.dart';
+import '../symptoms/log_sheet.dart';
 import '../symptoms/log_summary.dart';
 import '../symptoms/pet_logs_screen.dart';
 import '../symptoms/symptom_providers.dart';
@@ -56,7 +57,8 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: petsState.when(
-        data: (pets) => pets.isEmpty ? _NoPets(household: household, uid: uid) : _pets(pets),
+        data: (pets) =>
+            pets.isEmpty ? _NoPets(household: household, uid: uid) : _pets(context, pets),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -75,17 +77,69 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _pets(List<Pet> pets) {
+  Widget _pets(BuildContext context, List<Pet> pets) {
     final grid = pets.length <= _gridMaxPets;
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+    return Stack(
       children: [
-        if (grid)
-          _PetGrid(household: household, uid: uid, pets: pets)
-        else
-          _PetRow(household: household, uid: uid, pets: pets),
-        _Recent(household: household, uid: uid, pets: pets, showAllPets: !grid),
+        ListView(
+          // Room for the button over the last row.
+          padding: const EdgeInsets.only(bottom: 110),
+          children: [
+            if (grid)
+              _PetGrid(household: household, uid: uid, pets: pets)
+            else
+              _PetRow(household: household, uid: uid, pets: pets),
+            _Recent(household: household, uid: uid, pets: pets, showAllPets: !grid),
+          ],
+        ),
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 0,
+          child: SafeArea(
+            top: false,
+            minimum: const EdgeInsets.only(bottom: 26),
+            child: _LogButton(
+              onPressed: () => showLogSheet(context, household: household, uid: uid, pets: pets),
+            ),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _LogButton extends StatelessWidget {
+  const _LogButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: .35),
+            offset: const Offset(0, 6),
+            blurRadius: 18,
+          ),
+        ],
+      ),
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(60),
+          shape: const StadiumBorder(),
+          // From the theme, so it keeps the app font.
+          textStyle: Theme.of(context).textTheme.labelLarge!
+              .copyWith(fontSize: 17, fontWeight: FontWeight.w600),
+        ),
+        icon: const Icon(Icons.add, size: 24),
+        label: const Text('Log a symptom'),
+        onPressed: onPressed,
+      ),
     );
   }
 }

@@ -27,6 +27,7 @@ class SymptomLogRepository {
     );
   }
 
+  /// Saved as [logId] when given, from [newLogId]; under a new id otherwise.
   Future<void> addOtherLog({
     required String householdId,
     required String petId,
@@ -34,15 +35,18 @@ class SymptomLogRepository {
     required String title,
     required DateTime occurredAt,
     String? notes,
+    String? logId,
   }) {
-    return _logs(householdId, petId).add(
-      SymptomLog.otherToFirestore(
-        createdBy: createdBy,
-        title: title,
-        occurredAt: occurredAt,
-        notes: notes,
-      ),
-    );
+    return _logs(householdId, petId)
+        .doc(logId)
+        .set(
+          SymptomLog.otherToFirestore(
+            createdBy: createdBy,
+            title: title,
+            occurredAt: occurredAt,
+            notes: notes,
+          ),
+        );
   }
 
   Future<void> updateOtherLog({
