@@ -14,12 +14,17 @@ class SymptomLogRepository {
       .doc(petId)
       .collection('symptomLogs');
 
-  /// The pet's logs, most recent first.
-  Stream<List<SymptomLog>> watchLogs({required String householdId, required String petId}) {
-    return _logs(householdId, petId)
-        .orderBy('occurredAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map(SymptomLog.fromFirestore).toList());
+  /// The pet's logs, most recent first. Only the latest [limit], when given.
+  Stream<List<SymptomLog>> watchLogs({
+    required String householdId,
+    required String petId,
+    int? limit,
+  }) {
+    var query = _logs(householdId, petId).orderBy('occurredAt', descending: true);
+    if (limit != null) query = query.limit(limit);
+    return query.snapshots().map(
+      (snapshot) => snapshot.docs.map(SymptomLog.fromFirestore).toList(),
+    );
   }
 
   Future<void> addOtherLog({

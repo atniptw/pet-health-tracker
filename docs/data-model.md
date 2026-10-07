@@ -173,7 +173,7 @@ Question mechanics:
 ## Conventions
 
 - **Deletes:** pets are archived; logs are hard-deleted (by their author or an admin).
-- **Indexes:** the main query (a pet's logs by `occurredAt` descending) needs no custom index. Filtering by symptom needs a composite index on `(symptom, occurredAt)`.
+- **Indexes:** the main query (a pet's logs by `occurredAt` descending) needs no custom index. Filtering by symptom needs a composite index on `(symptom, occurredAt)`. The home screen's recent logs, "Logged before" titles and last-logged pet all come from each pet's latest 50 logs by `occurredAt`, so they need no composite index either.
 
 ## Open questions
 

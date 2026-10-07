@@ -256,6 +256,22 @@ void main() {
       expect(result.first.createdBy, 'user-1');
     });
 
+    test('emits only the latest logs when given a limit', () async {
+      for (final day in [3, 5, 4, 1]) {
+        await repository.addOtherLog(
+          householdId: 'h1',
+          petId: 'p1',
+          createdBy: 'user-1',
+          title: 'Day $day',
+          occurredAt: DateTime(2026, 10, day),
+        );
+      }
+
+      final result = await repository.watchLogs(householdId: 'h1', petId: 'p1', limit: 2).first;
+
+      expect(result.map((log) => log.title), ['Day 5', 'Day 4']);
+    });
+
     test('reads notes and answers, and ignores other pets', () async {
       await logs().doc('l1').set({
         'symptom': 'vomit',
