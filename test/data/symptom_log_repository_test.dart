@@ -238,6 +238,28 @@ void main() {
     });
   });
 
+  group('updateOccurredAt', () {
+    test('changes only when it happened', () async {
+      await logs().doc('log-1').set({
+        'symptom': 'vomit',
+        'occurredAt': Timestamp.fromDate(DateTime.utc(2026, 10, 5)),
+        'notes': 'Grass',
+      });
+
+      await repository.updateOccurredAt(
+        householdId: 'h1',
+        petId: 'p1',
+        logId: 'log-1',
+        occurredAt: DateTime.utc(2026, 10, 4, 22, 15),
+      );
+
+      final data = (await logs().doc('log-1').get()).data()!;
+      expect((data['occurredAt'] as Timestamp).toDate().toUtc(), DateTime.utc(2026, 10, 4, 22, 15));
+      expect(data['updatedAt'], isA<Timestamp>());
+      expect((data['symptom'], data['notes']), ('vomit', 'Grass'));
+    });
+  });
+
   group('deleteLog', () {
     test('deletes only that log', () async {
       await logs().doc('log-1').set({'symptom': 'vomit'});

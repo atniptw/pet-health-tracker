@@ -40,21 +40,8 @@ class _EditLogScreenState extends ConsumerState<EditLogScreen> {
   }
 
   Future<void> _pickOccurredAt() async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _occurredAt,
-      firstDate: DateTime(now.year - 50),
-      lastDate: now,
-      helpText: 'When did it happen?',
-    );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_occurredAt),
-    );
-    if (time == null) return;
-    setState(() => _occurredAt = DateTime(date.year, date.month, date.day, time.hour, time.minute));
+    final occurredAt = await pickOccurredAt(context, _occurredAt);
+    if (occurredAt != null) setState(() => _occurredAt = occurredAt);
   }
 
   void _save() {

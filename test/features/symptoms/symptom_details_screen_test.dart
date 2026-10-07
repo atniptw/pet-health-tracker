@@ -67,7 +67,10 @@ final catalog = SymptomCatalog.fromMap({
 void main() {
   late MockSymptomLogRepository repository;
 
-  setUpAll(() => registerFallbackValue(<String, Object?>{}));
+  setUpAll(() {
+    registerFallbackValue(<String, Object?>{});
+    registerFallbackValue(DateTime(2026));
+  });
 
   void stubAnswers(Future<void> Function() answer) {
     when(
@@ -89,6 +92,14 @@ void main() {
         petId: any(named: 'petId'),
         logId: any(named: 'logId'),
         notes: any(named: 'notes'),
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => repository.updateOccurredAt(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        logId: any(named: 'logId'),
+        occurredAt: any(named: 'occurredAt'),
       ),
     ).thenAnswer((_) async {});
   });
@@ -174,8 +185,10 @@ void main() {
     await open(tester, log());
 
     expect(find.text('Seizure'), findsOneWidget);
-    expect(find.textContaining('Boogie · ', findRichText: true), findsOneWidget);
-    expect(find.textContaining('6:40 AM', findRichText: true), findsOneWidget);
+    expect(
+      find.text('Boogie · Tuesday, October 6, 2026 · 6:40 AM', findRichText: true),
+      findsOneWidget,
+    );
   });
 
   testWidgets("shows each question with the log's answers", (tester) async {
@@ -340,5 +353,63 @@ void main() {
 
     expect(find.text('bloat'), findsOneWidget);
     expect(noteField(), findsOneWidget);
+  });
+
+  group('when it happened', () {
+    const shown = 'Tuesday, October 6, 2026 · 6:40 AM';
+
+    void verifyNoTimeWrite() => verifyNever(
+      () => repository.updateOccurredAt(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        logId: any(named: 'logId'),
+        occurredAt: any(named: 'occurredAt'),
+      ),
+    );
+
+    testWidgets('shows when the log happened', (tester) async {
+      await open(tester, log());
+
+      expect(find.text('Occurred'), findsOneWidget);
+      expect(find.text(shown), findsOneWidget);
+    });
+
+    testWidgets('writes only the new time when another date is picked', (tester) async {
+      await open(tester, log());
+      await tapAndSettle(tester, find.byKey(const ValueKey('occurredAt')));
+      await tester.tap(find.text('5'));
+      await tapAndSettle(tester, find.text('OK'));
+      await tapAndSettle(tester, find.text('OK'));
+
+      verify(
+        () => repository.updateOccurredAt(
+          householdId: 'h1',
+          petId: 'p1',
+          logId: 'l1',
+          occurredAt: DateTime(2026, 10, 5, 6, 40),
+        ),
+      ).called(1);
+      expect(find.text('Monday, October 5, 2026 · 6:40 AM'), findsOneWidget);
+      expect(find.textContaining('Monday, October 5, 2026', findRichText: true), findsNWidgets(2));
+      verifyNoWrites();
+    });
+
+    testWidgets('writes nothing when the pickers are cancelled', (tester) async {
+      await open(tester, log());
+      await tapAndSettle(tester, find.byKey(const ValueKey('occurredAt')));
+      await tapAndSettle(tester, find.text('Cancel'));
+
+      expect(find.text(shown), findsOneWidget);
+      verifyNoTimeWrite();
+    });
+
+    testWidgets('writes nothing when the same time is picked', (tester) async {
+      await open(tester, log());
+      await tapAndSettle(tester, find.byKey(const ValueKey('occurredAt')));
+      await tapAndSettle(tester, find.text('OK'));
+      await tapAndSettle(tester, find.text('OK'));
+
+      verifyNoTimeWrite();
+    });
   });
 }

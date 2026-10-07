@@ -48,6 +48,9 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
   final _fields =
       <String, ({CatalogQuestion question, TextEditingController text, FocusNode focus})>{};
 
+  /// When it happened, as last written.
+  late DateTime _occurredAt = widget.log.occurredAt;
+
   late final _notes = TextEditingController(text: widget.log.notes);
   late final _notesFocus = FocusNode()..addListener(_onNotesFocusChanged);
   late String _savedNotes = widget.log.notes ?? '';
@@ -111,6 +114,20 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
     if (value != _answers[question.key]) _saveAnswer(question.key, value);
   }
 
+  Future<void> _pickOccurredAt() async {
+    final occurredAt = await pickOccurredAt(context, _occurredAt);
+    if (occurredAt == null || occurredAt == _occurredAt) return;
+    setState(() => _occurredAt = occurredAt);
+    _write(
+      _repository.updateOccurredAt(
+        householdId: widget.householdId,
+        petId: widget.petId,
+        logId: widget.log.id,
+        occurredAt: occurredAt,
+      ),
+    );
+  }
+
   void _onNotesFocusChanged() {
     if (!_notesFocus.hasFocus) _saveNotes();
   }
@@ -153,6 +170,7 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
 
     final children = <Widget>[];
     var i = 0;
+    final occurred = _OccurredRow(occurredAt: _occurredAt, onTap: _pickOccurredAt);
     while (i < questions.length) {
       final question = questions[i];
       if (question.type == QuestionType.yesNo) {
@@ -209,7 +227,7 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
         title: _Header(
           title: symptom?.label ?? widget.log.symptom,
           petName: widget.petName,
-          occurredAt: widget.log.occurredAt,
+          occurredAt: _occurredAt,
         ),
         actions: [
           Padding(
@@ -228,7 +246,10 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
           ),
         ],
       ),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24), children: children),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [occurred, ...children],
+      ),
     );
   }
 
@@ -339,6 +360,43 @@ class _Header extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+/// "Occurred" and when, which opens the date and time pickers on tap.
+class _OccurredRow extends StatelessWidget {
+  const _OccurredRow({required this.occurredAt, required this.onTap});
+
+  final DateTime occurredAt;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final mute = Theme.of(context).colorScheme.onSurfaceVariant;
+    return InkWell(
+      key: const ValueKey('occurredAt'),
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            const Text('Occurred', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                formatOccurredAt(context, occurredAt),
+                textAlign: TextAlign.end,
+                style: TextStyle(fontFamily: monoFontFamily, fontSize: 13, color: mute),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.schedule, size: 20, color: mute),
+          ],
+        ),
+      ),
     );
   }
 }

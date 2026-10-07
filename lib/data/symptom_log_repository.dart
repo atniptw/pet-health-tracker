@@ -118,6 +118,19 @@ class SymptomLogRepository {
     });
   }
 
+  /// Changes only when the log's symptom happened.
+  Future<void> updateOccurredAt({
+    required String householdId,
+    required String petId,
+    required String logId,
+    required DateTime occurredAt,
+  }) {
+    return _logs(householdId, petId).doc(logId).update({
+      'occurredAt': Timestamp.fromDate(occurredAt),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> deleteLog({
     required String householdId,
     required String petId,
