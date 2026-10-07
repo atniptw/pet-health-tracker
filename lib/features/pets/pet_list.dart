@@ -43,6 +43,12 @@ class PetList extends ConsumerWidget {
   }
 }
 
+/// "Dog · Beagle", or the species alone when the breed isn't set.
+String describePet(Pet pet) {
+  final breed = pet.breed;
+  return breed == null ? pet.species.label : '${pet.species.label} · $breed';
+}
+
 class _PetTile extends StatelessWidget {
   const _PetTile({required this.pet, required this.onTap});
 
@@ -51,11 +57,10 @@ class _PetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final breed = pet.breed;
     return ListTile(
       leading: CircleAvatar(child: Text(pet.name.characters.first.toUpperCase())),
       title: Text(pet.name),
-      subtitle: Text(breed == null ? pet.species.label : '${pet.species.label} · $breed'),
+      subtitle: Text(describePet(pet)),
       onTap: onTap,
     );
   }

@@ -56,6 +56,47 @@ void main() {
     }
   });
 
+  test('pet avatars cycle through 4 colour pairs in each theme', () {
+    final light = appTheme(Brightness.light).extension<AppColors>()!;
+    final dark = appTheme(Brightness.dark).extension<AppColors>()!;
+
+    expect(light.avatar(0), (fill: const Color(0xFFCFF0EB), initial: const Color(0xFF00554D)));
+    expect(light.avatar(4), light.avatar(0));
+    expect(dark.avatar(0), (fill: const Color(0xFF0C3531), initial: const Color(0xFF93E3D8)));
+    expect(dark.avatars, hasLength(4));
+    for (final pair in dark.avatars) {
+      expect(pair.fill.computeLuminance(), lessThan(pair.initial.computeLuminance()));
+    }
+  });
+
+  test('avatar colours switch halfway through a theme change', () {
+    final light = appTheme(Brightness.light).extension<AppColors>()!;
+    final dark = appTheme(Brightness.dark).extension<AppColors>()!;
+
+    expect(light.lerp(dark, .4), light);
+    expect(light.lerp(dark, .6), dark);
+    expect(light.lerp(null, 1), light);
+    expect(light.copyWith().avatars, light.avatars);
+    expect(light.copyWith(avatars: dark.avatars).avatars, dark.avatars);
+  });
+
+  testWidgets('a theme without avatar colours falls back to the design\'s', (tester) async {
+    late AppColors colors;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(brightness: Brightness.dark),
+        home: Builder(
+          builder: (context) {
+            colors = AppColors.of(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(colors.avatars, appTheme(Brightness.dark).extension<AppColors>()!.avatars);
+  });
+
   test('text uses Figtree', () {
     final theme = appTheme(Brightness.light);
 

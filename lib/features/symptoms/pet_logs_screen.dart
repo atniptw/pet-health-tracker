@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/household.dart';
 import '../../data/pet.dart';
 import '../../data/symptom_log.dart';
 import 'log_symptom_screen.dart';
 import 'occurred_at.dart';
 import 'symptom_details_screen.dart';
 import 'symptom_providers.dart';
+
+/// Opens [pet]'s history for the signed-in user, [uid].
+void openPetLogs(
+  BuildContext context, {
+  required Household household,
+  required String uid,
+  required Pet pet,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (context) => PetLogsScreen(
+        householdId: household.id,
+        pet: pet,
+        uid: uid,
+        isAdmin: household.adminIds.contains(uid),
+      ),
+    ),
+  );
+}
 
 /// A pet's symptom logs, with a button to log a new one. Tapping a log the
 /// user may change opens it for editing.

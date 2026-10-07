@@ -60,6 +60,52 @@ const _dark = _Tokens(
   accText: Color(0xFF93E3D8),
 );
 
+/// A pet avatar's circle and initial.
+typedef AvatarColors = ({Color fill, Color initial});
+
+/// The design's colours that have no place in [ColorScheme].
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({required this.avatars});
+
+  /// The theme's, or the design's for its brightness when the theme has none.
+  static AppColors of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<AppColors>() ??
+        (theme.brightness == Brightness.light ? _lightColors : _darkColors);
+  }
+
+  /// Teal, terracotta, violet and amber, given to pets by their order in the
+  /// list and cycling.
+  final List<AvatarColors> avatars;
+
+  AvatarColors avatar(int index) => avatars[index % avatars.length];
+
+  @override
+  AppColors copyWith({List<AvatarColors>? avatars}) => AppColors(avatars: avatars ?? this.avatars);
+
+  @override
+  AppColors lerp(AppColors? other, double t) => other != null && t >= .5 ? other : this;
+}
+
+const _lightColors = AppColors(
+  avatars: [
+    (fill: Color(0xFFCFF0EB), initial: Color(0xFF00554D)),
+    (fill: Color(0xFFFEE5DC), initial: Color(0xFF833F27)),
+    (fill: Color(0xFFEBE3FC), initial: Color(0xFF544272)),
+    (fill: Color(0xFFF8EACE), initial: Color(0xFF6B4716)),
+  ],
+);
+
+// Dark, muted fills with light initials, as accSoft and accText are in dark.
+const _darkColors = AppColors(
+  avatars: [
+    (fill: Color(0xFF0C3531), initial: Color(0xFF93E3D8)),
+    (fill: Color(0xFF3B2219), initial: Color(0xFFF4B9A2)),
+    (fill: Color(0xFF2A2340), initial: Color(0xFFCDBDF0)),
+    (fill: Color(0xFF352A12), initial: Color(0xFFEBC98A)),
+  ],
+);
+
 /// For times, which the design sets in a monospaced font.
 const monoFontFamily = 'IBM Plex Mono';
 
@@ -82,7 +128,11 @@ ThemeData appTheme(Brightness brightness) {
     outline: t.mute,
     outlineVariant: t.line,
   );
-  return ThemeData(colorScheme: colorScheme, fontFamily: 'Figtree');
+  return ThemeData(
+    colorScheme: colorScheme,
+    fontFamily: 'Figtree',
+    extensions: [if (brightness == Brightness.light) _lightColors else _darkColors],
+  );
 }
 
 /// Adds the bundled fonts' licenses to the app's license page.
