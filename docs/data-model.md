@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging and editing `other` symptoms (title, time, notes) and listing a pet's logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note from a pet's log history, and the security rules in `firestore.rules` are built; creating catalog logs and deleting logs exist in the data layer (`SymptomLogRepository`) but no screen uses them yet; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 

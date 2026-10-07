@@ -65,7 +65,7 @@ typedef AvatarColors = ({Color fill, Color initial});
 
 /// The design's colours that have no place in [ColorScheme].
 class AppColors extends ThemeExtension<AppColors> {
-  const AppColors({required this.avatars});
+  const AppColors({required this.avatars, required this.symptomDots, required this.otherDot});
 
   /// The theme's, or the design's for its brightness when the theme has none.
   static AppColors of(BuildContext context) {
@@ -80,8 +80,24 @@ class AppColors extends ThemeExtension<AppColors> {
 
   AvatarColors avatar(int index) => avatars[index % avatars.length];
 
+  /// Catalog symptoms' dots, keyed by symptom key.
+  final Map<String, Color> symptomDots;
+
+  /// The dot for `other` logs, and for catalog symptoms without their own.
+  final Color otherDot;
+
+  Color symptomDot(String key) => symptomDots[key] ?? otherDot;
+
   @override
-  AppColors copyWith({List<AvatarColors>? avatars}) => AppColors(avatars: avatars ?? this.avatars);
+  AppColors copyWith({
+    List<AvatarColors>? avatars,
+    Map<String, Color>? symptomDots,
+    Color? otherDot,
+  }) => AppColors(
+    avatars: avatars ?? this.avatars,
+    symptomDots: symptomDots ?? this.symptomDots,
+    otherDot: otherDot ?? this.otherDot,
+  );
 
   @override
   AppColors lerp(AppColors? other, double t) => other != null && t >= .5 ? other : this;
@@ -94,9 +110,16 @@ const _lightColors = AppColors(
     (fill: Color(0xFFEBE3FC), initial: Color(0xFF544272)),
     (fill: Color(0xFFF8EACE), initial: Color(0xFF6B4716)),
   ],
+  symptomDots: {
+    'seizure': Color(0xFF9274C3),
+    'vomit': Color(0xFFCC9C42),
+    'diarrhea': Color(0xFFC26B4C),
+  },
+  otherDot: Color(0xFF948274),
 );
 
 // Dark, muted fills with light initials, as accSoft and accText are in dark.
+// Dots are lightened to show on the dark background.
 const _darkColors = AppColors(
   avatars: [
     (fill: Color(0xFF0C3531), initial: Color(0xFF93E3D8)),
@@ -104,6 +127,12 @@ const _darkColors = AppColors(
     (fill: Color(0xFF2A2340), initial: Color(0xFFCDBDF0)),
     (fill: Color(0xFF352A12), initial: Color(0xFFEBC98A)),
   ],
+  symptomDots: {
+    'seizure': Color(0xFFB49CE0),
+    'vomit': Color(0xFFE0B762),
+    'diarrhea': Color(0xFFE08D70),
+  },
+  otherDot: Color(0xFFB5A598),
 );
 
 /// For times, which the design sets in a monospaced font.

@@ -7,8 +7,11 @@ import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
+import 'package:pet_health_tracker/data/symptom_catalog.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
 import 'package:pet_health_tracker/features/symptoms/log_sheet.dart';
+import 'package:pet_health_tracker/features/symptoms/symptom_details_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/symptom_providers.dart';
 
 import '../../helpers.dart';
 
@@ -16,6 +19,12 @@ class MockSymptomLogRepository extends Mock implements SymptomLogRepository {}
 
 void main() {
   const household = Household(id: 'h1', name: 'The Den', memberIds: ['u1'], adminIds: ['u1']);
+
+  const catalog = SymptomCatalog([
+    CatalogSymptom(key: 'seizure', label: 'Seizure'),
+    CatalogSymptom(key: 'cough', label: 'Cough', retired: true),
+    CatalogSymptom(key: 'vomit', label: 'Vomit'),
+  ]);
 
   late FakeFirebaseFirestore firestore;
 
@@ -65,6 +74,7 @@ void main() {
         symptomLogRepositoryProvider.overrideWithValue(
           repository ?? SymptomLogRepository(firestore),
         ),
+        symptomCatalogProvider.overrideWith((ref) => Stream.value(catalog)),
       ],
     );
     await tester.tap(find.text('Open'));
@@ -235,6 +245,67 @@ void main() {
     ).thenAnswer((_) => Future.error('offline'));
     await openSheet(tester, pets, repository: repository);
     await logSomethingElse(tester, 'Limping');
+
+    expect(find.text("Couldn't save the log: offline"), findsOneWidget);
+  });
+
+  testWidgets("lists the catalog's current symptoms, then something else", (tester) async {
+    final pets = await addPets(['Boogie']);
+    await openSheet(tester, pets);
+
+    expect(find.text('Cough'), findsNothing);
+    final tops = [
+      for (final label in ['Seizure', 'Vomit', 'Something else…'])
+        tester.getTopLeft(find.text(label)).dy,
+    ];
+    expect(tops, orderedEquals([...tops]..sort()));
+  });
+
+  testWidgets('picking a symptom saves it for the pet and opens its questions', (tester) async {
+    final pets = await addPets(['Boogie', 'Pootz']);
+    await openSheet(tester, pets);
+    await tester.tap(find.text('Pootz'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Vomit'));
+    await tester.pumpAndSettle();
+
+    final logs = await logsOf(pets[1]);
+    expect((logs.single['symptom'], logs.single['createdBy']), ('vomit', 'u1'));
+    expect(logs.single['answers'], isEmpty);
+    expect(find.byType(LogSheet), findsNothing);
+    final details = tester.widget<SymptomDetailsScreen>(find.byType(SymptomDetailsScreen));
+    expect((details.householdId, details.petId, details.petName), ('h1', pets[1].id, 'Pootz'));
+    expect((details.log.symptom, details.log.createdBy), ('vomit', 'u1'));
+    final snapshot = await firestore
+        .collection('households/h1/pets/${pets[1].id}/symptomLogs')
+        .get();
+    expect(details.log.id, snapshot.docs.single.id);
+  });
+
+  testWidgets('says so when a catalog log fails to save', (tester) async {
+    final pets = await addPets(['Boogie']);
+    final repository = MockSymptomLogRepository();
+    when(
+      () => repository.watchLogs(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        limit: any(named: 'limit'),
+      ),
+    ).thenAnswer((_) => Stream.value(const []));
+    when(() => repository.newLogId(householdId: 'h1', petId: pets[0].id)).thenReturn('log1');
+    when(
+      () => repository.addCatalogLog(
+        householdId: any(named: 'householdId'),
+        petId: any(named: 'petId'),
+        logId: any(named: 'logId'),
+        createdBy: any(named: 'createdBy'),
+        symptom: any(named: 'symptom'),
+        occurredAt: any(named: 'occurredAt'),
+      ),
+    ).thenAnswer((_) => Future.error('offline'));
+    await openSheet(tester, pets, repository: repository);
+    await tester.tap(find.text('Seizure'));
+    await tester.pumpAndSettle();
 
     expect(find.text("Couldn't save the log: offline"), findsOneWidget);
   });

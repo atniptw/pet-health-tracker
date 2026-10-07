@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
+import '../../core/theme.dart';
 import '../../data/household.dart';
 import '../../data/pet.dart';
+import '../../data/symptom_catalog.dart';
+import '../../data/symptom_log.dart';
 import '../pets/pet_avatar.dart';
+import 'symptom_details_screen.dart';
 import 'symptom_providers.dart';
 
 /// Up to this many pets are picked from a grid of pills; more from a row of
@@ -124,6 +128,50 @@ class _LogSheetState extends ConsumerState<LogSheet> {
     );
   }
 
+  /// Saves a catalog log for the selected pet, closes the sheet, and opens the
+  /// log's questions.
+  void _logCatalog(CatalogSymptom symptom) {
+    final pet = _selected(_lastLoggedPetId(watch: false));
+    final householdId = widget.household.id;
+    final repository = ref.read(symptomLogRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final log = SymptomLog(
+      id: repository.newLogId(householdId: householdId, petId: pet.id),
+      symptom: symptom.key,
+      createdBy: widget.uid,
+      occurredAt: DateTime.now(),
+    );
+    // Not awaited, so logging works without signal.
+    unawaited(
+      repository
+          .addCatalogLog(
+            householdId: householdId,
+            petId: pet.id,
+            logId: log.id,
+            createdBy: log.createdBy,
+            symptom: log.symptom,
+            occurredAt: log.occurredAt,
+          )
+          .catchError((Object e) {
+            messenger.showSnackBar(SnackBar(content: Text("Couldn't save the log: $e")));
+          }),
+    );
+    navigator
+      ..pop()
+      ..push(
+        MaterialPageRoute<void>(
+          builder: (context) => SymptomDetailsScreen(
+            householdId: householdId,
+            petId: pet.id,
+            petName: pet.name,
+            log: log,
+          ),
+        ),
+      );
+  }
+
   void _saveTitle() {
     final title = _title.text.trim();
     if (title.isEmpty) {
@@ -186,7 +234,16 @@ class _LogSheetState extends ConsumerState<LogSheet> {
               _Section(
                 label: 'What happened',
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _SomethingElseRow(onTap: () => setState(() => _typing = true)),
+                child: _SymptomRows(
+                  symptoms: [
+                    for (final symptom
+                        in ref.watch(symptomCatalogProvider).value?.symptoms ??
+                            const <CatalogSymptom>[])
+                      if (!symptom.retired) symptom,
+                  ],
+                  onPicked: _logCatalog,
+                  onSomethingElse: () => setState(() => _typing = true),
+                ),
               ),
               _LoggedBefore(householdId: widget.household.id, pet: pet, onPicked: _logOther),
             ],
@@ -409,31 +466,73 @@ class _PetAvatars extends StatelessWidget {
   }
 }
 
-class _SomethingElseRow extends StatelessWidget {
-  const _SomethingElseRow({required this.onTap});
+/// The catalog's symptoms, then "Something else…", divided by lines.
+class _SymptomRows extends StatelessWidget {
+  const _SymptomRows({
+    required this.symptoms,
+    required this.onPicked,
+    required this.onSomethingElse,
+  });
 
-  final VoidCallback onTap;
+  final List<CatalogSymptom> symptoms;
+  final ValueChanged<CatalogSymptom> onPicked;
+  final VoidCallback onSomethingElse;
 
   @override
   Widget build(BuildContext context) {
-    final mute = Theme.of(context).colorScheme.onSurfaceVariant;
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        height: 52,
-        child: Row(
-          children: [
-            Icon(Icons.edit_outlined, size: 18, color: mute),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Text(
-                'Something else…',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    final colors = Theme.of(context).colorScheme;
+    final dots = AppColors.of(context);
+    Widget row({
+      required Widget lead,
+      required String label,
+      Widget? trail,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 52,
+          child: Row(
+            children: [
+              SizedBox(width: 18, child: Center(child: lead)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              ?trail,
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (final symptom in symptoms) ...[
+          row(
+            lead: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: dots.symptomDot(symptom.key),
+                shape: BoxShape.circle,
               ),
             ),
-          ],
+            label: symptom.label,
+            trail: Icon(Icons.chevron_right, size: 22, color: colors.onSurfaceVariant),
+            onTap: () => onPicked(symptom),
+          ),
+          Divider(height: 1, color: colors.outlineVariant),
+        ],
+        row(
+          lead: Icon(Icons.edit_outlined, size: 18, color: colors.onSurfaceVariant),
+          label: 'Something else…',
+          onTap: onSomethingElse,
         ),
-      ),
+      ],
     );
   }
 }

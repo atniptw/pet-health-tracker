@@ -69,6 +69,22 @@ void main() {
     }
   });
 
+  test('each catalog symptom has its dot, and others the other dot', () {
+    final light = appTheme(Brightness.light).extension<AppColors>()!;
+    final dark = appTheme(Brightness.dark).extension<AppColors>()!;
+
+    expect(light.symptomDot('seizure'), const Color(0xFF9274C3));
+    expect(light.symptomDot('vomit'), const Color(0xFFCC9C42));
+    expect(light.symptomDot('diarrhea'), const Color(0xFFC26B4C));
+    expect(light.symptomDot('limping'), const Color(0xFF948274));
+    for (final key in ['seizure', 'vomit', 'diarrhea', 'other']) {
+      expect(
+        dark.symptomDot(key).computeLuminance(),
+        greaterThan(light.symptomDot(key).computeLuminance()),
+      );
+    }
+  });
+
   test('avatar colours switch halfway through a theme change', () {
     final light = appTheme(Brightness.light).extension<AppColors>()!;
     final dark = appTheme(Brightness.dark).extension<AppColors>()!;
@@ -76,8 +92,20 @@ void main() {
     expect(light.lerp(dark, .4), light);
     expect(light.lerp(dark, .6), dark);
     expect(light.lerp(null, 1), light);
-    expect(light.copyWith().avatars, light.avatars);
-    expect(light.copyWith(avatars: dark.avatars).avatars, dark.avatars);
+    final copy = light.copyWith();
+    expect(
+      (copy.avatars, copy.symptomDots, copy.otherDot),
+      (light.avatars, light.symptomDots, light.otherDot),
+    );
+    final changed = light.copyWith(
+      avatars: dark.avatars,
+      symptomDots: dark.symptomDots,
+      otherDot: dark.otherDot,
+    );
+    expect(
+      (changed.avatars, changed.symptomDots, changed.otherDot),
+      (dark.avatars, dark.symptomDots, dark.otherDot),
+    );
   });
 
   testWidgets('a theme without avatar colours falls back to the design\'s', (tester) async {
