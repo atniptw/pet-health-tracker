@@ -119,3 +119,15 @@ The source oklch values are in the HTML. Dark-mode values for the avatar and dot
 ## Files
 - `Pet Health Tracker.dc.html`: all screens. Sections 2a and 2b are the target; 1b, 1d and 0 are context.
 - In the repo, the screens these touch: `lib/features/household/home_screen.dart`, `lib/features/pets/pet_list.dart`, `lib/features/symptoms/log_symptom_screen.dart`, `lib/data/symptom_log.dart`, `lib/core/app.dart` (theme).
+
+## Open questions
+Still to be decided. Questions 1–7 are needed before the home screen and log sheet are built; question 8 before catalog symptoms can be picked in the sheet.
+
+1. **"All pets" link:** where does the link next to "Recent" go when there are more than 4 pets?
+2. **Dark-mode colours:** the pet avatar and symptom-dot colours have no dark values. Derive them from the dark palette, or pick them?
+3. **"Something else…":** does the title field open inside the sheet or on its own screen? After saving, does the details screen open for a note?
+4. **No pets yet:** what does the home screen show for a household with no pets? Only admins can add pets.
+5. **Old logging paths:** do the "Log symptom" button on a pet's history and the full-screen `other` form stay once the sheet exists?
+6. **Chips and footnote:** 2a shows the "Logged before" chips and 2b shows the footnote. Should both layouts show both?
+7. **Recent list:** how many rows does it show, and how are times older than today written?
+8. **Changing the time:** catalog logs are timed "now" and the details screen has no time control. Can the user change when it happened?
