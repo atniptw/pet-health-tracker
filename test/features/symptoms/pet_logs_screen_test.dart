@@ -7,7 +7,7 @@ import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/symptom_catalog.dart';
 import 'package:pet_health_tracker/data/symptom_log.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
-import 'package:pet_health_tracker/features/symptoms/log_symptom_screen.dart';
+import 'package:pet_health_tracker/features/symptoms/edit_log_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/pet_logs_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/symptom_details_screen.dart';
 import 'package:pet_health_tracker/features/symptoms/symptom_providers.dart';
@@ -134,17 +134,11 @@ void main() {
     expect(find.text('Nothing logged yet'), findsOneWidget);
   });
 
-  testWidgets('opens the log screen for this pet', (tester) async {
+  testWidgets('has no button to log a symptom', (tester) async {
     await pumpLogs(tester);
-    await tester.tap(find.text('Log symptom'));
     await tester.pumpAndSettle();
 
-    final screen = tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen));
-    expect(
-      (screen.householdId, screen.petId, screen.petName, screen.uid),
-      ('h1', 'p1', 'Boogie', 'u1'),
-    );
-    expect(screen.log, isNull);
+    expect(find.byType(FloatingActionButton), findsNothing);
   });
 
   group('editing', () {
@@ -164,8 +158,8 @@ void main() {
       await tester.tap(find.text('Ate a sock'));
       await tester.pumpAndSettle();
 
-      final screen = tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen));
-      expect((screen.householdId, screen.petId, screen.log?.title), ('h1', 'p1', 'Ate a sock'));
+      final screen = tester.widget<EditLogScreen>(find.byType(EditLogScreen));
+      expect((screen.householdId, screen.petId, screen.log.title), ('h1', 'p1', 'Ate a sock'));
     });
 
     testWidgets("members can't open someone else's log", (tester) async {
@@ -176,7 +170,7 @@ void main() {
       await tester.tap(find.text('Limping'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(LogSymptomScreen), findsNothing);
+      expect(find.byType(EditLogScreen), findsNothing);
     });
 
     testWidgets("admins can open anyone's log", (tester) async {
@@ -187,7 +181,7 @@ void main() {
       await tester.tap(find.text('Limping'));
       await tester.pumpAndSettle();
 
-      expect(tester.widget<LogSymptomScreen>(find.byType(LogSymptomScreen)).log?.title, 'Limping');
+      expect(tester.widget<EditLogScreen>(find.byType(EditLogScreen)).log.title, 'Limping');
     });
 
     Future<void> tapCatalogLog(WidgetTester tester, {required bool isAdmin}) async {
@@ -212,7 +206,7 @@ void main() {
         (screen.householdId, screen.petId, screen.petName, screen.log.id),
         ('h1', 'p1', 'Boogie', 'l1'),
       );
-      expect(find.byType(LogSymptomScreen), findsNothing);
+      expect(find.byType(EditLogScreen), findsNothing);
     });
 
     testWidgets("members can't open someone else's catalog log", (tester) async {

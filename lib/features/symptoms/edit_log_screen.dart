@@ -7,38 +7,29 @@ import '../../core/firebase_providers.dart';
 import '../../data/symptom_log.dart';
 import 'occurred_at.dart';
 
-/// Logs a symptom for a pet: a title, when it happened, and optional notes.
-/// Edits [log] when one is given.
-class LogSymptomScreen extends ConsumerStatefulWidget {
-  const LogSymptomScreen({
+/// Edits an `other` log: its title, when it happened, and its notes.
+class EditLogScreen extends ConsumerStatefulWidget {
+  const EditLogScreen({
     required this.householdId,
     required this.petId,
-    required this.petName,
-    required this.uid,
-    this.log,
+    required this.log,
     super.key,
   });
 
   final String householdId;
   final String petId;
-  final String petName;
 
-  /// The signed-in user, recorded as a new log's author.
-  final String uid;
-
-  /// An [SymptomLog.otherSymptom] log to edit.
-  final SymptomLog? log;
+  /// An [SymptomLog.otherSymptom] log.
+  final SymptomLog log;
 
   @override
-  ConsumerState<LogSymptomScreen> createState() => _LogSymptomScreenState();
+  ConsumerState<EditLogScreen> createState() => _EditLogScreenState();
 }
 
-class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
-  late final _titleController = TextEditingController(text: widget.log?.title);
-  late final _notesController = TextEditingController(text: widget.log?.notes);
-
-  /// When it happened. Null means now, taken at the moment of saving.
-  late DateTime? _occurredAt = widget.log?.occurredAt;
+class _EditLogScreenState extends ConsumerState<EditLogScreen> {
+  late final _titleController = TextEditingController(text: widget.log.title);
+  late final _notesController = TextEditingController(text: widget.log.notes);
+  late DateTime _occurredAt = widget.log.occurredAt;
   bool _showMissing = false;
 
   @override
@@ -50,10 +41,9 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
 
   Future<void> _pickOccurredAt() async {
     final now = DateTime.now();
-    final initial = _occurredAt ?? now;
     final date = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: _occurredAt,
       firstDate: DateTime(now.year - 50),
       lastDate: now,
       helpText: 'When did it happen?',
@@ -61,7 +51,7 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
     if (date == null || !mounted) return;
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
+      initialTime: TimeOfDay.fromDateTime(_occurredAt),
     );
     if (time == null) return;
     setState(() => _occurredAt = DateTime(date.year, date.month, date.day, time.hour, time.minute));
@@ -74,29 +64,18 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
-    final repository = ref.read(symptomLogRepositoryProvider);
-    final occurredAt = _occurredAt ?? DateTime.now();
-    final notes = _notesController.text.trim();
-    final log = widget.log;
-    final write = log == null
-        ? repository.addOtherLog(
-            householdId: widget.householdId,
-            petId: widget.petId,
-            createdBy: widget.uid,
-            title: title,
-            occurredAt: occurredAt,
-            notes: notes,
-          )
-        : repository.updateOtherLog(
-            householdId: widget.householdId,
-            petId: widget.petId,
-            logId: log.id,
-            title: title,
-            occurredAt: occurredAt,
-            notes: notes,
-          );
+    final write = ref
+        .read(symptomLogRepositoryProvider)
+        .updateOtherLog(
+          householdId: widget.householdId,
+          petId: widget.petId,
+          logId: widget.log.id,
+          title: title,
+          occurredAt: _occurredAt,
+          notes: _notesController.text.trim(),
+        );
     // Not awaited: Firestore completes the write only once the server has it,
-    // and logging has to work without signal. The local cache shows the log
+    // and editing has to work without signal. The local cache shows the change
     // straight away.
     unawaited(
       write.catchError((Object e) {
@@ -108,17 +87,13 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final occurredAt = _occurredAt;
-    final editing = widget.log != null;
-
     return Scaffold(
-      appBar: AppBar(title: Text(editing ? 'Edit log' : 'Log for ${widget.petName}')),
+      appBar: AppBar(title: const Text('Edit log')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _titleController,
-            autofocus: !editing,
             maxLength: 100,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
@@ -132,7 +107,7 @@ class _LogSymptomScreenState extends ConsumerState<LogSymptomScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('When'),
-            subtitle: Text(occurredAt == null ? 'Now' : formatOccurredAt(context, occurredAt)),
+            subtitle: Text(formatOccurredAt(context, _occurredAt)),
             trailing: const Icon(Icons.schedule),
             onTap: _pickOccurredAt,
           ),

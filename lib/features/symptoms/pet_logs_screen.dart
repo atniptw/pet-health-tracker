@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/household.dart';
 import '../../data/pet.dart';
 import '../../data/symptom_log.dart';
-import 'log_symptom_screen.dart';
+import 'edit_log_screen.dart';
 import 'occurred_at.dart';
 import 'symptom_details_screen.dart';
 import 'symptom_providers.dart';
@@ -28,8 +28,8 @@ void openPetLogs(
   );
 }
 
-/// A pet's symptom logs, with a button to log a new one. Tapping a log the
-/// user may change opens it for editing.
+/// A pet's symptom logs. Tapping a log the user may change opens it for
+/// editing.
 class PetLogsScreen extends ConsumerWidget {
   const PetLogsScreen({
     required this.householdId,
@@ -53,32 +53,16 @@ class PetLogsScreen extends ConsumerWidget {
 
   /// The form for an `other` log, or the catalog questions for any other.
   void _open(BuildContext context, SymptomLog log) {
-    if (log.symptom == SymptomLog.otherSymptom) {
-      _openForm(context, log: log);
-      return;
-    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => SymptomDetailsScreen(
-          householdId: householdId,
-          petId: pet.id,
-          petName: pet.name,
-          log: log,
-        ),
-      ),
-    );
-  }
-
-  void _openForm(BuildContext context, {SymptomLog? log}) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => LogSymptomScreen(
-          householdId: householdId,
-          petId: pet.id,
-          petName: pet.name,
-          uid: uid,
-          log: log,
-        ),
+        builder: (context) => log.symptom == SymptomLog.otherSymptom
+            ? EditLogScreen(householdId: householdId, petId: pet.id, log: log)
+            : SymptomDetailsScreen(
+                householdId: householdId,
+                petId: pet.id,
+                petName: pet.name,
+                log: log,
+              ),
       ),
     );
   }
@@ -91,17 +75,10 @@ class PetLogsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(pet.name)),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text('Log symptom'),
-        onPressed: () => _openForm(context),
-      ),
       body: logsState.when(
         data: (logs) => logs.isEmpty
             ? const Center(child: Text('Nothing logged yet'))
             : ListView(
-                // Room for the floating button over the last entry.
-                padding: const EdgeInsets.only(bottom: 88),
                 children: [
                   for (final log in logs)
                     _LogTile(
