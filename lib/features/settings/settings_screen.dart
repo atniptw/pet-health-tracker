@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/app_version.dart';
 import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
 import '../pets/pet_form_screen.dart';
@@ -49,6 +50,14 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Version'),
+            trailing: Text(
+              ref.watch(appVersionProvider).value ?? '',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+          ),
           SafeArea(
             top: false,
             child: ListTile(

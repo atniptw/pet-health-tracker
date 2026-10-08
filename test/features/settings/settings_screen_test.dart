@@ -2,6 +2,7 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pet_health_tracker/core/app_version.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/pet.dart';
@@ -34,9 +35,18 @@ void main() {
       overrides: [
         petRepositoryProvider.overrideWithValue(pets),
         authRepositoryProvider.overrideWithValue(auth),
+        appVersionProvider.overrideWith((ref) async => '0.0.1 (31)'),
       ],
     );
   }
+
+  testWidgets('shows the app version and build number', (tester) async {
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Version'), findsOneWidget);
+    expect(find.text('0.0.1 (31)'), findsOneWidget);
+  });
 
   testWidgets("lists the household's pets", (tester) async {
     await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog, breed: 'Beagle');
