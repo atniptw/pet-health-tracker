@@ -78,15 +78,21 @@ class PetLogsScreen extends ConsumerWidget {
       body: logsState.when(
         data: (logs) => logs.isEmpty
             ? const Center(child: Text('Nothing logged yet'))
-            : ListView(
-                children: [
-                  for (final log in logs)
-                    _LogTile(
-                      log: log,
-                      title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
-                      onTap: _canEdit(log) ? () => _open(context, log) : null,
-                    ),
-                ],
+            : ListView.separated(
+                itemCount: logs.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                itemBuilder: (context, index) {
+                  final log = logs[index];
+                  return _LogTile(
+                    log: log,
+                    title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
+                    onTap: _canEdit(log) ? () => _open(context, log) : null,
+                  );
+                },
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(

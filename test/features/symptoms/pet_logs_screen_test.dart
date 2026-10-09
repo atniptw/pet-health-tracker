@@ -79,6 +79,23 @@ void main() {
     expect(find.text('Nothing logged yet'), findsNothing);
   });
 
+  testWidgets('separates logs with dividers', (tester) async {
+    for (final title in ['Ate a sock', 'Limping', 'Sneezing']) {
+      await logs.addOtherLog(
+        householdId: 'h1',
+        petId: 'p1',
+        createdBy: 'u1',
+        title: title,
+        occurredAt: DateTime(2026, 10, 5, 9, 5),
+      );
+    }
+
+    await pumpLogs(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Divider), findsNWidgets(2));
+  });
+
   testWidgets('titles a catalog log with its catalog label', (tester) async {
     final repository = MockSymptomLogRepository();
     when(() => repository.watchLogs(householdId: 'h1', petId: 'p1')).thenAnswer(
