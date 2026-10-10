@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
 import 'household_providers.dart';
+import 'join_household_screen.dart';
 
 class CreateHouseholdScreen extends ConsumerStatefulWidget {
   const CreateHouseholdScreen({required this.user, super.key});
@@ -93,6 +94,15 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
               const SizedBox(height: 16),
               Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => JoinHouseholdScreen(user: widget.user),
+                ),
+              ),
+              child: const Text('Have an invite code? Join a household'),
+            ),
           ],
         ),
       ),

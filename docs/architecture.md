@@ -1,6 +1,6 @@
 # Architecture
 
-Status: partly implemented. The Firebase project is set up, and Google sign-in, household creation, adding and editing pets, the home screen with its "Log a symptom" sheet (catalog and `other` symptoms, with Undo for `other` logs), editing `other` logs, the symptom catalog (bundled, published and read, with catalog labels on logs), and answering a catalog log's questions and changing its time are built. The rest is still a plan.
+Status: partly implemented. The Firebase project is set up, and Google sign-in, creating, joining (with an invite code) and switching households, member names, adding and editing pets, the home screen with its "Log a symptom" sheet (catalog and `other` symptoms, with Undo for `other` logs), editing `other` logs, the symptom catalog (bundled, published and read, with catalog labels on logs), and answering a catalog log's questions and changing its time are built. The rest is still a plan.
 
 ## Cost
 

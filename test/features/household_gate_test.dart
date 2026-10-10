@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,10 +7,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/app.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
+import 'package:pet_health_tracker/data/invite_code.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/create_household_screen.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
 import 'package:pet_health_tracker/features/household/household_providers.dart';
+import 'package:pet_health_tracker/features/household/join_household_screen.dart';
 import 'package:pet_health_tracker/features/household/member_name_screen.dart';
 
 import '../helpers.dart';
@@ -200,6 +203,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(CreateHouseholdScreen), findsNothing);
+    expect(tester.widget<HomeScreen>(find.byType(HomeScreen)).household.name, 'Cabin');
+  });
+
+  testWidgets('joins another household from the switcher and opens it', (tester) async {
+    final auth = MockFirebaseAuth();
+    when(() => auth.currentUser).thenReturn(user);
+    final firestore = FakeFirebaseFirestore();
+    final repository = HouseholdRepository(firestore);
+    await repository.createHousehold(name: 'The Den', ownerUid: 'u1', ownerName: 'Tom');
+    await firestore.doc('households/h2').set({
+      'name': 'Cabin',
+      'memberIds': ['admin'],
+      'adminIds': ['admin'],
+    });
+    await firestore.doc('invites/${inviteIdFor('acorn tulip shelf')}').set({
+      'householdId': 'h2',
+      'createdBy': 'admin',
+      'createdAt': Timestamp.now(),
+      'schemaVersion': 1,
+    });
+
+    await tester.pumpScoped(
+      HouseholdGate(user: user),
+      overrides: [
+        firebaseAuthProvider.overrideWithValue(auth),
+        householdRepositoryProvider.overrideWithValue(repository),
+        petRepositoryProvider.overrideWithValue(PetRepository(FakeFirebaseFirestore())),
+        lastHouseholdStoreProvider.overrideWithValue(FakeLastHouseholdStore()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.arrow_drop_down));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Join a household'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Invite code'), 'acorn tulip shelf');
+    await tester.tap(find.text('Join'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(JoinHouseholdScreen), findsNothing);
     expect(tester.widget<HomeScreen>(find.byType(HomeScreen)).household.name, 'Cabin');
   });
 

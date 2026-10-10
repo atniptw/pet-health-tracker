@@ -7,6 +7,7 @@ import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/features/household/create_household_screen.dart';
 import 'package:pet_health_tracker/features/household/household_providers.dart';
+import 'package:pet_health_tracker/features/household/join_household_screen.dart';
 
 import '../helpers.dart';
 
@@ -195,5 +196,13 @@ void main() {
 
     expect(find.byType(CreateHouseholdScreen), findsNothing);
     expect(find.text('Open'), findsOneWidget);
+  });
+
+  testWidgets('links to joining with an invite code', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('Have an invite code? Join a household'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(JoinHouseholdScreen), findsOneWidget);
   });
 }

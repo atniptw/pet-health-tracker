@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,9 +8,10 @@ import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
 import 'create_household_screen.dart';
 import 'household_providers.dart';
+import 'join_household_screen.dart';
 
-/// The open household's name. Tapping it opens a sheet to switch households
-/// or create another.
+/// The open household's name. Tapping it opens a sheet to switch households,
+/// join one, or create another.
 class HouseholdTitle extends ConsumerWidget {
   const HouseholdTitle({required this.household, required this.uid, super.key});
 
@@ -65,25 +67,34 @@ class HouseholdTitle extends ConsumerWidget {
                 ),
               const Divider(),
               ListTile(
+                leading: const Icon(Icons.group_add_outlined),
+                title: const Text('Join a household'),
+                onTap: () => _open(context, sheetContext, ref, JoinHouseholdScreen.new),
+              ),
+              ListTile(
                 leading: const Icon(Icons.add),
                 title: const Text('Create a household'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  final user = ref.read(firebaseAuthProvider).currentUser;
-                  if (user == null) return;
-                  unawaited(
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => CreateHouseholdScreen(user: user),
-                      ),
-                    ),
-                  );
-                },
+                onTap: () => _open(context, sheetContext, ref, CreateHouseholdScreen.new),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Closes the sheet and opens [screen] for the signed-in user.
+  void _open(
+    BuildContext context,
+    BuildContext sheetContext,
+    WidgetRef ref,
+    Widget Function({required User user}) screen,
+  ) {
+    Navigator.of(sheetContext).pop();
+    final user = ref.read(firebaseAuthProvider).currentUser;
+    if (user == null) return;
+    unawaited(
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) => screen(user: user))),
     );
   }
 }
