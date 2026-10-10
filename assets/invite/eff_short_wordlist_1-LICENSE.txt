@@ -1,0 +1,8 @@
+EFF Short Wordlist 1 (https://www.eff.org/dice), by the Electronic Frontier
+Foundation, used to suggest household invite codes.
+
+Licensed under the Creative Commons Attribution 3.0 United States License:
+https://creativecommons.org/licenses/by/3.0/us/
+
+The list is unchanged except that the dice numbers before each word were
+removed.

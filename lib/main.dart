@@ -10,11 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/app.dart';
 import 'core/theme.dart';
+import 'data/invite_code.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerFontLicenses();
+  registerInviteWordsLicense();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Crash reports come from release builds only. Debug builds keep Flutter's

@@ -42,6 +42,8 @@ dependencies:
   firebase_crashlytics: ^5.4.0
   package_info_plus: ^10.2.2
   shared_preferences: ^2.5.6
+  crypto: ^3.0.7
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,8 @@ flutter:
     - assets/catalog/symptoms.json
     - assets/fonts/Figtree-OFL.txt
     - assets/fonts/IBMPlexMono-OFL.txt
+    - assets/invite/eff_short_wordlist_1.txt
+    - assets/invite/eff_short_wordlist_1-LICENSE.txt
 
   # Figtree is a variable font: FontWeight sets its weight axis.
   fonts:

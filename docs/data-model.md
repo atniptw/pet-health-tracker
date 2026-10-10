@@ -44,10 +44,10 @@ A pet's history shows who logged each entry, once the household has more than on
 
 Admins add people with an invite code, redeemed with security rules only (no Cloud Functions, since those need a paid plan; see architecture.md). New people join as members, and admins promote from there. This works the same for Google and Apple users.
 
-- **The code:** the app suggests three random words. The admin can regenerate the suggestion or type their own of at least 12 characters, any characters allowed.
+- **The code:** the app suggests three random words from the bundled EFF Short Wordlist 1 (1,296 words, CC BY 3.0, credited on the licenses page), picked again until the suggestion is at least 12 characters. The admin can regenerate the suggestion or type their own of at least 12 characters, any characters allowed.
 - **Matching:** exact, after trimming trailing spaces. Autocorrect is off on the code field.
 - **Reuse and expiry:** a code works for any number of people until it expires, 7 days after it is made. A household has one active code; making a new one replaces it, and the old one stops working.
-- **Only the hash is stored:** Firestore keeps the code's SHA-256 hash, never the code. The raw code is kept only on the phone of the admin who made it, in secure storage, keyed by account and household, and deleted when it expires. Other admins, or the same admin on another phone, see that a code is active and when it expires, and can make a new one to share.
+- **Only the hash is stored:** Firestore keeps the code's SHA-256 hash, never the code. The raw code is kept only on the phone of the admin who made it, in secure storage (`flutter_secure_storage`; Android auto-backup is off so a restored backup can't leave unreadable values), keyed by account and household, and deleted when it expires. Other admins, or the same admin on another phone, see that a code is active and when it expires, and can make a new one to share.
 - **Who sees it:** admins only.
 
 ### Leaving
