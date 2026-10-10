@@ -9,19 +9,27 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
+  arrayRemove,
+  arrayUnion,
+  collection,
   deleteDoc,
   deleteField,
   doc,
   getDoc,
+  getDocs,
+  query,
   serverTimestamp,
   setDoc,
   setLogLevel,
   updateDoc,
+  where,
+  writeBatch,
 } from 'firebase/firestore';
 
 const ADMIN = 'admin-uid';
 const MEMBER = 'member-uid';
 const OUTSIDER = 'outsider-uid';
+const SECOND_ADMIN = 'second-admin-uid';
 
 const HOUSEHOLD = 'households/h1';
 const PET = `${HOUSEHOLD}/pets/p1`;
@@ -156,6 +164,296 @@ describe('households', () => {
     await assertFails(updateDoc(ref, { adminIds: [ADMIN, OUTSIDER] }));
     await assertFails(updateDoc(ref, { memberIds: [MEMBER] }));
     await assertSucceeds(updateDoc(ref, { adminIds: [ADMIN, MEMBER] }));
+  });
+});
+
+// Invite IDs are the SHA-256 hash of the code, in lowercase hex.
+const INVITE_ID = 'a'.repeat(64);
+const INVITE = `invites/${INVITE_ID}`;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** An invite to h1 made [ageDays] days ago, written directly. */
+async function seedInvite(ageDays = 1, householdId = 'h1') {
+  await seed({
+    [INVITE]: {
+      householdId,
+      createdBy: ADMIN,
+      createdAt: new Date(Date.now() - ageDays * DAY_MS),
+      schemaVersion: 1,
+    },
+  });
+}
+
+/** What the app writes when making an invite. */
+function newInvite(overrides = {}) {
+  return {
+    householdId: 'h1',
+    createdBy: ADMIN,
+    createdAt: serverTimestamp(),
+    schemaVersion: 1,
+    ...overrides,
+  };
+}
+
+/** What the app writes for a member's name. */
+function newMember(overrides = {}) {
+  return {
+    name: 'Tom',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    schemaVersion: 1,
+    ...overrides,
+  };
+}
+
+/** The join batch: add [uid] to h1's memberIds and write their member doc. */
+function join(uid, { inviteId = INVITE_ID, member = newMember({ inviteId }) } = {}) {
+  const firestore = db(uid);
+  const batch = writeBatch(firestore);
+  batch.update(doc(firestore, HOUSEHOLD), { memberIds: arrayUnion(uid), updatedAt: serverTimestamp() });
+  batch.set(doc(firestore, `${HOUSEHOLD}/members/${uid}`), member);
+  return batch.commit();
+}
+
+/** The leave write: remove [uid] from h1's memberIds. */
+function leave(uid) {
+  return updateDoc(doc(db(uid), HOUSEHOLD), {
+    memberIds: arrayRemove(uid),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+describe('joining a household', () => {
+  test('a signed-in user can join with an unexpired invite', async () => {
+    await seedHousehold();
+    await seedInvite();
+    await assertSucceeds(join(OUTSIDER));
+    await assertSucceeds(getDoc(doc(db(OUTSIDER), HOUSEHOLD)));
+  });
+
+  test('an invite works for more than one person', async () => {
+    await seedHousehold();
+    await seedInvite();
+    await assertSucceeds(join(OUTSIDER));
+    await assertSucceeds(join('another-uid'));
+  });
+
+  test('an invite stops working 7 days after it was made', async () => {
+    await seedHousehold();
+    await seedInvite(7.01);
+    await assertFails(join(OUTSIDER));
+  });
+
+  test('joining needs an invite that exists and points at this household', async () => {
+    await seedHousehold();
+    await assertFails(join(OUTSIDER));
+    await seedInvite(1, 'h2');
+    await assertFails(join(OUTSIDER));
+  });
+
+  test('joining needs the member doc in the same batch', async () => {
+    await seedHousehold();
+    await seedInvite();
+    await assertFails(
+      updateDoc(doc(db(OUTSIDER), HOUSEHOLD), {
+        memberIds: arrayUnion(OUTSIDER),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('joining can only add yourself, as a member', async () => {
+    await seedHousehold();
+    await seedInvite();
+    const firestore = db(OUTSIDER);
+    const attempt = (changes) => {
+      const batch = writeBatch(firestore);
+      batch.update(doc(firestore, HOUSEHOLD), { updatedAt: serverTimestamp(), ...changes });
+      batch.set(doc(firestore, `${HOUSEHOLD}/members/${OUTSIDER}`), newMember({ inviteId: INVITE_ID }));
+      return batch.commit();
+    };
+    await assertFails(attempt({ memberIds: arrayUnion(OUTSIDER, 'friend-uid') }));
+    await assertFails(attempt({ memberIds: arrayUnion(OUTSIDER), adminIds: arrayUnion(OUTSIDER) }));
+    await assertFails(attempt({ memberIds: arrayUnion(OUTSIDER), name: 'Mine now' }));
+    await assertFails(attempt({ memberIds: [OUTSIDER] }));
+  });
+
+  test('a former member can join again, keeping their member doc', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
+    });
+    await seedInvite();
+    await assertFails(join(MEMBER));
+    await assertSucceeds(join(MEMBER, { member: newMember({ inviteId: INVITE_ID, createdAt: new Date(0) }) }));
+  });
+});
+
+describe('leaving a household', () => {
+  test('a member who is not an admin can leave', async () => {
+    await seedHousehold();
+    await assertSucceeds(leave(MEMBER));
+    await assertFails(getDoc(doc(db(MEMBER), HOUSEHOLD)));
+  });
+
+  test('a member can only remove themselves', async () => {
+    await seedHousehold();
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER, OUTSIDER], adminIds: [ADMIN] },
+    });
+    await assertFails(
+      updateDoc(doc(db(MEMBER), HOUSEHOLD), { memberIds: arrayRemove(OUTSIDER), updatedAt: serverTimestamp() }),
+    );
+    await assertFails(
+      updateDoc(doc(db(MEMBER), HOUSEHOLD), {
+        memberIds: arrayRemove(MEMBER),
+        name: 'Bye',
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('outsiders have nothing to leave', async () => {
+    await seedHousehold();
+    await assertFails(leave(OUTSIDER));
+  });
+
+  test('the last admin cannot leave', async () => {
+    await seedHousehold();
+    await assertFails(
+      updateDoc(doc(db(ADMIN), HOUSEHOLD), {
+        memberIds: arrayRemove(ADMIN),
+        adminIds: arrayRemove(ADMIN),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('admins cannot use the member leave path', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN] },
+    });
+    await assertFails(leave(SECOND_ADMIN));
+  });
+});
+
+describe('members', () => {
+  const OWN = `${HOUSEHOLD}/members/${MEMBER}`;
+
+  test('members can read member docs, outsiders cannot', async () => {
+    await seedHousehold();
+    await seed({ [OWN]: { name: 'Tom' } });
+    await assertSucceeds(getDoc(doc(db(ADMIN), OWN)));
+    await assertFails(getDoc(doc(db(OUTSIDER), OWN)));
+  });
+
+  test('a member can write their own name, not anyone else\'s', async () => {
+    await seedHousehold();
+    await assertSucceeds(setDoc(doc(db(MEMBER), OWN), newMember()));
+    await assertFails(setDoc(doc(db(ADMIN), OWN), newMember({ createdAt: new Date(0) })));
+    await assertFails(setDoc(doc(db(OUTSIDER), `${HOUSEHOLD}/members/${OUTSIDER}`), newMember()));
+  });
+
+  test('the creator can write their name in the batch that creates the household', async () => {
+    const firestore = db(OUTSIDER);
+    const batch = writeBatch(firestore);
+    batch.set(doc(firestore, 'households/new'), newHousehold(OUTSIDER));
+    batch.set(doc(firestore, `households/new/members/${OUTSIDER}`), newMember());
+    await assertSucceeds(batch.commit());
+  });
+
+  test('a name is 1 to 100 characters', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), OWN);
+    await assertFails(setDoc(ref, newMember({ name: '' })));
+    await assertFails(setDoc(ref, newMember({ name: 'x'.repeat(101) })));
+    await assertSucceeds(setDoc(ref, newMember({ name: 'x'.repeat(100) })));
+  });
+
+  test('a member doc must be well formed', async () => {
+    await seedHousehold();
+    const ref = doc(db(MEMBER), OWN);
+    await assertFails(setDoc(ref, newMember({ createdAt: new Date(0) })));
+    await assertFails(setDoc(ref, newMember({ schemaVersion: 2 })));
+    await assertFails(setDoc(ref, newMember({ inviteId: 'not-a-hash' })));
+    await assertFails(setDoc(ref, newMember({ extra: true })));
+  });
+
+  test('a member can rename themselves but not change createdAt', async () => {
+    await seedHousehold();
+    await seed({ [OWN]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 } });
+    const ref = doc(db(MEMBER), OWN);
+    await assertSucceeds(updateDoc(ref, { name: 'Dad', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { createdAt: new Date(1), updatedAt: serverTimestamp() }));
+  });
+
+  test('nobody can delete a member doc', async () => {
+    await seedHousehold();
+    await seed({ [OWN]: { name: 'Tom' } });
+    await assertFails(deleteDoc(doc(db(MEMBER), OWN)));
+    await assertFails(deleteDoc(doc(db(ADMIN), OWN)));
+  });
+
+  test('a former member cannot change their name', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [OWN]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
+    });
+    await assertFails(updateDoc(doc(db(MEMBER), OWN), { name: 'Dad', updatedAt: serverTimestamp() }));
+  });
+});
+
+describe('invites', () => {
+  test('any signed-in user can get an invite by its ID, signed-out users cannot', async () => {
+    await seedInvite();
+    await assertSucceeds(getDoc(doc(db(OUTSIDER), INVITE)));
+    await assertFails(getDoc(doc(db(null), INVITE)));
+  });
+
+  test("only the household's admins can list its invites", async () => {
+    await seedHousehold();
+    await seedInvite();
+    const invitesOf = (uid) => query(collection(db(uid), 'invites'), where('householdId', '==', 'h1'));
+    await assertSucceeds(getDocs(invitesOf(ADMIN)));
+    await assertFails(getDocs(invitesOf(MEMBER)));
+    await assertFails(getDocs(invitesOf(OUTSIDER)));
+    await assertFails(getDocs(collection(db(ADMIN), 'invites')));
+  });
+
+  test('only admins can make an invite for their household', async () => {
+    await seedHousehold();
+    await assertFails(setDoc(doc(db(MEMBER), INVITE), newInvite({ createdBy: MEMBER })));
+    await assertFails(setDoc(doc(db(OUTSIDER), INVITE), newInvite({ createdBy: OUTSIDER })));
+    await assertSucceeds(setDoc(doc(db(ADMIN), INVITE), newInvite()));
+  });
+
+  test('a new invite must be well formed', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), INVITE);
+    await assertFails(setDoc(doc(db(ADMIN), 'invites/purple-otter-lamp'), newInvite()));
+    await assertFails(setDoc(ref, newInvite({ createdBy: MEMBER })));
+    await assertFails(setDoc(ref, newInvite({ createdAt: new Date() })));
+    await assertFails(setDoc(ref, newInvite({ schemaVersion: 2 })));
+    await assertFails(setDoc(ref, newInvite({ expiresAt: new Date() })));
+  });
+
+  test('an unexpired code cannot be taken over, an expired one can', async () => {
+    await seedHousehold();
+    await seed({ 'households/h2': { name: 'Other', memberIds: [OUTSIDER], adminIds: [OUTSIDER] } });
+    await seedInvite();
+    const ref = doc(db(OUTSIDER), INVITE);
+    const theirs = newInvite({ householdId: 'h2', createdBy: OUTSIDER });
+    await assertFails(setDoc(ref, theirs));
+    await seedInvite(8);
+    await assertSucceeds(setDoc(ref, theirs));
+  });
+
+  test("only the household's admins can delete its invite", async () => {
+    await seedHousehold();
+    await seedInvite();
+    await assertFails(deleteDoc(doc(db(MEMBER), INVITE)));
+    await assertFails(deleteDoc(doc(db(OUTSIDER), INVITE)));
+    await assertSucceeds(deleteDoc(doc(db(ADMIN), INVITE)));
   });
 });
 

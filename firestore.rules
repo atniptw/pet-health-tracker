@@ -59,6 +59,81 @@ service cloud.firestore {
         && data.schemaVersion == 1;
     }
 
+    function householdPath(householdId) {
+      return /databases/$(database)/documents/households/$(householdId);
+    }
+
+    // An invite works for 7 days after it is made.
+    function isUnexpired(invite) {
+      return request.time < invite.data.createdAt + duration.value(7, 'd');
+    }
+
+    // The update only adds or removes the caller in memberIds (and stamps updatedAt).
+    function changesOnlyMemberIds() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // A non-admin adds their own uid to memberIds. The same batch writes their member doc
+    // naming an unexpired invite for this household.
+    function isJoining(householdId) {
+      let uid = request.auth.uid;
+      let before = resource.data.memberIds;
+      let after = request.resource.data.memberIds;
+      let member = getAfter(/databases/$(database)/documents/households/$(householdId)/members/$(uid));
+      let invite = get(/databases/$(database)/documents/invites/$(member.data.inviteId));
+      return isSignedIn()
+        && changesOnlyMemberIds()
+        && !(uid in before)
+        && after.size() == before.size() + 1
+        && after.hasAll(before)
+        && uid in after
+        && invite.data.householdId == householdId
+        && isUnexpired(invite);
+    }
+
+    // A member who isn't an admin removes their own uid from memberIds.
+    function isLeaving() {
+      let uid = request.auth.uid;
+      let before = resource.data.memberIds;
+      let after = request.resource.data.memberIds;
+      return isSignedIn()
+        && changesOnlyMemberIds()
+        && uid in before
+        && !(uid in resource.data.adminIds)
+        && after.size() == before.size() - 1
+        && before.hasAll(after)
+        && !(uid in after);
+    }
+
+    // Fields every member doc write must leave valid.
+    function isValidMember(data) {
+      return data.keys().hasOnly(['name', 'inviteId', 'createdAt', 'updatedAt', 'schemaVersion'])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 100
+        && (!('inviteId' in data) || isInviteId(data.inviteId))
+        && data.updatedAt == request.time
+        && data.schemaVersion == 1;
+    }
+
+    // An invite's ID is the SHA-256 hash of its code, in lowercase hex.
+    function isInviteId(id) {
+      return id is string && id.matches('[0-9a-f]{64}');
+    }
+
+    // A new invite, made by an admin of the household it points at.
+    function isValidNewInvite(inviteId) {
+      let data = request.resource.data;
+      return isInviteId(inviteId)
+        && data.keys().hasOnly(['householdId', 'createdBy', 'createdAt', 'schemaVersion'])
+        && data.householdId is string
+        && isAdmin(get(householdPath(data.householdId)))
+        && data.createdBy == request.auth.uid
+        && data.createdAt == request.time
+        && data.schemaVersion == 1;
+    }
+
     match /households/{householdId} {
       allow read: if isMember(resource);
       allow create: if isSignedIn()
@@ -72,10 +147,28 @@ service cloud.firestore {
         && request.resource.data.schemaVersion == 1
         && request.resource.data.keys().hasOnly(
           ['name', 'memberIds', 'adminIds', 'createdAt', 'updatedAt', 'schemaVersion']);
-      allow update: if isAdmin(resource)
-        && request.resource.data.adminIds.size() > 0
-        && request.resource.data.memberIds.hasAll(request.resource.data.adminIds);
+      allow update: if (isAdmin(resource)
+          && request.resource.data.adminIds.size() > 0
+          && request.resource.data.memberIds.hasAll(request.resource.data.adminIds))
+        || isJoining(householdId)
+        || isLeaving();
       allow delete: if isAdmin(resource);
+
+      // A member's name in this household. Kept after they leave, so their logs keep it.
+      match /members/{uid} {
+        allow read: if isMember(get(householdPath(householdId)));
+        allow create: if isSignedIn()
+          && request.auth.uid == uid
+          && uid in getAfter(householdPath(householdId)).data.memberIds
+          && isValidMember(request.resource.data)
+          && request.resource.data.createdAt == request.time;
+        allow update: if isSignedIn()
+          && request.auth.uid == uid
+          && uid in getAfter(householdPath(householdId)).data.memberIds
+          && isValidMember(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
 
       match /pets/{petId} {
         allow read: if isMember(get(/databases/$(database)/documents/households/$(householdId)));
@@ -106,6 +199,17 @@ service cloud.firestore {
           allow create, update, delete: if isAdmin(get(/databases/$(database)/documents/households/$(householdId)));
         }
       }
+    }
+
+    // Invites are looked up by the hash of their code, which only people given the code
+    // know. Admins list their household's invites to see when the active one expires.
+    match /invites/{inviteId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin(get(householdPath(resource.data.householdId)));
+      allow create: if isValidNewInvite(inviteId);
+      // An expired code can be made again, by any household.
+      allow update: if !isUnexpired(resource) && isValidNewInvite(inviteId);
+      allow delete: if isAdmin(get(householdPath(resource.data.householdId)));
     }
 
     match /catalog/{docId} {

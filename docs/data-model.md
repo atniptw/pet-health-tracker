@@ -85,8 +85,7 @@ A member's name in this household. The doc ID is the member's uid. It is kept wh
 |---|---|---|
 | `householdId` | string | |
 | `createdBy` | uid | the admin who made it |
-| `createdAt` | server timestamp | |
-| `expiresAt` | timestamp | `createdAt` plus 7 days |
+| `createdAt` | server timestamp | the invite expires 7 days later; rules compute this, so no expiry is stored |
 | `schemaVersion` | int | |
 
 Making a new code deletes the household's old invite and creates the new one in one batch.
@@ -152,9 +151,9 @@ Each question is a map: `key`, `label`, `type`, `retired?`, for number types an 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`. A non-admin can make two changes only: add their own uid to `memberIds` when joining, and remove it when leaving.
-- **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId` (or updates it, if they were a member before). The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and hasn't expired. Whether this holds up in the rules emulator still needs to be proven with rules tests.
+- **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId` (or updates it, if they were a member before). The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and is less than 7 days old.
 - **Members:** read if in `memberIds`. A member can create and update only their own doc, and only while their uid is in `memberIds` (checked with `getAfter`, so it can be in the same batch as creating or joining the household). No one can delete a member doc.
-- **Invites:** any signed-in user can `get` an invite by its ID; only the household's admins can list them (to see the active one's expiry) and create or delete them. `expiresAt` must be 7 days after `createdAt`.
+- **Invites:** any signed-in user can `get` an invite by its ID; only the household's admins can list them (to see the active one's expiry) and create or delete them. An invite's ID must be a SHA-256 hex hash. An expired invite's ID can be reused by any household's admin.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`. Creates and updates must match the pet schema above: `name` 1 to 100 characters, a known `species` and `sex`, `breed` up to 100 characters, `birthDate` as `YYYY-MM-DD`, server timestamps, no other fields. A new pet can't be archived, and updates keep `createdAt`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` and `createdAt` cannot be changed. Creates and updates must match the log schema above: a `symptom` key of 1 to 50 characters, a `title` of 1 to 100 characters when `symptom` is `other` and no `title` otherwise, `answers` a map, `occurredAt` a timestamp, `notes` up to 2000 characters, server timestamps, no other fields.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
