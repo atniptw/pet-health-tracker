@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/app_version.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household.dart';
+import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/data/invite_repository.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
@@ -14,6 +15,8 @@ import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
 
 import '../../helpers.dart';
+
+class MockHouseholdRepository extends Mock implements HouseholdRepository {}
 
 void main() {
   const household = Household(
@@ -142,5 +145,82 @@ void main() {
 
     verify(auth.signOut).called(1);
     expect(find.byType(SettingsScreen), findsNothing);
+  });
+
+  group('leaving', () {
+    late MockHouseholdRepository households;
+
+    setUp(() {
+      households = MockHouseholdRepository();
+      when(
+        () => households.leaveHousehold(
+          householdId: any(named: 'householdId'),
+          uid: any(named: 'uid'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    /// Opens settings on top of a placeholder root, as the app does.
+    Future<void> openSettings(WidgetTester tester, {required String uid}) async {
+      await tester.pumpScoped(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => SettingsScreen(household: household, uid: uid),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+        overrides: [
+          petRepositoryProvider.overrideWithValue(pets),
+          householdRepositoryProvider.overrideWithValue(households),
+        ],
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a member leaves after confirming, and returns to the root', (tester) async {
+      await openSettings(tester, uid: 'member');
+
+      await tester.tap(find.text('Leave household'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leave The Den?'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Leave'));
+      await tester.pumpAndSettle();
+
+      verify(() => households.leaveHousehold(householdId: 'h1', uid: 'member')).called(1);
+      expect(find.byType(SettingsScreen), findsNothing);
+    });
+
+    testWidgets('cancelling keeps the member in the household', (tester) async {
+      await openSettings(tester, uid: 'member');
+
+      await tester.tap(find.text('Leave household'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        () => households.leaveHousehold(
+          householdId: any(named: 'householdId'),
+          uid: any(named: 'uid'),
+        ),
+      );
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+
+    testWidgets("admins can't leave, and are told why", (tester) async {
+      await openSettings(tester, uid: 'admin');
+
+      expect(find.text("Admins can't leave a household"), findsOneWidget);
+      await tester.tap(find.text('Leave household'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+    });
   });
 }

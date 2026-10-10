@@ -163,6 +163,23 @@ void main() {
     });
   });
 
+  test('leaving removes only the user from the members, keeping their name', () async {
+    await firestore.doc('households/h1').set({
+      'name': 'The Den',
+      'memberIds': ['admin', 'u1'],
+      'adminIds': ['admin'],
+    });
+    await firestore.doc('households/h1/members/u1').set({'name': 'Tom'});
+
+    await repository.leaveHousehold(householdId: 'h1', uid: 'u1');
+
+    final household = (await firestore.doc('households/h1').get()).data()!;
+    expect(household['memberIds'], ['admin']);
+    expect(household['adminIds'], ['admin']);
+    expect(household['updatedAt'], isA<Timestamp>());
+    expect((await firestore.doc('households/h1/members/u1').get()).data(), {'name': 'Tom'});
+  });
+
   group('joinHousehold', () {
     const code = 'acorn tulip shelf';
     final now = DateTime(2026, 10, 10, 12);

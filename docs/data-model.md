@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (members who aren't admins, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -52,7 +52,7 @@ Admins add people with an invite code, redeemed with security rules only (no Clo
 
 ### Leaving
 
-A member who isn't an admin can leave a household. Admins can't leave. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
+A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
 
 ## Collections
 

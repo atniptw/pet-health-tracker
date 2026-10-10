@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,6 +64,13 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ListTile(
+            leading: const Icon(Icons.exit_to_app),
+            title: const Text('Leave household'),
+            subtitle: isAdmin ? const Text("Admins can't leave a household") : null,
+            enabled: !isAdmin,
+            onTap: () => _leave(context, ref),
+          ),
+          ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),
             trailing: Text(
@@ -83,6 +92,33 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _leave(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Leave ${household.name}?'),
+        content: const Text(
+          "You'll lose access to its pets and logs. The symptoms you logged stay, "
+          "with your name. To come back, you'll need a new invite code.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Leave')),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    // Back to the root, which opens another household or the create and join
+    // choice. Like logging, leaving doesn't wait for the server.
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    unawaited(
+      ref.read(householdRepositoryProvider).leaveHousehold(householdId: household.id, uid: uid),
     );
   }
 }

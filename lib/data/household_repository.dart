@@ -79,6 +79,16 @@ class HouseholdRepository {
     });
   }
 
+  /// Removes [uid] from the household's members. The rules allow this only
+  /// for members who aren't admins. Their member doc stays, so their logs
+  /// keep their name.
+  Future<void> leaveHousehold({required String householdId, required String uid}) {
+    return _households.doc(householdId).update({
+      'memberIds': FieldValue.arrayRemove([uid]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Joins the household whose invite matches [code], as a member named
   /// [name], and returns the household's ID. Someone already in it just gets
   /// its ID.
