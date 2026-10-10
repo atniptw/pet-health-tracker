@@ -20,12 +20,37 @@ A household has members and pets. Every member can see the household's pets and 
 | Delete symptom logs | own entries only | all |
 | Add, edit, delete medications | no | yes |
 | Add, edit, archive pets | no | yes |
-| Add or remove members, change roles | no | yes |
-| Edit or delete the household | no | yes |
+| See and share the invite code | no | yes |
+| Remove members, change roles | no | yes |
+| Rename or delete the household | no | yes |
+| Change their own name in the household | yes | yes |
+| Leave the household | yes | no |
 
 A household always has at least one admin.
 
-A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its sole admin, with a default name of `{display name}'s Household`.
+A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its sole admin, with a default name of `{display name}'s Household`. People already in a household can join or create more.
+
+### Multiple households
+
+A person can be in several households. The app shows one household at a time, with a switcher, and remembers the last-opened household on the device. After joining, the app opens the household just joined.
+
+### Names
+
+Each member has a name per household, so someone can be "Tom" in one and "Dad" in another. It is pre-filled from the login's display name. The creator sets theirs on the create screen and an invitee sets theirs when joining. A member with no name in a household (households created before names existed) is asked for one once, the next time they open it. Anyone can change their own name.
+
+### Invite codes
+
+Admins add people with an invite code, redeemed with security rules only (no Cloud Functions, since those need a paid plan; see architecture.md). New people join as members, and admins promote from there. This works the same for Google and Apple users.
+
+- **The code:** the app suggests three random words. The admin can regenerate the suggestion or type their own of at least 12 characters, any characters allowed.
+- **Matching:** exact, after trimming trailing spaces. Autocorrect is off on the code field.
+- **Reuse and expiry:** a code works for any number of people until it expires, 7 days after it is made. A household has one active code; making a new one replaces it, and the old one stops working.
+- **Only the hash is stored:** Firestore keeps the code's SHA-256 hash, never the code. The raw code is kept only on the phone of the admin who made it, in secure storage, keyed by account and household, and deleted when it expires. Other admins, or the same admin on another phone, see that a code is active and when it expires, and can make a new one to share.
+- **Who sees it:** admins only.
+
+### Leaving
+
+A member who isn't an admin can leave a household. Admins can't leave. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
 
 ## Collections
 
@@ -40,6 +65,31 @@ A user does not get a household automatically. After sign-in, if they aren't alr
 | `schemaVersion` | int | evolve fields without a migration job |
 
 Membership and role live on the household doc as two arrays, so security rules can check a user's role with a single read of this doc, and "my households" is `where memberIds array-contains uid`.
+
+### `households/{householdId}/members/{uid}`
+
+A member's name in this household. The doc ID is the member's uid. It is kept when they leave.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | 1 to 100 characters |
+| `inviteId` | string? | the invite most recently used to join; absent for the creator |
+| `createdAt`, `updatedAt` | server timestamp | |
+| `schemaVersion` | int | |
+
+### `invites/{inviteId}`
+
+`inviteId` is the SHA-256 hash (hex) of the code. Top-level, so the person joining can look it up before they can read the household.
+
+| Field | Type | Notes |
+|---|---|---|
+| `householdId` | string | |
+| `createdBy` | uid | the admin who made it |
+| `createdAt` | server timestamp | |
+| `expiresAt` | timestamp | `createdAt` plus 7 days |
+| `schemaVersion` | int | |
+
+Making a new code deletes the household's old invite and creates the new one in one batch.
 
 ### `households/{householdId}/pets/{petId}`
 
@@ -101,7 +151,10 @@ Each question is a map: `key`, `label`, `type`, `retired?`, for number types an 
 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
 
-- **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`.
+- **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`. A non-admin can make two changes only: add their own uid to `memberIds` when joining, and remove it when leaving.
+- **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId` (or updates it, if they were a member before). The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and hasn't expired. Whether this holds up in the rules emulator still needs to be proven with rules tests.
+- **Members:** read if in `memberIds`. A member can create and update only their own doc, and only while their uid is in `memberIds` (checked with `getAfter`, so it can be in the same batch as creating or joining the household). No one can delete a member doc.
+- **Invites:** any signed-in user can `get` an invite by its ID; only the household's admins can list them (to see the active one's expiry) and create or delete them. `expiresAt` must be 7 days after `createdAt`.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`. Creates and updates must match the pet schema above: `name` 1 to 100 characters, a known `species` and `sex`, `breed` up to 100 characters, `birthDate` as `YYYY-MM-DD`, server timestamps, no other fields. A new pet can't be archived, and updates keep `createdAt`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` and `createdAt` cannot be changed. Creates and updates must match the log schema above: a `symptom` key of 1 to 50 characters, a `title` of 1 to 100 characters when `symptom` is `other` and no `title` otherwise, `answers` a map, `occurredAt` a timestamp, `notes` up to 2000 characters, server timestamps, no other fields.
 - **Medications:** read if in `memberIds`; create, update, delete if in `adminIds`.
@@ -174,13 +227,3 @@ Question mechanics:
 
 - **Deletes:** pets are archived; logs are hard-deleted (by their author or an admin).
 - **Indexes:** the main query (a pet's logs by `occurredAt` descending) needs no custom index. Filtering by symptom needs a composite index on `(symptom, occurredAt)`. The home screen's recent logs, "Logged before" titles and last-logged pet all come from each pet's latest 50 logs by `occurredAt`, so they need no composite index either.
-
-## Open questions
-
-1. **How do admins add and remove members?** Removing is settled: an admin removes the uid from `memberIds` and `adminIds`, and a household keeps at least one admin. Adding is proposed but not confirmed: **invite codes, redeemed with security rules only** (no Cloud Functions, since those need a paid plan; see architecture.md).
-   - An admin creates `invites/{code}`, a top-level doc with `householdId`, `createdBy`, `expiresAt` and `redeemedBy` (null until used). The code is a long random string, so it can't be guessed. Signed-in users can `get` an invite by its exact code but cannot list invites.
-   - The admin shares the code with the person, for example via the phone's share sheet. The person enters it in the app.
-   - The app redeems it with one batched write: set `redeemedBy` to the caller and add the caller to the household's `memberIds`. The household update rule allows a non-admin to do this only when the change is exactly "add my own uid to `memberIds`", the invite exists, is unredeemed and unexpired, points at this household, and the same batch marks it redeemed (using `getAfter`).
-   - The invitee joins as a member. Admins promote from there.
-   - This works the same for Google and Apple users. Whether it holds up in the rules emulator still needs to be proven with rules tests.
-2. **How are members shown by name?** Logs record `createdBy` as a uid, but names come from somewhere. This is tied to how members join (question 1).
