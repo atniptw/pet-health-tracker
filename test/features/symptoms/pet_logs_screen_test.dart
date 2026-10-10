@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
+import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/symptom_catalog.dart';
 import 'package:pet_health_tracker/data/symptom_log.dart';
@@ -21,17 +22,29 @@ void main() {
   const catalog = SymptomCatalog([CatalogSymptom(key: 'vomit', label: 'Vomit')]);
 
   late SymptomLogRepository logs;
+  late FakeFirebaseFirestore membersFirestore;
 
-  setUp(() => logs = SymptomLogRepository(FakeFirebaseFirestore()));
+  setUp(() {
+    logs = SymptomLogRepository(FakeFirebaseFirestore());
+    membersFirestore = FakeFirebaseFirestore();
+  });
 
   Future<void> pumpLogs(
     WidgetTester tester, {
     SymptomLogRepository? repository,
     bool isAdmin = false,
+    bool hasOtherMembers = false,
   }) {
     return tester.pumpScoped(
-      PetLogsScreen(householdId: 'h1', pet: boogie, uid: 'u1', isAdmin: isAdmin),
+      PetLogsScreen(
+        householdId: 'h1',
+        pet: boogie,
+        uid: 'u1',
+        isAdmin: isAdmin,
+        hasOtherMembers: hasOtherMembers,
+      ),
       overrides: [
+        householdRepositoryProvider.overrideWithValue(HouseholdRepository(membersFirestore)),
         symptomLogRepositoryProvider.overrideWithValue(repository ?? logs),
         symptomCatalogProvider.overrideWith((ref) => Stream.value(catalog)),
       ],
@@ -156,6 +169,59 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(FloatingActionButton), findsNothing);
+  });
+
+  group('who logged it', () {
+    Future<void> addLog(String title, {required String createdBy}) => logs.addOtherLog(
+      householdId: 'h1',
+      petId: 'p1',
+      createdBy: createdBy,
+      title: title,
+      occurredAt: DateTime(2026, 10, 5, 9, 5),
+    );
+
+    setUp(() async {
+      await membersFirestore.doc('households/h1/members/u1').set({'name': 'Tom'});
+      await membersFirestore.doc('households/h1/members/u2').set({'name': 'Sam'});
+    });
+
+    testWidgets('shows names when the household has other members', (tester) async {
+      await addLog('Ate a sock', createdBy: 'u1');
+      await addLog('Limping', createdBy: 'u2');
+
+      await pumpLogs(tester, hasOtherMembers: true);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM · Tom'), findsOneWidget);
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM · Sam'), findsOneWidget);
+    });
+
+    testWidgets('leaves your own name off when you are the only member', (tester) async {
+      await addLog('Ate a sock', createdBy: 'u1');
+
+      await pumpLogs(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM'), findsOneWidget);
+    });
+
+    testWidgets("still names a former member's logs when you are the only member", (tester) async {
+      await addLog('Limping', createdBy: 'u2');
+
+      await pumpLogs(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM · Sam'), findsOneWidget);
+    });
+
+    testWidgets('shows no name for someone who has not given one', (tester) async {
+      await addLog('Limping', createdBy: 'u3');
+
+      await pumpLogs(tester, hasOtherMembers: true);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM'), findsOneWidget);
+    });
   });
 
   group('editing', () {

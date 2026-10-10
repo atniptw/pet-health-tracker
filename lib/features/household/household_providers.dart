@@ -17,3 +17,11 @@ final nameMissingProvider = StreamProvider.autoDispose
           .watch(householdRepositoryProvider)
           .watchNameMissing(householdId: key.householdId, uid: key.uid);
     });
+
+/// Members' names in the household by uid, former members included.
+final memberNamesProvider = StreamProvider.autoDispose.family<Map<String, String>, String>((
+  ref,
+  householdId,
+) {
+  return ref.watch(householdRepositoryProvider).watchMemberNames(householdId);
+});

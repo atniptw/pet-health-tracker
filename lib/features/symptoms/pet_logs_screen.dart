@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/household.dart';
 import '../../data/pet.dart';
 import '../../data/symptom_log.dart';
+import '../household/household_providers.dart';
 import 'edit_log_screen.dart';
 import 'occurred_at.dart';
 import 'symptom_details_screen.dart';
@@ -23,6 +24,7 @@ void openPetLogs(
         pet: pet,
         uid: uid,
         isAdmin: household.adminIds.contains(uid),
+        hasOtherMembers: household.memberIds.length > 1,
       ),
     ),
   );
@@ -36,6 +38,7 @@ class PetLogsScreen extends ConsumerWidget {
     required this.pet,
     required this.uid,
     required this.isAdmin,
+    required this.hasOtherMembers,
     super.key,
   });
 
@@ -47,6 +50,10 @@ class PetLogsScreen extends ConsumerWidget {
 
   /// Whether the signed-in user is a household admin, who can edit anyone's logs.
   final bool isAdmin;
+
+  /// Whether anyone else is in the household. Logs show who logged them only
+  /// when they could be someone else's.
+  final bool hasOtherMembers;
 
   /// Members can edit their own logs, admins anyone's.
   bool _canEdit(SymptomLog log) => isAdmin || log.createdBy == uid;
@@ -72,6 +79,7 @@ class PetLogsScreen extends ConsumerWidget {
     final key = (householdId: householdId, petId: pet.id);
     final logsState = ref.watch(symptomLogsProvider(key));
     final catalog = ref.watch(symptomCatalogProvider).value;
+    final names = ref.watch(memberNamesProvider(householdId)).value ?? const {};
 
     return Scaffold(
       appBar: AppBar(title: Text(pet.name)),
@@ -90,6 +98,7 @@ class PetLogsScreen extends ConsumerWidget {
                   return _LogTile(
                     log: log,
                     title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
+                    loggedBy: hasOtherMembers || log.createdBy != uid ? names[log.createdBy] : null,
                     onTap: _canEdit(log) ? () => _open(context, log) : null,
                   );
                 },
@@ -114,17 +123,21 @@ class PetLogsScreen extends ConsumerWidget {
 }
 
 class _LogTile extends StatelessWidget {
-  const _LogTile({required this.log, required this.title, this.onTap});
+  const _LogTile({required this.log, required this.title, this.loggedBy, this.onTap});
 
   final SymptomLog log;
 
   /// The `other` title, or the catalog label.
   final String title;
+
+  /// The name of who logged it, when shown.
+  final String? loggedBy;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final when = formatOccurredAt(context, log.occurredAt);
+    final occurredAt = formatOccurredAt(context, log.occurredAt);
+    final when = loggedBy == null ? occurredAt : '$occurredAt · $loggedBy';
     final notes = log.notes;
     return ListTile(
       title: Text(title),

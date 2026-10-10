@@ -126,5 +126,13 @@ void main() {
       expect(data['name'], 'Tom');
       expect(data['schemaVersion'], 1);
     });
+
+    test("lists every member's name by uid", () async {
+      final householdId = await seedHousehold();
+      await repository.addMemberName(householdId: householdId, uid: 'u1', name: 'Tom');
+      await repository.addMemberName(householdId: householdId, uid: 'u2', name: 'Sam');
+
+      expect(await repository.watchMemberNames(householdId).first, {'u1': 'Tom', 'u2': 'Sam'});
+    });
   });
 }

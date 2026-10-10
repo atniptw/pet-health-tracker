@@ -57,4 +57,13 @@ class HouseholdRepository {
         .doc(uid)
         .set(Member.toFirestore(name: name));
   }
+
+  /// Every member's name in the household by uid, former members included.
+  Stream<Map<String, String>> watchMemberNames(String householdId) {
+    return _households.doc(householdId).collection('members').snapshots().map((snapshot) {
+      return {
+        for (final member in snapshot.docs.map(Member.fromFirestore)) member.uid: member.name,
+      };
+    });
+  }
 }
