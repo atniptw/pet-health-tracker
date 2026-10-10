@@ -15,7 +15,7 @@ void main() {
 
   group('createHousehold', () {
     test('writes the fields the security rules require', () async {
-      await repository.createHousehold(name: 'Home', ownerUid: 'u1');
+      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
 
       final docs = (await firestore.collection('households').get()).docs;
       expect(docs, hasLength(1));
@@ -38,6 +38,22 @@ void main() {
       expect(data['updatedAt'], isA<Timestamp>());
       expect(data['schemaVersion'], 1);
     });
+
+    test("writes the owner's member doc with their name", () async {
+      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
+
+      final household = (await firestore.collection('households').get()).docs.single;
+      final member = await household.reference.collection('members').doc('u1').get();
+      final data = member.data()!;
+      expect(
+        data.keys,
+        unorderedEquals(<String>['name', 'createdAt', 'updatedAt', 'schemaVersion']),
+      );
+      expect(data['name'], 'Tom');
+      expect(data['createdAt'], isA<Timestamp>());
+      expect(data['updatedAt'], isA<Timestamp>());
+      expect(data['schemaVersion'], 1);
+    });
   });
 
   group('watchMyHousehold', () {
@@ -46,7 +62,7 @@ void main() {
     });
 
     test("emits the user's household", () async {
-      await repository.createHousehold(name: 'Home', ownerUid: 'u1');
+      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
 
       final household = await repository.watchMyHousehold('u1').first;
 
@@ -57,7 +73,7 @@ void main() {
     });
 
     test("does not emit someone else's household", () async {
-      await repository.createHousehold(name: 'Theirs', ownerUid: 'u2');
+      await repository.createHousehold(name: 'Theirs', ownerUid: 'u2', ownerName: 'Tom');
 
       expect(await repository.watchMyHousehold('u1').first, isNull);
     });
@@ -66,7 +82,7 @@ void main() {
       final emissions = repository.watchMyHousehold('u1').map((h) => h?.name);
 
       final expectation = expectLater(emissions, emitsInOrder(<String?>[null, 'Home']));
-      await repository.createHousehold(name: 'Home', ownerUid: 'u1');
+      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
       await expectation;
     });
   });

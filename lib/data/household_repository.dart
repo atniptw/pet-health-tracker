@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'household.dart';
+import 'member.dart';
 
 class HouseholdRepository {
   HouseholdRepository(this._firestore);
@@ -18,7 +19,16 @@ class HouseholdRepository {
     });
   }
 
-  Future<void> createHousehold({required String name, required String ownerUid}) {
-    return _households.add(Household.toFirestore(name: name, ownerUid: ownerUid));
+  /// Creates the household and the owner's member doc in one batch.
+  Future<void> createHousehold({
+    required String name,
+    required String ownerUid,
+    required String ownerName,
+  }) {
+    final household = _households.doc();
+    return (_firestore.batch()
+          ..set(household, Household.toFirestore(name: name, ownerUid: ownerUid))
+          ..set(household.collection('members').doc(ownerUid), Member.toFirestore(name: ownerName)))
+        .commit();
   }
 }

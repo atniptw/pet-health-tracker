@@ -42,7 +42,7 @@ void main() {
 
   testWidgets('shows home when the user has a household', (tester) async {
     final repository = HouseholdRepository(FakeFirebaseFirestore());
-    await repository.createHousehold(name: 'The Den', ownerUid: 'u1');
+    await repository.createHousehold(name: 'The Den', ownerUid: 'u1', ownerName: 'Tom');
 
     await tester.pumpScoped(
       HouseholdGate(user: user),

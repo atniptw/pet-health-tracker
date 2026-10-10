@@ -20,6 +20,7 @@ void main() {
       () => repository.createHousehold(
         name: any(named: 'name'),
         ownerUid: any(named: 'ownerUid'),
+        ownerName: any(named: 'ownerName'),
       ),
     ).thenAnswer((_) async {});
   });
@@ -33,8 +34,11 @@ void main() {
     );
   }
 
-  String fieldText(WidgetTester tester) =>
-      tester.widget<TextField>(find.byType(TextField)).controller!.text;
+  final householdField = find.widgetWithText(TextField, 'Household name');
+  final ownerField = find.widgetWithText(TextField, 'Your name');
+
+  String fieldText(WidgetTester tester, [Finder? field]) =>
+      tester.widget<TextField>(field ?? householdField).controller!.text;
 
   testWidgets("suggests a name from the user's display name", (tester) async {
     await pumpScreen(tester);
@@ -54,16 +58,38 @@ void main() {
 
   testWidgets('creates the household with the trimmed name', (tester) async {
     await pumpScreen(tester);
-    await tester.enterText(find.byType(TextField), '  The Den  ');
+    await tester.enterText(householdField, '  The Den  ');
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
-    verify(() => repository.createHousehold(name: 'The Den', ownerUid: 'u1')).called(1);
+    verify(() => repository.createHousehold(name: 'The Den', ownerUid: 'u1', ownerName: 'Tom'))
+        .called(1);
   });
 
-  testWidgets('does nothing when the name is blank', (tester) async {
+  testWidgets("suggests the user's display name as their name", (tester) async {
     await pumpScreen(tester);
-    await tester.enterText(find.byType(TextField), '   ');
+    expect(fieldText(tester, ownerField), 'Tom');
+  });
+
+  testWidgets('leaves the name empty when the user has no display name', (tester) async {
+    await pumpScreen(tester, displayName: null);
+    expect(fieldText(tester, ownerField), '');
+  });
+
+  testWidgets("creates the household with the owner's trimmed name", (tester) async {
+    await pumpScreen(tester);
+    await tester.enterText(ownerField, '  Dad  ');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repository.createHousehold(name: "Tom's Household", ownerUid: 'u1', ownerName: 'Dad'),
+    ).called(1);
+  });
+
+  testWidgets('does nothing when your name is blank', (tester) async {
+    await pumpScreen(tester);
+    await tester.enterText(ownerField, '   ');
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
@@ -71,6 +97,22 @@ void main() {
       () => repository.createHousehold(
         name: any(named: 'name'),
         ownerUid: any(named: 'ownerUid'),
+        ownerName: any(named: 'ownerName'),
+      ),
+    );
+  });
+
+  testWidgets('does nothing when the name is blank', (tester) async {
+    await pumpScreen(tester);
+    await tester.enterText(householdField, '   ');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    verifyNever(
+      () => repository.createHousehold(
+        name: any(named: 'name'),
+        ownerUid: any(named: 'ownerUid'),
+        ownerName: any(named: 'ownerName'),
       ),
     );
   });
@@ -81,6 +123,7 @@ void main() {
       () => repository.createHousehold(
         name: any(named: 'name'),
         ownerUid: any(named: 'ownerUid'),
+        ownerName: any(named: 'ownerName'),
       ),
     ).thenAnswer((_) => completer.future);
 
@@ -101,6 +144,7 @@ void main() {
       () => repository.createHousehold(
         name: any(named: 'name'),
         ownerUid: any(named: 'ownerUid'),
+        ownerName: any(named: 'ownerName'),
       ),
     ).thenThrow(Exception('permission denied'));
 

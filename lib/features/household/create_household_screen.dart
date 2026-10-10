@@ -15,6 +15,7 @@ class CreateHouseholdScreen extends ConsumerStatefulWidget {
 
 class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
   late final TextEditingController _nameController;
+  late final TextEditingController _ownerNameController;
   bool _creating = false;
   String? _error;
 
@@ -27,18 +28,21 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
           ? 'My Household'
           : "$displayName's Household",
     );
+    _ownerNameController = TextEditingController(text: displayName ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _ownerNameController.dispose();
     super.dispose();
   }
 
   Future<void> _create() async {
     if (_creating) return;
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    final ownerName = _ownerNameController.text.trim();
+    if (name.isEmpty || ownerName.isEmpty) return;
     setState(() {
       _creating = true;
       _error = null;
@@ -46,7 +50,7 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
     try {
       await ref
           .read(householdRepositoryProvider)
-          .createHousehold(name: name, ownerUid: widget.user.uid);
+          .createHousehold(name: name, ownerUid: widget.user.uid, ownerName: ownerName);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
@@ -66,6 +70,15 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Household name'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _ownerNameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Your name',
+                helperText: 'Shown to the household on the symptoms you log',
+              ),
             ),
             const SizedBox(height: 16),
             if (_creating)
