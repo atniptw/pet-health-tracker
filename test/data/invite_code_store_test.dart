@@ -24,15 +24,46 @@ void main() {
         value: any(named: 'value'),
       ),
     ).thenAnswer((_) async {});
-    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
 
     expect(await store.read(uid: 'u1', householdId: 'h1'), 'acorn tulip shelf');
 
     await store.write(uid: 'u1', householdId: 'h2', code: 'plum otter lamp');
     verify(() => storage.write(key: 'inviteCode.u1.h2', value: 'plum otter lamp')).called(1);
+  });
 
-    await store.delete(uid: 'u2', householdId: 'h1');
-    verify(() => storage.delete(key: 'inviteCode.u2.h1')).called(1);
+  test('deletes a saved code only if it is still the one checked', () async {
+    final saved = {'inviteCode.u1.h1': 'acorn tulip shelf'};
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((invocation) async => saved[invocation.namedArguments[#key]]);
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((invocation) async {
+      saved[invocation.namedArguments[#key] as String] =
+          invocation.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key')))
+        .thenAnswer((invocation) async => saved.remove(invocation.namedArguments[#key]));
+
+    // A new code is saved before the clean-up of the old one gets its turn.
+    final save = store.write(uid: 'u1', householdId: 'h1', code: 'plum otter lamp');
+    final cleanUp = store.deleteIfStill(uid: 'u1', householdId: 'h1', code: 'acorn tulip shelf');
+    await Future.wait([save, cleanUp]);
+    expect(saved, {'inviteCode.u1.h1': 'plum otter lamp'});
+
+    // Once nothing newer is saved, the stale code is deleted.
+    await store.deleteIfStill(uid: 'u1', householdId: 'h1', code: 'plum otter lamp');
+    expect(saved, isEmpty);
+  });
+
+  test('keeps working after a storage error', () async {
+    when(() => storage.read(key: any(named: 'key'))).thenThrow(Exception('locked'));
+    await expectLater(store.read(uid: 'u1', householdId: 'h1'), throwsException);
+
+    when(() => storage.read(key: any(named: 'key'))).thenAnswer((_) async => 'acorn tulip shelf');
+    expect(await store.read(uid: 'u1', householdId: 'h1'), 'acorn tulip shelf');
   });
 
   group('savedCodeFor', () {

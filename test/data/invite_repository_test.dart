@@ -1,9 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/data/invite.dart';
 import 'package:pet_health_tracker/data/invite_code.dart';
 import 'package:pet_health_tracker/data/invite_repository.dart';
+
+class MockWriteBatch extends Mock implements WriteBatch {}
+
+/// A Firestore whose batch commits fail with [error].
+class FailingCommitFirestore extends FakeFirebaseFirestore {
+  FailingCommitFirestore(this.error);
+
+  final Object error;
+
+  @override
+  WriteBatch batch() {
+    final batch = MockWriteBatch();
+    when(batch.commit).thenThrow(error);
+    return batch;
+  }
+}
 
 void main() {
   late FakeFirebaseFirestore firestore;
@@ -51,6 +68,32 @@ void main() {
       expect(
         ids,
         unorderedEquals([inviteIdFor('acorn tulip shelf'), inviteIdFor('their code here')]),
+      );
+    });
+  });
+
+  group('createInvite failures', () {
+    test('a refused write means the code is taken', () {
+      final repository = InviteRepository(
+        FailingCommitFirestore(
+          FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied'),
+        ),
+      );
+
+      expect(
+        repository.createInvite(householdId: 'h1', createdBy: 'u1', code: 'acorn tulip shelf'),
+        throwsA(isA<InviteCodeTakenException>()),
+      );
+    });
+
+    test('other errors pass through', () {
+      final repository = InviteRepository(
+        FailingCommitFirestore(FirebaseException(plugin: 'cloud_firestore', code: 'unavailable')),
+      );
+
+      expect(
+        repository.createInvite(householdId: 'h1', createdBy: 'u1', code: 'acorn tulip shelf'),
+        throwsA(isA<FirebaseException>().having((e) => e.code, 'code', 'unavailable')),
       );
     });
   });

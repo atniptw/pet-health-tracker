@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_version.dart';
 import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
+import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
 
@@ -50,6 +51,16 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
+          if (isAdmin)
+            ListTile(
+              leading: const Icon(Icons.person_add_outlined),
+              title: const Text('Invite someone'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => InviteScreen(household: household, uid: uid),
+                ),
+              ),
+            ),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),

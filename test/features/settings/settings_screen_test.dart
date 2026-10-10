@@ -5,8 +5,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/app_version.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household.dart';
+import 'package:pet_health_tracker/data/invite_repository.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
+import 'package:pet_health_tracker/features/household/invite_providers.dart';
+import 'package:pet_health_tracker/features/household/invite_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
 
@@ -36,6 +39,8 @@ void main() {
         petRepositoryProvider.overrideWithValue(pets),
         authRepositoryProvider.overrideWithValue(auth),
         appVersionProvider.overrideWith((ref) async => '0.0.1 (31)'),
+        inviteRepositoryProvider.overrideWithValue(InviteRepository(FakeFirebaseFirestore())),
+        inviteCodeStoreProvider.overrideWithValue(FakeInviteCodeStore()),
       ],
     );
   }
@@ -65,6 +70,21 @@ void main() {
 
     expect(find.byType(PetFormScreen), findsOneWidget);
     expect(find.text('Add a pet'), findsOneWidget);
+  });
+
+  testWidgets('admins can open the invite screen', (tester) async {
+    await pumpSettings(tester);
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InviteScreen), findsOneWidget);
+  });
+
+  testWidgets('members who are not admins cannot invite', (tester) async {
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invite someone'), findsNothing);
   });
 
   testWidgets('members who are not admins cannot add pets', (tester) async {

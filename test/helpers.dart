@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pet_health_tracker/data/invite_code_store.dart';
 import 'package:pet_health_tracker/data/last_household_store.dart';
 import 'package:pet_health_tracker/features/auth/auth_repository.dart';
 
@@ -42,5 +43,30 @@ extension PumpApp on WidgetTester {
         child: MaterialApp(home: child),
       ),
     );
+  }
+}
+
+/// Keeps invite codes in memory instead of the phone's secure storage.
+class FakeInviteCodeStore implements InviteCodeStore {
+  final saved = <String, String>{};
+
+  @override
+  Future<String?> read({required String uid, required String householdId}) async =>
+      saved['$uid.$householdId'];
+
+  @override
+  Future<void> write({
+    required String uid,
+    required String householdId,
+    required String code,
+  }) async => saved['$uid.$householdId'] = code;
+
+  @override
+  Future<void> deleteIfStill({
+    required String uid,
+    required String householdId,
+    required String code,
+  }) async {
+    if (saved['$uid.$householdId'] == code) saved.remove('$uid.$householdId');
   }
 }
