@@ -56,32 +56,39 @@ void main() {
     });
   });
 
-  group('watchMyHousehold', () {
-    test('emits null when the user is in no household', () async {
-      expect(await repository.watchMyHousehold('u1').first, isNull);
+  group('watchMyHouseholds', () {
+    test('emits nothing when the user is in no household', () async {
+      expect(await repository.watchMyHouseholds('u1').first, isEmpty);
     });
 
-    test("emits the user's household", () async {
-      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
+    test("emits the user's households sorted by name", () async {
+      await repository.createHousehold(name: 'the Den', ownerUid: 'u1', ownerName: 'Tom');
+      await repository.createHousehold(name: 'Cabin', ownerUid: 'u1', ownerName: 'Tom');
 
-      final household = await repository.watchMyHousehold('u1').first;
+      final households = await repository.watchMyHouseholds('u1').first;
 
-      expect(household, isA<Household>());
-      expect(household!.name, 'Home');
-      expect(household.memberIds, ['u1']);
-      expect(household.adminIds, ['u1']);
+      expect(households.map((h) => h.name), ['Cabin', 'the Den']);
+      expect(households.first, isA<Household>());
+      expect(households.first.memberIds, ['u1']);
+      expect(households.first.adminIds, ['u1']);
     });
 
     test("does not emit someone else's household", () async {
-      await repository.createHousehold(name: 'Theirs', ownerUid: 'u2', ownerName: 'Tom');
+      await repository.createHousehold(name: 'Theirs', ownerUid: 'u2', ownerName: 'Sam');
 
-      expect(await repository.watchMyHousehold('u1').first, isNull);
+      expect(await repository.watchMyHouseholds('u1').first, isEmpty);
     });
 
     test('emits again when the user creates a household', () async {
-      final emissions = repository.watchMyHousehold('u1').map((h) => h?.name);
+      final emissions = repository.watchMyHouseholds('u1').map((h) => h.map((e) => e.name));
 
-      final expectation = expectLater(emissions, emitsInOrder(<String?>[null, 'Home']));
+      final expectation = expectLater(
+        emissions,
+        emitsInOrder(<Matcher>[
+          isEmpty,
+          equals(['Home']),
+        ]),
+      );
       await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
       await expectation;
     });

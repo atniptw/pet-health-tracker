@@ -4,11 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pet_health_tracker/data/last_household_store.dart';
 import 'package:pet_health_tracker/features/auth/auth_repository.dart';
 
 class MockUser extends Mock implements User {}
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
+/// Keeps the last-opened household in memory instead of on the device.
+class FakeLastHouseholdStore implements LastHouseholdStore {
+  final saved = <String, String>{};
+
+  @override
+  Future<String?> read(String uid) async => saved[uid];
+
+  @override
+  Future<void> write(String uid, String householdId) async => saved[uid] = householdId;
+}
 
 MockUser fakeUser({String uid = 'user-1', String? displayName = 'Tom'}) {
   final user = MockUser();

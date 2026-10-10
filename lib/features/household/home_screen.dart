@@ -15,6 +15,7 @@ import '../symptoms/log_sheet.dart';
 import '../symptoms/log_summary.dart';
 import '../symptoms/pet_logs_screen.dart';
 import '../symptoms/symptom_providers.dart';
+import 'household_title.dart';
 
 /// Up to this many pets show as a grid of cards; more as a row of avatars.
 const _gridMaxPets = 4;
@@ -38,10 +39,7 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         toolbarHeight: 60,
         titleSpacing: 20,
-        title: Text(
-          household.name,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-        ),
+        title: HouseholdTitle(household: household, uid: uid),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),

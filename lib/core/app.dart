@@ -62,12 +62,12 @@ class HouseholdGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final householdState = ref.watch(myHouseholdProvider(user.uid));
+    final householdsState = ref.watch(myHouseholdsProvider(user.uid));
 
-    return householdState.when(
-      data: (household) => household == null
+    return householdsState.when(
+      data: (households) => households.isEmpty
           ? CreateHouseholdScreen(user: user)
-          : _NamedHome(household: household, user: user),
+          : _OpenHousehold(households: households, user: user),
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
@@ -77,7 +77,7 @@ class HouseholdGate extends ConsumerWidget {
               Text('$error'),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => ref.invalidate(myHouseholdProvider(user.uid)),
+                onPressed: () => ref.invalidate(myHouseholdsProvider(user.uid)),
                 child: const Text('Retry'),
               ),
             ],
@@ -88,11 +88,33 @@ class HouseholdGate extends ConsumerWidget {
   }
 }
 
+/// The household the user last opened on this device, or their first one if
+/// that isn't known or they're no longer in it.
+class _OpenHousehold extends ConsumerWidget {
+  const _OpenHousehold({required this.households, required this.user});
+
+  final List<Household> households;
+  final User user;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final last = ref.watch(lastHouseholdProvider(user.uid));
+    if (last.isLoading && !last.hasValue) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final household = households.firstWhere(
+      (each) => each.id == last.value,
+      orElse: () => households.first,
+    );
+    return _NamedHome(key: ValueKey(household.id), household: household, user: user);
+  }
+}
+
 /// The home screen, or a one-time prompt for the user's name if they have none
 /// in this household. Shows home while that isn't known yet, so logging never
 /// waits on it.
 class _NamedHome extends ConsumerWidget {
-  const _NamedHome({required this.household, required this.user});
+  const _NamedHome({required this.household, required this.user, super.key});
 
   final Household household;
   final User user;

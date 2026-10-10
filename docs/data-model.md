@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household (not joining one) with the creator's name, asking existing members for their name once, showing who logged each entry in a pet's history, adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household (not joining one) with the creator's name, asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -32,7 +32,7 @@ A user does not get a household automatically. After sign-in, if they aren't alr
 
 ### Multiple households
 
-A person can be in several households. The app shows one household at a time, with a switcher, and remembers the last-opened household on the device. After joining, the app opens the household just joined.
+A person can be in several households. The app shows one household at a time and remembers the last-opened household on the device (`shared_preferences`, keyed by uid); without one it opens the first by name. With more than one household, tapping the household name on the home screen opens a sheet to switch. After joining, the app opens the household just joined.
 
 ### Names
 
