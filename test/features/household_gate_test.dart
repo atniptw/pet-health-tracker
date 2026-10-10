@@ -8,6 +8,7 @@ import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/create_household_screen.dart';
 import 'package:pet_health_tracker/features/household/home_screen.dart';
+import 'package:pet_health_tracker/features/household/member_name_screen.dart';
 
 import '../helpers.dart';
 
@@ -55,6 +56,32 @@ void main() {
 
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.text('The Den'), findsWidgets);
+  });
+
+  testWidgets('asks a member with no name for one, then shows home', (tester) async {
+    final firestore = FakeFirebaseFirestore();
+    await firestore.doc('households/h1').set({
+      'name': 'The Den',
+      'memberIds': ['u1'],
+      'adminIds': ['u1'],
+    });
+
+    await tester.pumpScoped(
+      HouseholdGate(user: user),
+      overrides: [
+        householdRepositoryProvider.overrideWithValue(HouseholdRepository(firestore)),
+        petRepositoryProvider.overrideWithValue(PetRepository(FakeFirebaseFirestore())),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MemberNameScreen), findsOneWidget);
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect((await firestore.doc('households/h1/members/u1').get()).data()!['name'], 'Tom');
   });
 
   testWidgets('shows the error and retries on tap', (tester) async {

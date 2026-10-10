@@ -9,3 +9,11 @@ import '../../data/household.dart';
 final myHouseholdProvider = StreamProvider.autoDispose.family<Household?, String>((ref, uid) {
   return ref.watch(householdRepositoryProvider).watchMyHousehold(uid);
 });
+
+/// Whether the user still needs to give their name in the household.
+final nameMissingProvider = StreamProvider.autoDispose
+    .family<bool, ({String householdId, String uid})>((ref, key) {
+      return ref
+          .watch(householdRepositoryProvider)
+          .watchNameMissing(householdId: key.householdId, uid: key.uid);
+    });

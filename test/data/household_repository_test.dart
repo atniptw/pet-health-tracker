@@ -86,4 +86,45 @@ void main() {
       await expectation;
     });
   });
+
+  group('member names', () {
+    Future<String> seedHousehold() async {
+      final ref = await firestore.collection('households').add({
+        'name': 'Home',
+        'memberIds': ['u1'],
+        'adminIds': ['u1'],
+      });
+      return ref.id;
+    }
+
+    test('a member with no member doc is missing a name', () async {
+      final householdId = await seedHousehold();
+
+      expect(await repository.watchNameMissing(householdId: householdId, uid: 'u1').first, isTrue);
+    });
+
+    test('the creator is not missing a name', () async {
+      await repository.createHousehold(name: 'Home', ownerUid: 'u1', ownerName: 'Tom');
+      final householdId = (await firestore.collection('households').get()).docs.single.id;
+
+      expect(await repository.watchNameMissing(householdId: householdId, uid: 'u1').first, isFalse);
+    });
+
+    test('adding a name writes the member doc and clears missing', () async {
+      final householdId = await seedHousehold();
+      final missing = repository.watchNameMissing(householdId: householdId, uid: 'u1');
+      final expectation = expectLater(missing, emitsInOrder(<bool>[true, false]));
+
+      await repository.addMemberName(householdId: householdId, uid: 'u1', name: 'Tom');
+      await expectation;
+
+      final data = (await firestore.doc('households/$householdId/members/u1').get()).data()!;
+      expect(
+        data.keys,
+        unorderedEquals(<String>['name', 'createdAt', 'updatedAt', 'schemaVersion']),
+      );
+      expect(data['name'], 'Tom');
+      expect(data['schemaVersion'], 1);
+    });
+  });
 }

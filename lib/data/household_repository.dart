@@ -31,4 +31,30 @@ class HouseholdRepository {
           ..set(household.collection('members').doc(ownerUid), Member.toFirestore(name: ownerName)))
         .commit();
   }
+
+  /// Emits true when the server confirms [uid] has no member doc (no name) in
+  /// the household. Emits false while that is only known from the cache, so
+  /// a phone with no signal isn't asked for a name it may already have.
+  Stream<bool> watchNameMissing({required String householdId, required String uid}) {
+    return _households
+        .doc(householdId)
+        .collection('members')
+        .doc(uid)
+        .snapshots(includeMetadataChanges: true)
+        .map((snapshot) => !snapshot.exists && !snapshot.metadata.isFromCache)
+        .distinct();
+  }
+
+  /// Creates [uid]'s member doc in the household with [name].
+  Future<void> addMemberName({
+    required String householdId,
+    required String uid,
+    required String name,
+  }) {
+    return _households
+        .doc(householdId)
+        .collection('members')
+        .doc(uid)
+        .set(Member.toFirestore(name: name));
+  }
 }

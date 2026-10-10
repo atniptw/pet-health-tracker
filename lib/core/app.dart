@@ -2,10 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/household.dart';
 import '../features/auth/sign_in_screen.dart';
 import '../features/household/create_household_screen.dart';
 import '../features/household/home_screen.dart';
 import '../features/household/household_providers.dart';
+import '../features/household/member_name_screen.dart';
 import 'firebase_providers.dart';
 import 'theme.dart';
 
@@ -65,7 +67,7 @@ class HouseholdGate extends ConsumerWidget {
     return householdState.when(
       data: (household) => household == null
           ? CreateHouseholdScreen(user: user)
-          : HomeScreen(household: household, uid: user.uid),
+          : _NamedHome(household: household, user: user),
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
@@ -83,5 +85,23 @@ class HouseholdGate extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// The home screen, or a one-time prompt for the user's name if they have none
+/// in this household. Shows home while that isn't known yet, so logging never
+/// waits on it.
+class _NamedHome extends ConsumerWidget {
+  const _NamedHome({required this.household, required this.user});
+
+  final Household household;
+  final User user;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nameMissing = ref.watch(nameMissingProvider((householdId: household.id, uid: user.uid)));
+    return nameMissing.value ?? false
+        ? MemberNameScreen(household: household, user: user)
+        : HomeScreen(household: household, uid: user.uid);
   }
 }
