@@ -12,10 +12,23 @@ class Member {
     return Member(uid: doc.id, name: doc.data()!['name'] as String);
   }
 
-  static Map<String, dynamic> toFirestore({required String name}) {
+  /// A new member doc. [inviteId] is the invite used to join; the creator has none.
+  static Map<String, dynamic> toFirestore({required String name, String? inviteId}) {
     return {
       'name': name,
+      'inviteId': ?inviteId,
       'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'schemaVersion': 1,
+    };
+  }
+
+  /// The fields a former member rewrites when joining again, merged into their
+  /// kept doc so its `createdAt` stays.
+  static Map<String, dynamic> rejoinFields({required String name, required String inviteId}) {
+    return {
+      'name': name,
+      'inviteId': inviteId,
       'updatedAt': FieldValue.serverTimestamp(),
       'schemaVersion': 1,
     };

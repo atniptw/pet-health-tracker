@@ -287,6 +287,28 @@ describe('joining a household', () => {
     await assertFails(join(MEMBER));
     await assertSucceeds(join(MEMBER, { member: newMember({ inviteId: INVITE_ID, createdAt: new Date(0) }) }));
   });
+  test('a former member can rejoin with a merge that keeps their member doc', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
+    });
+    await seedInvite();
+    const firestore = db(MEMBER);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), { memberIds: arrayUnion(MEMBER), updatedAt: serverTimestamp() });
+    batch.set(
+      doc(firestore, `${HOUSEHOLD}/members/${MEMBER}`),
+      { name: 'Dad', inviteId: INVITE_ID, updatedAt: serverTimestamp(), schemaVersion: 1 },
+      { merge: true },
+    );
+    await assertSucceeds(batch.commit());
+  });
+
+  test('a member cannot join again', async () => {
+    await seedHousehold();
+    await seedInvite();
+    await assertFails(join(MEMBER));
+  });
 });
 
 describe('leaving a household', () => {

@@ -1,8 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
+import 'package:pet_health_tracker/data/invite_code.dart';
+
+class MockWriteBatch extends Mock implements WriteBatch {}
+
+/// A Firestore whose first batch commits fail, one per code in [errors].
+class RefusingFirestore extends FakeFirebaseFirestore {
+  RefusingFirestore(this.errors);
+
+  final List<String> errors;
+
+  @override
+  WriteBatch batch() {
+    if (errors.isEmpty) return super.batch();
+    final batch = MockWriteBatch();
+    when(batch.commit)
+        .thenThrow(FirebaseException(plugin: 'cloud_firestore', code: errors.removeAt(0)));
+    return batch;
+  }
+}
 
 void main() {
   late FakeFirebaseFirestore firestore;
@@ -140,6 +160,141 @@ void main() {
       await repository.addMemberName(householdId: householdId, uid: 'u2', name: 'Sam');
 
       expect(await repository.watchMemberNames(householdId).first, {'u1': 'Tom', 'u2': 'Sam'});
+    });
+  });
+
+  group('joinHousehold', () {
+    const code = 'acorn tulip shelf';
+    final now = DateTime(2026, 10, 10, 12);
+
+    Future<void> seed(FakeFirebaseFirestore firestore, {DateTime? invitedAt}) async {
+      await firestore.doc('households/h1').set({
+        'name': 'The Den',
+        'memberIds': ['admin'],
+        'adminIds': ['admin'],
+      });
+      await firestore.doc('invites/${inviteIdFor(code)}').set({
+        'householdId': 'h1',
+        'createdBy': 'admin',
+        'createdAt': Timestamp.fromDate(invitedAt ?? DateTime(2026, 10, 9)),
+        'schemaVersion': 1,
+      });
+    }
+
+    test('adds the user as a member with their name and the invite used', () async {
+      await seed(firestore);
+
+      final householdId = await repository.joinHousehold(
+        code: code,
+        uid: 'u1',
+        name: 'Tom',
+        now: () => now,
+      );
+
+      expect(householdId, 'h1');
+      final household = (await firestore.doc('households/h1').get()).data()!;
+      expect(household['memberIds'], ['admin', 'u1']);
+      expect(household['adminIds'], ['admin']);
+      expect(household['updatedAt'], isA<Timestamp>());
+      final member = (await firestore.doc('households/h1/members/u1').get()).data()!;
+      expect(
+        member.keys,
+        unorderedEquals(<String>['name', 'inviteId', 'createdAt', 'updatedAt', 'schemaVersion']),
+      );
+      expect(member['name'], 'Tom');
+      expect(member['inviteId'], inviteIdFor(code));
+    });
+
+    test('ignores trailing spaces in the code', () async {
+      await seed(firestore);
+
+      expect(
+        await repository.joinHousehold(code: '$code  ', uid: 'u1', name: 'Tom', now: () => now),
+        'h1',
+      );
+    });
+
+    test('refuses a code with no invite', () async {
+      await seed(firestore);
+
+      await expectLater(
+        repository.joinHousehold(code: 'Acorn tulip shelf', uid: 'u1', name: 'Tom', now: () => now),
+        throwsA(isA<InviteNotFoundException>()),
+      );
+      expect((await firestore.doc('households/h1').get()).data()!['memberIds'], ['admin']);
+    });
+
+    test('refuses an expired invite', () async {
+      await seed(firestore, invitedAt: now.subtract(inviteLifetime));
+
+      await expectLater(
+        repository.joinHousehold(code: code, uid: 'u1', name: 'Tom', now: () => now),
+        throwsA(isA<InviteNotFoundException>()),
+      );
+    });
+
+    test('someone already in the household just gets its ID', () async {
+      await seed(firestore);
+
+      expect(
+        await repository.joinHousehold(code: code, uid: 'admin', name: 'Tom', now: () => now),
+        'h1',
+      );
+      expect((await firestore.doc('households/h1/members/admin').get()).exists, isFalse);
+    });
+
+    test('a former member rejoins by merging into their kept doc', () async {
+      final refusing = RefusingFirestore(['permission-denied']);
+      await seed(refusing);
+      await refusing.doc('households/h1/members/u1').set({
+        'name': 'Tom',
+        'createdAt': Timestamp.fromDate(DateTime(2026)),
+        'schemaVersion': 1,
+      });
+
+      await HouseholdRepository(refusing)
+          .joinHousehold(code: code, uid: 'u1', name: 'Dad', now: () => now);
+
+      final member = (await refusing.doc('households/h1/members/u1').get()).data()!;
+      expect(member['name'], 'Dad');
+      expect(member['inviteId'], inviteIdFor(code));
+      expect(member['createdAt'], Timestamp.fromDate(DateTime(2026)));
+      expect((await refusing.doc('households/h1').get()).data()!['memberIds'], ['admin', 'u1']);
+    });
+
+    test('refused twice means the invite stopped working', () async {
+      final refusing = RefusingFirestore(['permission-denied', 'permission-denied']);
+      await seed(refusing);
+
+      await expectLater(
+        HouseholdRepository(refusing)
+            .joinHousehold(code: code, uid: 'u1', name: 'Tom', now: () => now),
+        throwsA(isA<InviteNotFoundException>()),
+      );
+    });
+
+    test('other errors pass through', () async {
+      for (final errors in [
+        ['unavailable'],
+        ['permission-denied', 'unavailable'],
+      ]) {
+        final failing = RefusingFirestore(errors);
+        await seed(failing);
+
+        await expectLater(
+          HouseholdRepository(failing)
+              .joinHousehold(code: code, uid: 'u1', name: 'Tom', now: () => now),
+          throwsA(isA<FirebaseException>().having((e) => e.code, 'code', 'unavailable')),
+          reason: '$errors',
+        );
+      }
+    });
+
+    test('says what to do about a code that matches nothing', () {
+      expect(
+        const InviteNotFoundException().toString(),
+        'No household found for that code. Check the spelling, or ask for a new code.',
+      );
     });
   });
 }
