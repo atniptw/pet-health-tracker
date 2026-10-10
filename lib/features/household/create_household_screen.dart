@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
+import 'household_providers.dart';
 
 class CreateHouseholdScreen extends ConsumerStatefulWidget {
   const CreateHouseholdScreen({required this.user, super.key});
@@ -48,9 +49,12 @@ class _CreateHouseholdScreenState extends ConsumerState<CreateHouseholdScreen> {
       _error = null;
     });
     try {
-      await ref
+      final householdId = await ref
           .read(householdRepositoryProvider)
           .createHousehold(name: name, ownerUid: widget.user.uid, ownerName: ownerName);
+      await ref.read(lastHouseholdProvider(widget.user.uid).notifier).select(householdId);
+      // Opened from the switcher: close, showing the new household.
+      if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {

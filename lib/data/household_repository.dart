@@ -18,17 +18,19 @@ class HouseholdRepository {
     });
   }
 
-  /// Creates the household and the owner's member doc in one batch.
-  Future<void> createHousehold({
+  /// Creates the household and the owner's member doc in one batch, and
+  /// returns the household's ID.
+  Future<String> createHousehold({
     required String name,
     required String ownerUid,
     required String ownerName,
-  }) {
+  }) async {
     final household = _households.doc();
-    return (_firestore.batch()
+    await (_firestore.batch()
           ..set(household, Household.toFirestore(name: name, ownerUid: ownerUid))
           ..set(household.collection('members').doc(ownerUid), Member.toFirestore(name: ownerName)))
         .commit();
+    return household.id;
   }
 
   /// Emits true when the server confirms [uid] has no member doc (no name) in

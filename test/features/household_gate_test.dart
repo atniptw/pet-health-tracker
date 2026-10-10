@@ -1,4 +1,5 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,6 +15,8 @@ import 'package:pet_health_tracker/features/household/member_name_screen.dart';
 import '../helpers.dart';
 
 class MockHouseholdRepository extends Mock implements HouseholdRepository {}
+
+class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 void main() {
   final user = fakeUser(uid: 'u1');
@@ -169,13 +172,16 @@ void main() {
     });
   });
 
-  testWidgets('a single household has no switcher', (tester) async {
+  testWidgets('creates another household from the switcher and opens it', (tester) async {
+    final auth = MockFirebaseAuth();
+    when(() => auth.currentUser).thenReturn(user);
     final repository = HouseholdRepository(FakeFirebaseFirestore());
     await repository.createHousehold(name: 'The Den', ownerUid: 'u1', ownerName: 'Tom');
 
     await tester.pumpScoped(
       HouseholdGate(user: user),
       overrides: [
+        firebaseAuthProvider.overrideWithValue(auth),
         householdRepositoryProvider.overrideWithValue(repository),
         petRepositoryProvider.overrideWithValue(PetRepository(FakeFirebaseFirestore())),
         lastHouseholdStoreProvider.overrideWithValue(FakeLastHouseholdStore()),
@@ -183,7 +189,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.arrow_drop_down), findsNothing);
+    await tester.tap(find.byIcon(Icons.arrow_drop_down));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create a household'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateHouseholdScreen), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Household name'), 'Cabin');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateHouseholdScreen), findsNothing);
+    expect(tester.widget<HomeScreen>(find.byType(HomeScreen)).household.name, 'Cabin');
   });
 
   testWidgets('shows the error and retries on tap', (tester) async {

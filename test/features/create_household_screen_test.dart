@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pet_health_tracker/core/firebase_providers.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/features/household/create_household_screen.dart';
+import 'package:pet_health_tracker/features/household/household_providers.dart';
 
 import '../helpers.dart';
 
@@ -13,16 +14,18 @@ class MockHouseholdRepository extends Mock implements HouseholdRepository {}
 
 void main() {
   late MockHouseholdRepository repository;
+  late FakeLastHouseholdStore store;
 
   setUp(() {
     repository = MockHouseholdRepository();
+    store = FakeLastHouseholdStore();
     when(
       () => repository.createHousehold(
         name: any(named: 'name'),
         ownerUid: any(named: 'ownerUid'),
         ownerName: any(named: 'ownerName'),
       ),
-    ).thenAnswer((_) async {});
+    ).thenAnswer((_) async => 'h9');
   });
 
   Future<void> pumpScreen(WidgetTester tester, {String? displayName = 'Tom'}) {
@@ -30,7 +33,10 @@ void main() {
       CreateHouseholdScreen(
         user: fakeUser(uid: 'u1', displayName: displayName),
       ),
-      overrides: [householdRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        householdRepositoryProvider.overrideWithValue(repository),
+        lastHouseholdStoreProvider.overrideWithValue(store),
+      ],
     );
   }
 
@@ -118,7 +124,7 @@ void main() {
   });
 
   testWidgets('shows a spinner while creating', (tester) async {
-    final completer = Completer<void>();
+    final completer = Completer<String>();
     when(
       () => repository.createHousehold(
         name: any(named: 'name'),
@@ -134,7 +140,7 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Create'), findsNothing);
 
-    completer.complete();
+    completer.complete('h9');
     await tester.pumpAndSettle();
     expect(find.text('Create'), findsOneWidget);
   });
@@ -154,5 +160,40 @@ void main() {
 
     expect(find.textContaining('permission denied'), findsOneWidget);
     expect(find.text('Create'), findsOneWidget);
+  });
+
+  testWidgets('opens the new household', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(store.saved['u1'], 'h9');
+  });
+
+  testWidgets('closes when opened on top of another screen', (tester) async {
+    await tester.pumpScoped(
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (context) => CreateHouseholdScreen(user: fakeUser(uid: 'u1')),
+            ),
+          ),
+          child: const Text('Open'),
+        ),
+      ),
+      overrides: [
+        householdRepositoryProvider.overrideWithValue(repository),
+        lastHouseholdStoreProvider.overrideWithValue(store),
+      ],
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreateHouseholdScreen), findsNothing);
+    expect(find.text('Open'), findsOneWidget);
   });
 }

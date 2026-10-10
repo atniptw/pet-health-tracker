@@ -32,7 +32,7 @@ A user does not get a household automatically. After sign-in, if they aren't alr
 
 ### Multiple households
 
-A person can be in several households. The app shows one household at a time and remembers the last-opened household on the device (`shared_preferences`, keyed by uid); without one it opens the first by name. With more than one household, tapping the household name on the home screen opens a sheet to switch. After joining, the app opens the household just joined.
+A person can be in several households. The app shows one household at a time and remembers the last-opened household on the device (`shared_preferences`, keyed by uid); without one it opens the first by name. Tapping the household name on the home screen opens a sheet to switch households or create another; a new household opens once created. After joining, the app opens the household just joined.
 
 ### Names
 

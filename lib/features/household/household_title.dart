@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
+import 'create_household_screen.dart';
 import 'household_providers.dart';
 
-/// The open household's name. When the user is in more than one household,
-/// tapping it opens a sheet to switch.
+/// The open household's name. Tapping it opens a sheet to switch households
+/// or create another.
 class HouseholdTitle extends ConsumerWidget {
   const HouseholdTitle({required this.household, required this.uid, super.key});
 
@@ -24,8 +26,6 @@ class HouseholdTitle extends ConsumerWidget {
       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
       overflow: TextOverflow.ellipsis,
     );
-    if (households.length < 2) return name;
-
     return Semantics(
       button: true,
       label: 'Switch household',
@@ -48,7 +48,7 @@ class HouseholdTitle extends ConsumerWidget {
       showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
-        builder: (context) => SafeArea(
+        builder: (sheetContext) => SafeArea(
           child: ListView(
             shrinkWrap: true,
             children: [
@@ -57,12 +57,29 @@ class HouseholdTitle extends ConsumerWidget {
                   title: Text(each.name),
                   trailing: each.id == household.id ? const Icon(Icons.check) : null,
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(sheetContext).pop();
                     if (each.id != household.id) {
                       unawaited(ref.read(lastHouseholdProvider(uid).notifier).select(each.id));
                     }
                   },
                 ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('Create a household'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  final user = ref.read(firebaseAuthProvider).currentUser;
+                  if (user == null) return;
+                  unawaited(
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => CreateHouseholdScreen(user: user),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
