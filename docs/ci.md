@@ -6,20 +6,20 @@
 test ──────────┐
                ├──> deploy-firestore-rules → production Firestore rules
 smoke-android ─┼──> deploy-android         → Play internal testing track
-               └──> deploy-ios (macos)     → build check only, no upload yet
+               └──> deploy-ios (macos)     → TestFlight
 ```
 
 - **test**: `scripts/check.sh` — formatting (`dart format`, 100 columns), `flutter analyze --fatal-infos` with strict casts, inference and raw types, `flutter test` with a line-coverage minimum (`scripts/coverage.sh`), and the security rules tests in `firestore-tests/` on the Firestore emulator. Dependencies install from the committed lockfiles (`flutter pub get --enforce-lockfile`, `npm ci`).
 - **smoke-android**: boots the debug app on an Android emulator against the Firebase emulators and checks it reaches the sign-in screen (`integration_test/`). This catches startup crashes the widget tests can't see. `scripts/smoke-android.sh` caps each attempt at 7 minutes and retries once only when an attempt times out, since `flutter test` has hung in CI after the app launched; a failing test is not retried. On failure it prints the verbose `flutter test` log and the device log. The emulator's system image and a booted snapshot are cached (`actions/cache`), so runs don't download the image.
 - **deploy-firestore-rules**: publishes `firestore.rules` through the Firebase Rules API (`scripts/deploy-firestore-rules.sh`), as the `firestore-rules-deploy` service account (Firebase Rules Admin; key in the `FIREBASE_RULES_SERVICE_ACCOUNT_JSON` secret).
 - **deploy-android**: builds a signed AAB and uploads it with fastlane (`android/fastlane/Fastfile`, lane `internal`).
-- **deploy-ios**: builds without code signing to confirm iOS still compiles. Signing and the TestFlight upload are not written yet; they need the Apple Developer account.
+- **deploy-ios**: builds the release app, signs it with the stored distribution certificate and profile, and uploads it to TestFlight with fastlane (`ios/fastlane/Fastfile`, lane `testflight`).
 
 Every deploy job waits for both **test** and **smoke-android**. The `.githooks/pre-push` hook runs `scripts/check.sh` before every push (enable it once per clone with `git config core.hooksPath .githooks`), so a broken commit normally never reaches CI.
 
-Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Firestore rules (`FIRESTORE_RULES_DEPLOY_ENABLED=true`) and Android (`ANDROID_DEPLOY_ENABLED=true`) are on; iOS is off.
+Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Firestore rules (`FIRESTORE_RULES_DEPLOY_ENABLED=true`), Android (`ANDROID_DEPLOY_ENABLED=true`) and iOS (`IOS_DEPLOY_ENABLED=true`) are on.
 
-Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`. Don't re-run an old workflow run to deploy: a re-run keeps its run number, so Play rejects the build number as already used. Push a new commit instead.
+Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`. Don't re-run an old workflow run to deploy: a re-run keeps its run number, so Play and App Store Connect reject the build number as already used. Push a new commit instead.
 
 ## Android deploys
 
@@ -53,16 +53,63 @@ gh secret set ANDROID_KEY_ALIAS --body upload
 
 **Draft releases.** While an app is still a draft in Play Console (App content declarations not finished), the API only accepts draft releases, and uploads fail with "Only releases with status draft may be created on draft app". `gh variable set PLAY_RELEASE_STATUS --body draft` makes CI upload drafts, which then have to be rolled out to testers by hand in the Console. The variable is not set now.
 
-## Turning on iOS deploys
+## iOS deploys
 
-Needs a paid Apple Developer account first. Then:
+On since 2026-10-11. Every push to `main` uploads a build to TestFlight.
 
-1. Register the App ID `com.pootzandboogie.petHealthTracker` and create the app record in App Store Connect.
-2. Create an App Store Connect API key (Users and Access → Integrations) for uploads.
-3. Choose how CI signs builds (fastlane `match` or a certificate and profile stored as secrets). Then add the signing and TestFlight upload steps to `deploy-ios` and an `ios/fastlane/Fastfile`.
-4. `gh variable set IOS_DEPLOY_ENABLED --body true`
+The lane imports the certificate into a temporary keychain (`setup_ci`), together with Apple's WWDR G3 intermediate certificate, which issued it. Without the intermediate the signing identity isn't valid. It switches the Runner target's Release configuration to manual signing on the CI checkout only, so local builds keep automatic signing. Then it builds an App Store IPA with `build_app` and uploads it with `upload_to_testflight`, without waiting for Apple to finish processing it. `ITSAppUsesNonExemptEncryption` is `false` in `Info.plist` (the app only uses HTTPS), so builds don't stop at the export compliance question.
 
-Until step 3 is done, turning on the variable only runs the unsigned build check.
+What's set up:
+
+- **Team**: `PVKDTU84Z8` (`DEVELOPMENT_TEAM` in the Runner target, `ios/fastlane/Appfile`).
+- **App ID**: `com.pootzandboogie.petHealthTracker`, no extra capabilities.
+- **Distribution certificate**: Apple Distribution, expires 2027-10-11. Its private key is `~/ios-distribution-pet-health-tracker.key`, and `~/ios-distribution-pet-health-tracker.p12` (password in `~/ios-distribution-pet-health-tracker.p12-password`) bundles the key with the certificate.
+- **App Store Connect app**: "Pet Symptom Tracker" (Apple ID `6821711148`, SKU `pet-health-tracker`). The name under the icon on the home screen is still "Pet Health Tracker" (`CFBundleDisplayName`).
+- **API key**: Team key `74RJJ9N8UC`, App Manager access, file at `~/AuthKey_74RJJ9N8UC.p8`.
+- **Provisioning profile**: App Store Connect profile `Pet Health Tracker App Store` (the Fastfile refers to it by this name), expires 2027-10-11. A copy is at `~/ios-pet-health-tracker-app-store.mobileprovision`.
+- **Secrets**:
+  | Secret | Value |
+  |---|---|
+  | `IOS_DIST_P12_BASE64` | the `.p12`, base64 |
+  | `IOS_DIST_P12_PASSWORD` | its password |
+  | `IOS_PROVISIONING_PROFILE_BASE64` | the `.mobileprovision`, base64 |
+  | `APP_STORE_CONNECT_API_KEY_ID` | API key ID |
+  | `APP_STORE_CONNECT_ISSUER_ID` | issuer ID (Users and Access → Integrations) |
+  | `APP_STORE_CONNECT_API_KEY` | contents of the `.p8` |
+
+Builds go to TestFlight without waiting for Apple's processing, so testers get them through an internal testing group with automatic distribution turned on (App Store Connect → TestFlight → Internal Testing).
+
+To set the API key secrets again, for example with a new key:
+
+```
+gh secret set APP_STORE_CONNECT_API_KEY_ID --body <key id>
+gh secret set APP_STORE_CONNECT_ISSUER_ID --body dd4492b3-a800-4d16-93bd-f76ca82b8920
+gh secret set APP_STORE_CONNECT_API_KEY < ~/AuthKey_<key id>.p8
+```
+
+**Renewing before 2027-10-11.** Make a new certificate from a new CSR (`openssl req -new -newkey rsa:2048 -nodes -keyout <key> -out <csr> -subj "/CN=Pet Health Tracker CI/C=US"`), edit the profile to use it and download it again, then rebuild the `.p12` and reset the secrets:
+
+```
+openssl x509 -inform DER -in distribution.cer -out /tmp/dist.pem
+openssl pkcs12 -export -legacy -inkey <key> -in /tmp/dist.pem -out <p12> -passout file:<password file>
+base64 -i <p12> | gh secret set IOS_DIST_P12_BASE64
+gh secret set IOS_DIST_P12_PASSWORD < <password file>
+base64 -i <profile> | gh secret set IOS_PROVISIONING_PROFILE_BASE64
+```
+
+`-legacy` keeps the `.p12` in a format macOS's `security import` reads.
+
+## Running the iOS lane locally
+
+`setup_ci` does nothing when `MATCH_KEYCHAIN_NAME` is already set. So for a local run, create a throwaway keychain with an empty password, add it to the search list (`security list-keychains -d user -s <keychain> <existing ones>`), and point `MATCH_KEYCHAIN_NAME` at it. Without the API key variables, the lane stops after writing the signed IPA to `build/ios/fastlane/`. The lane switches the project to manual signing, so discard that change in `ios/Runner.xcodeproj/project.pbxproj` afterwards, and put the old keychain search list back.
+
+```
+bundle install
+flutter build ios --release --no-codesign --build-number=<n>
+cd ios && MATCH_KEYCHAIN_NAME=<keychain> IOS_DIST_P12_PATH=~/ios-distribution-pet-health-tracker.p12 \
+  IOS_DIST_P12_PASSWORD="$(cat ~/ios-distribution-pet-health-tracker.p12-password)" \
+  IOS_PROVISIONING_PROFILE_PATH=~/ios-pet-health-tracker-app-store.mobileprovision bundle exec fastlane testflight
+```
 
 ## Running the Android lane locally
 

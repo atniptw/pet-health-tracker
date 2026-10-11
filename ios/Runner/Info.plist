@@ -37,6 +37,8 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>890809865754-90ue3j5p8d9p84sgdhbbld3nf88sndca.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

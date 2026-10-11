@@ -1,0 +1,52 @@
+default_platform(:ios)
+
+BUNDLE_ID = "com.pootzandboogie.petHealthTracker"
+PROFILE_NAME = "Pet Health Tracker App Store"
+
+platform :ios do
+  desc "Sign a release build and upload it to TestFlight"
+  lane :testflight do
+    # A temporary, unlocked keychain (name in MATCH_KEYCHAIN_NAME, empty password).
+    setup_ci
+    keychain = { keychain_name: ENV.fetch("MATCH_KEYCHAIN_NAME"), keychain_password: "" }
+
+    # Apple Distribution certificates are issued by the WWDR G3 intermediate.
+    # Without it in the keychain the signing identity isn't valid.
+    wwdr = File.join(Dir.tmpdir, "AppleWWDRCAG3.cer")
+    sh("curl", "-fsSL", "-o", wwdr, "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer")
+    import_certificate(certificate_path: wwdr, **keychain)
+    import_certificate(
+      certificate_path: ENV.fetch("IOS_DIST_P12_PATH"),
+      certificate_password: ENV.fetch("IOS_DIST_P12_PASSWORD"),
+      **keychain,
+    )
+    install_provisioning_profile(path: ENV.fetch("IOS_PROVISIONING_PROFILE_PATH"))
+
+    # The project uses automatic signing for local builds. CI signs Release
+    # manually with the stored certificate and profile.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj",
+      targets: ["Runner"],
+      build_configurations: ["Release"],
+      sdk: "iphoneos*",
+      code_sign_identity: "Apple Distribution",
+      profile_name: PROFILE_NAME,
+    )
+    build_app(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: { provisioningProfiles: { BUNDLE_ID => PROFILE_NAME } },
+      output_directory: "../build/ios/fastlane",
+    )
+
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_API_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+      key_content: ENV.fetch("APP_STORE_CONNECT_API_KEY"),
+    )
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+end
