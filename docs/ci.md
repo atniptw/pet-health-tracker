@@ -62,7 +62,7 @@ The lane imports the certificate into a temporary keychain (`setup_ci`), togethe
 What's set up:
 
 - **Team**: `PVKDTU84Z8` (`DEVELOPMENT_TEAM` in the Runner target, `ios/fastlane/Appfile`).
-- **App ID**: `com.pootzandboogie.petHealthTracker`, no extra capabilities.
+- **App ID**: `com.pootzandboogie.petHealthTracker`, with the Sign In with Apple capability. Adding a capability invalidates the profile, so edit the profile, save it, and set `IOS_PROVISIONING_PROFILE_BASE64` again with the new download.
 - **Distribution certificate**: Apple Distribution, expires 2027-10-11. Its private key is `~/ios-distribution-pet-health-tracker.key`, and `~/ios-distribution-pet-health-tracker.p12` (password in `~/ios-distribution-pet-health-tracker.p12-password`) bundles the key with the certificate.
 - **App Store Connect app**: "Pet Symptom Tracker" (Apple ID `6821711148`, SKU `pet-health-tracker`). The name under the icon on the home screen is still "Pet Health Tracker" (`CFBundleDisplayName`).
 - **API key**: Team key `74RJJ9N8UC`, App Manager access, file at `~/AuthKey_74RJJ9N8UC.p8`.

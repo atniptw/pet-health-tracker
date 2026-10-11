@@ -22,6 +22,15 @@ class AuthRepository {
     return _auth.signInWithCredential(credential);
   }
 
+  /// Uses Apple's native sign-in sheet on iOS. Apple shares the name only the
+  /// first time, and Firebase saves it as the new user's display name.
+  Future<UserCredential> signInWithApple() {
+    final provider = AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name');
+    return _auth.signInWithProvider(provider);
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();

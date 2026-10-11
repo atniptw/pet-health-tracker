@@ -17,7 +17,10 @@ void main() {
   late MockGoogleSignIn google;
   late AuthRepository repository;
 
-  setUpAll(() => registerFallbackValue(GoogleAuthProvider.credential(idToken: 'fallback')));
+  setUpAll(() {
+    registerFallbackValue(GoogleAuthProvider.credential(idToken: 'fallback'));
+    registerFallbackValue(AppleAuthProvider());
+  });
 
   setUp(() {
     auth = MockFirebaseAuth();
@@ -32,6 +35,7 @@ void main() {
     when(google.signOut).thenAnswer((_) async {});
     when(auth.signOut).thenAnswer((_) async {});
     when(() => auth.signInWithCredential(any())).thenAnswer((_) async => MockUserCredential());
+    when(() => auth.signInWithProvider(any())).thenAnswer((_) async => MockUserCredential());
   });
 
   test("signs in to Firebase with the Google account's ID token", () async {
@@ -57,6 +61,15 @@ void main() {
 
     await expectLater(repository.signInWithGoogle(), throwsA(isA<GoogleSignInException>()));
     verifyNever(() => auth.signInWithCredential(any()));
+  });
+
+  test('signs in to Firebase with Apple, asking for the name and email', () async {
+    await repository.signInWithApple();
+
+    final provider =
+        verify(() => auth.signInWithProvider(captureAny())).captured.single as AppleAuthProvider;
+    expect(provider.scopes, containsAll(<String>['name', 'email']));
+    verifyNever(google.authenticate);
   });
 
   test('signs out of both Firebase and Google', () async {
