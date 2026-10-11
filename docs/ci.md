@@ -77,6 +77,8 @@ What's set up:
   | `APP_STORE_CONNECT_ISSUER_ID` | issuer ID (Users and Access → Integrations) |
   | `APP_STORE_CONNECT_API_KEY` | contents of the `.p8` |
 
+  The workflow passes the three API key secrets to fastlane as `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_CONTENT`. fastlane's actions read variables named `APP_STORE_CONNECT_API_KEY*` on their own, and the first upload failed when the key text arrived under one of those names.
+
 Builds go to TestFlight without waiting for Apple's processing, so testers get them through an internal testing group with automatic distribution turned on (App Store Connect → TestFlight → Internal Testing).
 
 To set the API key secrets again, for example with a new key:
