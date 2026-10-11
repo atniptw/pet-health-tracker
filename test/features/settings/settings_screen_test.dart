@@ -27,10 +27,17 @@ void main() {
   );
 
   late PetRepository pets;
+  late FakeFirebaseFirestore firestore;
   late MockAuthRepository auth;
 
-  setUp(() {
+  setUp(() async {
     pets = PetRepository(FakeFirebaseFirestore());
+    firestore = FakeFirebaseFirestore();
+    await firestore.doc('households/h1').set({
+      'name': household.name,
+      'memberIds': household.memberIds,
+      'adminIds': household.adminIds,
+    });
     auth = MockAuthRepository();
     when(auth.signOut).thenAnswer((_) async {});
   });
@@ -40,6 +47,7 @@ void main() {
       SettingsScreen(household: household, uid: uid),
       overrides: [
         petRepositoryProvider.overrideWithValue(pets),
+        householdRepositoryProvider.overrideWithValue(HouseholdRepository(firestore)),
         authRepositoryProvider.overrideWithValue(auth),
         appVersionProvider.overrideWith((ref) async => '0.0.1 (31)'),
         inviteRepositoryProvider.overrideWithValue(InviteRepository(FakeFirebaseFirestore())),
@@ -118,6 +126,76 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PetFormScreen), findsNothing);
+  });
+
+  group('renaming', () {
+    Future<void> openRename(WidgetTester tester) async {
+      await pumpSettings(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Household name'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('admins see the household name', (tester) async {
+      await pumpSettings(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ListTile, 'Household name'), findsOneWidget);
+      expect(find.text('The Den'), findsOneWidget);
+    });
+
+    testWidgets('members who are not admins cannot rename', (tester) async {
+      await pumpSettings(tester, uid: 'member');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Household name'), findsNothing);
+    });
+
+    testWidgets('an admin renames the household', (tester) async {
+      await openRename(tester);
+
+      expect(find.widgetWithText(TextField, 'The Den'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), '  The Burrow  ');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect((await firestore.doc('households/h1').get()).data()!['name'], 'The Burrow');
+      expect(find.text('The Burrow'), findsOneWidget);
+    });
+
+    testWidgets('an empty name is not saved', (tester) async {
+      await openRename(tester);
+
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter a name'), findsOneWidget);
+      expect((await firestore.doc('households/h1').get()).data()!['name'], 'The Den');
+    });
+
+    testWidgets('cancelling keeps the name', (tester) async {
+      await openRename(tester);
+
+      await tester.enterText(find.byType(TextField), 'The Burrow');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect((await firestore.doc('households/h1').get()).data()!['name'], 'The Den');
+    });
+
+    testWidgets('leaving after a rename asks with the new name', (tester) async {
+      await firestore.doc('households/h1').update({'name': 'The Burrow'});
+      await pumpSettings(tester, uid: 'member');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Leave household'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Leave The Burrow?'), findsOneWidget);
+    });
   });
 
   testWidgets('signs out and returns to the root route', (tester) async {

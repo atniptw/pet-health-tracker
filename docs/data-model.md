@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (members who aren't admins, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (members who aren't admins, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins renaming the household (Settings, Household name), admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -49,6 +49,10 @@ Admins add people with an invite code, redeemed with security rules only (no Clo
 - **Reuse and expiry:** a code works for any number of people until it expires, 7 days after it is made. A household has one active code; making a new one replaces it, and the old one stops working.
 - **Only the hash is stored:** Firestore keeps the code's SHA-256 hash, never the code. The raw code is kept only on the phone of the admin who made it, in secure storage (`flutter_secure_storage`; Android auto-backup is off so a restored backup can't leave unreadable values), keyed by account and household, and deleted when it expires. Other admins, or the same admin on another phone, see that a code is active and when it expires, and can make a new one to share.
 - **Who sees it:** admins only.
+
+### Renaming
+
+An admin can rename the household from Settings (Household name), 1 to 100 characters. Like logging, the rename doesn't wait for the server; the new name shows right away.
 
 ### Leaving
 

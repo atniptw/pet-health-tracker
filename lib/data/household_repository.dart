@@ -79,6 +79,14 @@ class HouseholdRepository {
     });
   }
 
+  /// Changes the household's name. The rules allow this only for admins.
+  Future<void> renameHousehold({required String householdId, required String name}) {
+    return _households.doc(householdId).update({
+      'name': name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Removes [uid] from the household's members. The rules allow this only
   /// for members who aren't admins. Their member doc stays, so their logs
   /// keep their name.

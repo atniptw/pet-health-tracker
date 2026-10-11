@@ -59,6 +59,12 @@ service cloud.firestore {
         && data.schemaVersion == 1;
     }
 
+    function isValidHouseholdName(data) {
+      return data.get('name', null) is string
+        && data.name.size() > 0
+        && data.name.size() <= 100;
+    }
+
     function householdPath(householdId) {
       return /databases/$(database)/documents/households/$(householdId);
     }
@@ -139,15 +145,14 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.memberIds == [request.auth.uid]
         && request.resource.data.adminIds == [request.auth.uid]
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 100
+        && isValidHouseholdName(request.resource.data)
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && request.resource.data.schemaVersion == 1
         && request.resource.data.keys().hasOnly(
           ['name', 'memberIds', 'adminIds', 'createdAt', 'updatedAt', 'schemaVersion']);
       allow update: if (isAdmin(resource)
+          && isValidHouseholdName(request.resource.data)
           && request.resource.data.adminIds.size() > 0
           && request.resource.data.memberIds.hasAll(request.resource.data.adminIds))
         || isJoining(householdId)

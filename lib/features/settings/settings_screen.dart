@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_version.dart';
 import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
+import '../household/household_providers.dart';
 import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
@@ -13,6 +14,8 @@ import '../pets/pet_list.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({required this.household, required this.uid, super.key});
 
+  /// The household as it was when settings opened. Changes, like a rename,
+  /// come from [myHouseholdsProvider].
   final Household household;
 
   /// The signed-in user. Only admins can add and edit pets.
@@ -20,6 +23,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final household = _current(ref);
     final isAdmin = household.adminIds.contains(uid);
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -55,6 +59,13 @@ class SettingsScreen extends ConsumerWidget {
           const Divider(height: 1),
           if (isAdmin)
             ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Household name'),
+              subtitle: Text(household.name),
+              onTap: () => _rename(context, ref, household),
+            ),
+          if (isAdmin)
+            ListTile(
               leading: const Icon(Icons.person_add_outlined),
               title: const Text('Invite someone'),
               onTap: () => Navigator.of(context).push(
@@ -68,7 +79,7 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('Leave household'),
             subtitle: isAdmin ? const Text("Admins can't leave a household") : null,
             enabled: !isAdmin,
-            onTap: () => _leave(context, ref),
+            onTap: () => _leave(context, ref, household),
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),
@@ -95,7 +106,25 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _leave(BuildContext context, WidgetRef ref) async {
+  Household _current(WidgetRef ref) {
+    final households = ref.watch(myHouseholdsProvider(uid)).value ?? const <Household>[];
+    return households.where((h) => h.id == household.id).firstOrNull ?? household;
+  }
+
+  Future<void> _rename(BuildContext context, WidgetRef ref, Household household) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => _RenameDialog(name: household.name),
+    );
+    if (name == null || name == household.name) return;
+    // Like logging, renaming doesn't wait for the server. The new name shows
+    // right away from the local write.
+    unawaited(
+      ref.read(householdRepositoryProvider).renameHousehold(householdId: household.id, name: name),
+    );
+  }
+
+  Future<void> _leave(BuildContext context, WidgetRef ref, Household household) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -119,6 +148,59 @@ class SettingsScreen extends ConsumerWidget {
     Navigator.of(context).popUntil((route) => route.isFirst);
     unawaited(
       ref.read(householdRepositoryProvider).leaveHousehold(householdId: household.id, uid: uid),
+    );
+  }
+}
+
+/// Asks for the household's new name, and pops with it trimmed.
+class _RenameDialog extends StatefulWidget {
+  const _RenameDialog({required this.name});
+
+  final String name;
+
+  @override
+  State<_RenameDialog> createState() => _RenameDialogState();
+}
+
+class _RenameDialogState extends State<_RenameDialog> {
+  late final _controller = TextEditingController(text: widget.name);
+  bool _showMissing = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      setState(() => _showMissing = true);
+      return;
+    }
+    Navigator.of(context).pop(name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Household name'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 100,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          labelText: 'Name',
+          errorText: _showMissing && _controller.text.trim().isEmpty ? 'Enter a name' : null,
+        ),
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (_) => _save(),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(onPressed: _save, child: const Text('Save')),
+      ],
     );
   }
 }

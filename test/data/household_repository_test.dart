@@ -163,6 +163,22 @@ void main() {
     });
   });
 
+  test('renaming changes only the name and stamps updatedAt', () async {
+    await firestore.doc('households/h1').set({
+      'name': 'The Den',
+      'memberIds': ['admin', 'u1'],
+      'adminIds': ['admin'],
+    });
+
+    await repository.renameHousehold(householdId: 'h1', name: 'The Burrow');
+
+    final household = (await firestore.doc('households/h1').get()).data()!;
+    expect(household['name'], 'The Burrow');
+    expect(household['memberIds'], ['admin', 'u1']);
+    expect(household['adminIds'], ['admin']);
+    expect(household['updatedAt'], isA<Timestamp>());
+  });
+
   test('leaving removes only the user from the members, keeping their name', () async {
     await firestore.doc('households/h1').set({
       'name': 'The Den',

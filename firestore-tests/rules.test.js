@@ -157,6 +157,16 @@ describe('households', () => {
     await assertSucceeds(deleteDoc(doc(db(ADMIN), HOUSEHOLD)));
   });
 
+  test('an admin can rename the household to 1 to 100 characters', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), HOUSEHOLD);
+    await assertFails(updateDoc(ref, { name: '', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { name: 'x'.repeat(101), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { name: 42, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { name: deleteField(), updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(ref, { name: 'x'.repeat(100), updatedAt: serverTimestamp() }));
+  });
+
   test('an update must keep at least one admin, and every admin a member', async () => {
     await seedHousehold();
     const ref = doc(db(ADMIN), HOUSEHOLD);
