@@ -10,23 +10,27 @@ Status: partly implemented. Creating a household with the creator's name, joinin
 
 ## Households and roles
 
-A household has members and pets. Every member can see the household's pets and symptom logs, can add symptoms, and can edit and delete their own symptom entries. A household has one or more **admins**. A person can belong to multiple households.
+A household has members and pets. Every member can see the household's pets and symptom logs, can add symptoms, and can edit and delete their own symptom entries. A household has one **owner** and one or more **admins**; the owner is also an admin. A person can belong to multiple households.
 
-| Action | Member | Admin |
-|---|---|---|
-| See the household, its pets and logs | yes | yes |
-| Add symptom logs | yes | yes |
-| Edit symptom logs | own entries only | all |
-| Delete symptom logs | own entries only | all |
-| Add, edit, delete medications | no | yes |
-| Add, edit, archive pets | no | yes |
-| See and share the invite code | no | yes |
-| Remove members, change roles | no | yes |
-| Rename or delete the household | no | yes |
-| Change their own name in the household | yes | yes |
-| Leave the household | yes | no |
+| Action | Member | Admin | Owner |
+|---|---|---|---|
+| See the household, its pets and logs | yes | yes | yes |
+| Add symptom logs | yes | yes | yes |
+| Edit symptom logs | own entries only | all | all |
+| Delete symptom logs | own entries only | all | all |
+| Add, edit, delete medications | no | yes | yes |
+| Add, edit, archive pets | no | yes | yes |
+| See and share the invite code | no | yes | yes |
+| Remove members, change roles | no | yes | yes |
+| Rename the household | no | yes | yes |
+| Delete the household | no | no | yes |
+| Transfer ownership | no | no | yes |
+| Change their own name in the household | yes | yes | yes |
+| Leave the household | yes | yes | no |
 
-A household always has at least one admin.
+A household always has exactly one owner and at least one admin.
+
+The owner can transfer ownership to any member, who becomes an admin and the owner. The old owner stays an admin.
 
 A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its sole admin, with a default name of `{display name}'s Household`. People already in a household can join or create more.
 
@@ -56,7 +60,7 @@ An admin can rename the household from Settings (Household name), 1 to 100 chara
 
 ### Leaving
 
-A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
+A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Planned: admins who aren't the owner can leave too, and only the owner can't. Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
 
 ## Collections
 
