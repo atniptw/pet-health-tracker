@@ -42,7 +42,7 @@ A person can be in several households. The app shows one household at a time and
 
 Each member has a name per household, so someone can be "Tom" in one and "Dad" in another. It is pre-filled from the login's display name. The creator sets theirs on the create screen and an invitee sets theirs when joining. A member with no name in a household (households created before names existed) is asked for one once, the next time they open it. The app asks only when the server confirms the name is missing, and shows the home screen until then, so logging without signal is never blocked. Anyone can change their own name.
 
-A pet's history shows who logged each entry, once the household has more than one member. A log by someone else, such as a former member, always shows their name.
+A pet's history shows who logged each entry, once the household has more than one member. A log by someone else always shows their name. Planned: a log by someone who has left the household, or whose account was deleted, shows "Former member".
 
 ### Invite codes
 
@@ -60,7 +60,7 @@ An admin can rename the household from Settings (Household name), 1 to 100 chara
 
 ### Leaving
 
-A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Planned: admins who aren't the owner can leave too, and only the owner can't. Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again.
+A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Planned: admins who aren't the owner can leave too, and only the owner can't. Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again. Planned: leaving deletes their member doc instead; their logs stay with the household and show "Former member".
 
 ## Collections
 
@@ -78,7 +78,7 @@ Membership and role live on the household doc as two arrays, so security rules c
 
 ### `households/{householdId}/members/{uid}`
 
-A member's name in this household. The doc ID is the member's uid. It is kept when they leave.
+A member's name in this household. The doc ID is the member's uid. It is kept when they leave (planned: deleted when they leave).
 
 | Field | Type | Notes |
 |---|---|---|
