@@ -71,7 +71,7 @@ A member who isn't an admin can leave a household from Settings, after confirmin
 | `name` | string | required |
 | `memberIds` | list of uid | everyone in the household, admins included; non-empty |
 | `adminIds` | list of uid | subset of `memberIds`; non-empty |
-| `ownerId` | uid | the owner, set to the creator. Households made before owners have none yet |
+| `ownerId` | uid | the owner, set to the creator. Households made before owners get one from `scripts/backfill-owners.sh`: a sole admin, else the admin who created it (a member doc with no `inviteId`), else the longest-standing admin |
 | `createdAt`, `updatedAt` | server timestamp | |
 | `schemaVersion` | int | evolve fields without a migration job |
 

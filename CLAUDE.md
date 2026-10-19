@@ -38,6 +38,7 @@ flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
 npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
+./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
 flutter test integration_test            # smoke test on a running device; needs the Firebase emulators up
 ```
 
