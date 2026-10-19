@@ -145,12 +145,14 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.memberIds == [request.auth.uid]
         && request.resource.data.adminIds == [request.auth.uid]
+        // App builds from before owners leave ownerId out.
+        && request.resource.data.get('ownerId', request.auth.uid) == request.auth.uid
         && isValidHouseholdName(request.resource.data)
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && request.resource.data.schemaVersion == 1
         && request.resource.data.keys().hasOnly(
-          ['name', 'memberIds', 'adminIds', 'createdAt', 'updatedAt', 'schemaVersion']);
+          ['name', 'memberIds', 'adminIds', 'ownerId', 'createdAt', 'updatedAt', 'schemaVersion']);
       allow update: if (isAdmin(resource)
           && isValidHouseholdName(request.resource.data)
           && request.resource.data.adminIds.size() > 0

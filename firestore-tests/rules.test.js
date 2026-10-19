@@ -78,6 +78,7 @@ function newHousehold(uid, overrides = {}) {
     name: 'Home',
     memberIds: [uid],
     adminIds: [uid],
+    ownerId: uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     schemaVersion: 1,
@@ -117,6 +118,18 @@ describe('households', () => {
 
   test('a signed-in user can create a household with only themselves in it', async () => {
     await assertSucceeds(setDoc(doc(db(OUTSIDER), 'households/new'), newHousehold(OUTSIDER)));
+  });
+
+  test('a new household is owned by the user who creates it', async () => {
+    const ref = doc(db(OUTSIDER), 'households/new');
+    await assertFails(setDoc(ref, newHousehold(OUTSIDER, { ownerId: MEMBER })));
+    await assertFails(setDoc(ref, newHousehold(OUTSIDER, { ownerId: 42 })));
+  });
+
+  test('app builds from before owners can still create a household without one', async () => {
+    await assertSucceeds(
+      setDoc(doc(db(OUTSIDER), 'households/new'), without(newHousehold(OUTSIDER), 'ownerId')),
+    );
   });
 
   test('signed-out users cannot create a household', async () => {

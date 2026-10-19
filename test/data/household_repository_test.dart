@@ -46,6 +46,7 @@ void main() {
           'name',
           'memberIds',
           'adminIds',
+          'ownerId',
           'createdAt',
           'updatedAt',
           'schemaVersion',
@@ -54,6 +55,7 @@ void main() {
       expect(data['name'], 'Home');
       expect(data['memberIds'], ['u1']);
       expect(data['adminIds'], ['u1']);
+      expect(data['ownerId'], 'u1');
       expect(data['createdAt'], isA<Timestamp>());
       expect(data['updatedAt'], isA<Timestamp>());
       expect(data['schemaVersion'], 1);
@@ -91,6 +93,19 @@ void main() {
       expect(households.first, isA<Household>());
       expect(households.first.memberIds, ['u1']);
       expect(households.first.adminIds, ['u1']);
+      expect(households.first.ownerId, 'u1');
+    });
+
+    test('reads a household from before owners as having none', () async {
+      await firestore.collection('households').doc('old').set({
+        'name': 'Old',
+        'memberIds': ['u1'],
+        'adminIds': ['u1'],
+      });
+
+      final households = await repository.watchMyHouseholds('u1').first;
+
+      expect(households.single.ownerId, isNull);
     });
 
     test("does not emit someone else's household", () async {

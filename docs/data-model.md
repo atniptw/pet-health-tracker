@@ -32,7 +32,7 @@ A household always has exactly one owner and at least one admin.
 
 The owner can transfer ownership to any member, who becomes an admin and the owner. The old owner stays an admin.
 
-A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its sole admin, with a default name of `{display name}'s Household`. People already in a household can join or create more.
+A user does not get a household automatically. After sign-in, if they aren't already in a household, the app shows a choice: **join** an existing household with an invite code, or **create** a new one. Creating one makes the new user its owner and sole admin, with a default name of `{display name}'s Household`. People already in a household can join or create more.
 
 ### Multiple households
 
@@ -71,6 +71,7 @@ A member who isn't an admin can leave a household from Settings, after confirmin
 | `name` | string | required |
 | `memberIds` | list of uid | everyone in the household, admins included; non-empty |
 | `adminIds` | list of uid | subset of `memberIds`; non-empty |
+| `ownerId` | uid | the owner, set to the creator. Households made before owners have none yet |
 | `createdAt`, `updatedAt` | server timestamp | |
 | `schemaVersion` | int | evolve fields without a migration job |
 
@@ -160,7 +161,7 @@ Each question is a map: `key`, `label`, `type`, `retired?`, for number types an 
 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
 
-- **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`. A non-admin can make two changes only: add their own uid to `memberIds` when joining, and remove it when leaving.
+- **Household doc:** read if in `memberIds`; update and delete if in `adminIds`. Rules keep `adminIds` a non-empty subset of `memberIds`. A new household's `ownerId`, if set, must be its creator; app builds from before owners leave it out. A non-admin can make two changes only: add their own uid to `memberIds` when joining, and remove it when leaving.
 - **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId`. A former member's doc is kept but can't be read before joining, so when creating it is refused the app merges into it instead, keeping its `createdAt`. The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and is less than 7 days old.
 - **Members:** read if in `memberIds`. A member can create and update only their own doc, and only while their uid is in `memberIds` (checked with `getAfter`, so it can be in the same batch as creating or joining the household). No one can delete a member doc.
 - **Invites:** any signed-in user can `get` an invite by its ID; only the household's admins can list them (to see the active one's expiry) and create or delete them. An invite's ID must be a SHA-256 hex hash. An expired invite's ID can be reused by any household's admin.
