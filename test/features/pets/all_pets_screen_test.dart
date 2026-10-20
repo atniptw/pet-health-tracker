@@ -17,6 +17,7 @@ void main() {
     name: 'The Den',
     memberIds: ['admin', 'member'],
     adminIds: ['admin'],
+    ownerId: 'admin',
   );
 
   late FakeFirebaseFirestore firestore;

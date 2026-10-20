@@ -13,7 +13,13 @@ import '../helpers.dart';
 class MockHouseholdRepository extends Mock implements HouseholdRepository {}
 
 void main() {
-  const household = Household(id: 'h1', name: 'The Den', memberIds: ['u1'], adminIds: []);
+  const household = Household(
+    id: 'h1',
+    name: 'The Den',
+    memberIds: ['u1'],
+    adminIds: ['u1'],
+    ownerId: 'u1',
+  );
   late MockHouseholdRepository repository;
 
   void answerAddMemberName(Future<void> Function() answer) {

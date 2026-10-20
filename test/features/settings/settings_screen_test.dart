@@ -24,6 +24,7 @@ void main() {
     name: 'The Den',
     memberIds: ['admin', 'member'],
     adminIds: ['admin'],
+    ownerId: 'admin',
   );
 
   late PetRepository pets;
@@ -37,6 +38,7 @@ void main() {
       'name': household.name,
       'memberIds': household.memberIds,
       'adminIds': household.adminIds,
+      'ownerId': household.ownerId,
     });
     auth = MockAuthRepository();
     when(auth.signOut).thenAnswer((_) async {});

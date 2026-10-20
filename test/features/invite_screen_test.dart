@@ -17,7 +17,13 @@ import '../helpers.dart';
 class MockInviteRepository extends Mock implements InviteRepository {}
 
 void main() {
-  const household = Household(id: 'h1', name: 'The Den', memberIds: ['u1'], adminIds: ['u1']);
+  const household = Household(
+    id: 'h1',
+    name: 'The Den',
+    memberIds: ['u1'],
+    adminIds: ['u1'],
+    ownerId: 'u1',
+  );
   final words = InviteWords(['acorn', 'tulip', 'shelf']);
 
   late FakeFirebaseFirestore firestore;

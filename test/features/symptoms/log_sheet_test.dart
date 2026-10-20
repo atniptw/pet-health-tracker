@@ -18,7 +18,13 @@ import '../../helpers.dart';
 class MockSymptomLogRepository extends Mock implements SymptomLogRepository {}
 
 void main() {
-  const household = Household(id: 'h1', name: 'The Den', memberIds: ['u1'], adminIds: ['u1']);
+  const household = Household(
+    id: 'h1',
+    name: 'The Den',
+    memberIds: ['u1'],
+    adminIds: ['u1'],
+    ownerId: 'u1',
+  );
 
   const catalog = SymptomCatalog([
     CatalogSymptom(key: 'seizure', label: 'Seizure'),

@@ -76,6 +76,7 @@ void main() {
       'name': 'The Den',
       'memberIds': ['u1'],
       'adminIds': ['u1'],
+      'ownerId': 'u1',
     });
 
     await tester.pumpScoped(
@@ -109,6 +110,7 @@ void main() {
           'name': name,
           'memberIds': ['u1'],
           'adminIds': ['u1'],
+          'ownerId': 'u1',
         });
         await firestore.doc('households/$id/members/u1').set({'name': 'Tom'});
       }
@@ -216,6 +218,7 @@ void main() {
       'name': 'Cabin',
       'memberIds': ['admin'],
       'adminIds': ['admin'],
+      'ownerId': 'admin',
     });
     await firestore.doc('invites/${inviteIdFor('acorn tulip shelf')}').set({
       'householdId': 'h2',

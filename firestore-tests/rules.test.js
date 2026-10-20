@@ -126,8 +126,8 @@ describe('households', () => {
     await assertFails(setDoc(ref, newHousehold(OUTSIDER, { ownerId: 42 })));
   });
 
-  test('app builds from before owners can still create a household without one', async () => {
-    await assertSucceeds(
+  test('a new household must have an owner', async () => {
+    await assertFails(
       setDoc(doc(db(OUTSIDER), 'households/new'), without(newHousehold(OUTSIDER), 'ownerId')),
     );
   });

@@ -96,18 +96,6 @@ void main() {
       expect(households.first.ownerId, 'u1');
     });
 
-    test('reads a household from before owners as having none', () async {
-      await firestore.collection('households').doc('old').set({
-        'name': 'Old',
-        'memberIds': ['u1'],
-        'adminIds': ['u1'],
-      });
-
-      final households = await repository.watchMyHouseholds('u1').first;
-
-      expect(households.single.ownerId, isNull);
-    });
-
     test("does not emit someone else's household", () async {
       await repository.createHousehold(name: 'Theirs', ownerUid: 'u2', ownerName: 'Sam');
 
@@ -135,6 +123,7 @@ void main() {
         'name': 'Home',
         'memberIds': ['u1'],
         'adminIds': ['u1'],
+        'ownerId': 'u1',
       });
       return ref.id;
     }
@@ -183,6 +172,7 @@ void main() {
       'name': 'The Den',
       'memberIds': ['admin', 'u1'],
       'adminIds': ['admin'],
+      'ownerId': 'admin',
     });
 
     await repository.renameHousehold(householdId: 'h1', name: 'The Burrow');
@@ -199,6 +189,7 @@ void main() {
       'name': 'The Den',
       'memberIds': ['admin', 'u1'],
       'adminIds': ['admin'],
+      'ownerId': 'admin',
     });
     await firestore.doc('households/h1/members/u1').set({'name': 'Tom'});
 
@@ -220,6 +211,7 @@ void main() {
         'name': 'The Den',
         'memberIds': ['admin'],
         'adminIds': ['admin'],
+        'ownerId': 'admin',
       });
       await firestore.doc('invites/${inviteIdFor(code)}').set({
         'householdId': 'h1',
