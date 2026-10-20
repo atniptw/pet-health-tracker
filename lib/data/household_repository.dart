@@ -97,6 +97,50 @@ class HouseholdRepository {
     });
   }
 
+  /// Deletes the household and everything in it: its pets with their logs
+  /// and medications, its invites, and its members' names. The rules allow
+  /// this only for the owner.
+  ///
+  /// Unlike other writes this waits for the server: it reads from the server
+  /// first, so it fails with no connection instead of missing documents only
+  /// the server has. The household goes last, with the names, since the rules
+  /// for everything else need it to exist.
+  Future<void> deleteHousehold(String householdId) async {
+    const server = GetOptions(source: Source.server);
+    final household = _households.doc(householdId);
+    final pets = (await household.collection('pets').get(server)).docs;
+    final refs = <DocumentReference>[];
+    for (final pet in pets) {
+      for (final collection in ['symptomLogs', 'medications']) {
+        refs.addAll(
+          (await pet.reference.collection(collection).get(server)).docs.map((d) => d.reference),
+        );
+      }
+    }
+    refs.addAll(pets.map((pet) => pet.reference));
+    final invites = await _firestore
+        .collection('invites')
+        .where('householdId', isEqualTo: householdId)
+        .get(server);
+    refs.addAll(invites.docs.map((d) => d.reference));
+    final members = (await household.collection('members').get(server)).docs;
+
+    // A batch holds at most 500 writes.
+    for (var i = 0; i < refs.length; i += 500) {
+      final batch = _firestore.batch();
+      for (final ref in refs.skip(i).take(500)) {
+        batch.delete(ref);
+      }
+      await batch.commit();
+    }
+    final last = _firestore.batch();
+    for (final member in members) {
+      last.delete(member.reference);
+    }
+    last.delete(household);
+    await last.commit();
+  }
+
   /// Removes [uid] from the household's members and admins and deletes
   /// their member doc, so their logs show "Former member". The rules allow
   /// this for anyone but the owner.

@@ -24,6 +24,17 @@ class RefusingFirestore extends FakeFirebaseFirestore {
   }
 }
 
+/// A Firestore that counts the batches made from it.
+class CountingFirestore extends FakeFirebaseFirestore {
+  int batches = 0;
+
+  @override
+  WriteBatch batch() {
+    batches++;
+    return super.batch();
+  }
+}
+
 void main() {
   late FakeFirebaseFirestore firestore;
   late HouseholdRepository repository;
@@ -232,6 +243,69 @@ void main() {
     expect(household['adminIds'], ['admin', 'u1']);
     expect(household['memberIds'], ['admin', 'u1']);
     expect(household['updatedAt'], isA<Timestamp>());
+  });
+
+  group('deleteHousehold', () {
+    Future<void> seed(FakeFirebaseFirestore firestore, {int logs = 1}) async {
+      for (final id in ['h1', 'h2']) {
+        await firestore.doc('households/$id').set({
+          'name': id,
+          'memberIds': ['admin', 'u1'],
+          'adminIds': ['admin'],
+          'ownerId': 'admin',
+        });
+        await firestore.doc('households/$id/members/admin').set({'name': 'Ann'});
+        await firestore.doc('households/$id/members/u1').set({'name': 'Tom'});
+        await firestore.doc('households/$id/pets/p1').set({'name': 'Boogie'});
+        await firestore.doc('households/$id/pets/p2').set({'name': 'Pootz', 'archivedAt': 1});
+        await firestore.doc('households/$id/pets/p1/medications/m1').set({'name': 'Pill'});
+        for (var i = 0; i < logs; i++) {
+          await firestore.doc('households/$id/pets/p2/symptomLogs/l$i').set({'symptom': 'other'});
+        }
+        await firestore.doc('invites/invite-$id').set({'householdId': id});
+      }
+    }
+
+    Future<List<String>> paths(FakeFirebaseFirestore firestore, String householdId) async {
+      final household = firestore.doc('households/$householdId');
+      return [
+        if ((await household.get()).exists) household.path,
+        for (final collection in ['members', 'pets'])
+          ...(await household.collection(collection).get()).docs.map((d) => d.reference.path),
+        for (final pet in ['p1', 'p2'])
+          for (final collection in ['symptomLogs', 'medications'])
+            ...(await household.collection('pets/$pet/$collection').get()).docs.map(
+              (d) => d.reference.path,
+            ),
+        ...(await firestore
+                .collection('invites')
+                .where('householdId', isEqualTo: householdId)
+                .get())
+            .docs
+            .map((d) => d.reference.path),
+      ];
+    }
+
+    test('deletes the household with its names, pets, logs, medications and invite', () async {
+      await seed(firestore);
+      final otherBefore = await paths(firestore, 'h2');
+
+      await repository.deleteHousehold('h1');
+
+      expect(await paths(firestore, 'h1'), isEmpty);
+      expect(await paths(firestore, 'h2'), otherBefore);
+    });
+
+    test('splits the deletes into batches of at most 500', () async {
+      final counting = CountingFirestore();
+      await seed(counting, logs: 499);
+
+      await HouseholdRepository(counting).deleteHousehold('h1');
+
+      expect(await paths(counting, 'h1'), isEmpty);
+      // 499 logs, a medication, 2 pets and an invite, then the names and the household.
+      expect(counting.batches, 3);
+    });
   });
 
   group('joinHousehold', () {

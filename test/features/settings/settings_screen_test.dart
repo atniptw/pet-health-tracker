@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -359,6 +362,121 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
+    });
+  });
+
+  group('deleting', () {
+    late MockHouseholdRepository households;
+
+    setUp(() {
+      households = MockHouseholdRepository();
+      when(() => households.deleteHousehold(any())).thenAnswer((_) async {});
+    });
+
+    /// Opens settings on top of a placeholder root, as the app does.
+    Future<void> openSettings(
+      WidgetTester tester, {
+      String uid = 'admin',
+      Household? inHousehold,
+    }) async {
+      await tester.pumpScoped(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) => SettingsScreen(household: inHousehold ?? household, uid: uid),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+        overrides: [
+          petRepositoryProvider.overrideWithValue(pets),
+          householdRepositoryProvider.overrideWithValue(households),
+        ],
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> confirmDelete(WidgetTester tester) async {
+      await tester.tap(find.text('Delete household'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+    }
+
+    testWidgets('only the owner can delete the household', (tester) async {
+      const twoAdmins = Household(
+        id: 'h1',
+        name: 'The Den',
+        memberIds: ['admin', 'member'],
+        adminIds: ['admin', 'member'],
+        ownerId: 'admin',
+      );
+      await openSettings(tester, uid: 'member', inHousehold: twoAdmins);
+      expect(find.text('Delete household'), findsNothing);
+    });
+
+    testWidgets('the owner deletes after confirming, and returns to the root', (tester) async {
+      await openSettings(tester);
+
+      await tester.tap(find.text('Delete household'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete The Den?'), findsOneWidget);
+      expect(find.textContaining("can't be undone"), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      verify(() => households.deleteHousehold('h1')).called(1);
+      expect(find.byType(SettingsScreen), findsNothing);
+    });
+
+    testWidgets('cancelling keeps the household', (tester) async {
+      await openSettings(tester);
+
+      await tester.tap(find.text('Delete household'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => households.deleteHousehold(any()));
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+
+    testWidgets('waits for the server, showing progress', (tester) async {
+      final deleted = Completer<void>();
+      when(() => households.deleteHousehold(any())).thenAnswer((_) => deleted.future);
+      await openSettings(tester);
+
+      await confirmDelete(tester);
+      await tester.pump();
+
+      expect(find.text('Deleting The Den…'), findsOneWidget);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+
+      deleted.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsScreen), findsNothing);
+    });
+
+    testWidgets('a failed delete stays in settings and says to check the connection', (
+      tester,
+    ) async {
+      when(() => households.deleteHousehold(any())).thenAnswer(
+        (_) async => throw FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
+      );
+      await openSettings(tester);
+
+      await confirmDelete(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Deleting The Den…'), findsNothing);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(
+        find.text("Couldn't delete The Den. Check your connection and try again."),
+        findsOneWidget,
+      );
     });
   });
 }

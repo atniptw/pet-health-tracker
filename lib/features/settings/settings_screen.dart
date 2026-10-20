@@ -95,6 +95,12 @@ class SettingsScreen extends ConsumerWidget {
             enabled: !isOwner,
             onTap: () => _leave(context, ref, household),
           ),
+          if (isOwner)
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Delete household'),
+              onTap: () => _delete(context, ref, household),
+            ),
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Version'),
@@ -164,6 +170,63 @@ class SettingsScreen extends ConsumerWidget {
     unawaited(
       ref.read(householdRepositoryProvider).leaveHousehold(householdId: household.id, uid: uid),
     );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref, Household household) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${household.name}?'),
+        content: const Text(
+          'This deletes its pets and all their symptom logs, for everyone in it. '
+          "It can't be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final deleting = ref.read(householdRepositoryProvider).deleteHousehold(household.id);
+    // Unlike other changes, deleting waits for the server, so with no
+    // connection the owner is told instead of the delete waiting unseen.
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 24),
+                Expanded(child: Text('Deleting ${household.name}…')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    try {
+      await deleting;
+      // Back to the root, which opens another household or the create and
+      // join choice.
+      navigator.popUntil((route) => route.isFirst);
+    } catch (_) {
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Couldn't delete ${household.name}. Check your connection and try again."),
+        ),
+      );
+    }
   }
 }
 

@@ -332,6 +332,15 @@ function join(uid, { inviteId = INVITE_ID, member = newMember({ inviteId }) } = 
   return batch.commit();
 }
 
+/** The final batch of deleting h1: the given members' names and the household. */
+function deleteHousehold(uid, memberIds) {
+  const firestore = db(uid);
+  const batch = writeBatch(firestore);
+  for (const memberId of memberIds) batch.delete(doc(firestore, `${HOUSEHOLD}/members/${memberId}`));
+  batch.delete(doc(firestore, HOUSEHOLD));
+  return batch.commit();
+}
+
 /**
  * The leave batch: remove [uid] from h1's memberIds and adminIds and delete
  * their member doc.
@@ -578,11 +587,35 @@ describe('members', () => {
     await assertFails(updateDoc(ref, { createdAt: new Date(1), updatedAt: serverTimestamp() }));
   });
 
-  test('nobody can delete a member doc except by leaving', async () => {
+  test('nobody can delete a member doc except by leaving or deleting the household', async () => {
     await seedHousehold();
     await seed({ [OWN]: { name: 'Tom' } });
     await assertFails(deleteDoc(doc(db(MEMBER), OWN)));
     await assertFails(deleteDoc(doc(db(ADMIN), OWN)));
+  });
+
+  test('the owner deletes every name in the batch that deletes the household', async () => {
+    await seedHousehold();
+    await seed({ [OWN]: { name: 'Tom' }, [`${HOUSEHOLD}/members/${ADMIN}`]: { name: 'Ann' } });
+    await assertSucceeds(deleteHousehold(ADMIN, [ADMIN, MEMBER]));
+  });
+
+  test("only the owner can delete others' names, and only with the household", async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+      [OWN]: { name: 'Tom' },
+    });
+    await assertFails(deleteHousehold(SECOND_ADMIN, [MEMBER]));
+    const firestore = db(ADMIN);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), { name: 'Den', updatedAt: serverTimestamp() });
+    batch.delete(doc(firestore, OWN));
+    await assertFails(batch.commit());
   });
 
   test('a former member cannot change their name', async () => {

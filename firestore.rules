@@ -177,7 +177,7 @@ service cloud.firestore {
         || isLeaving();
       allow delete: if isOwner(resource);
 
-      // A member's name in this household. Deleted when they leave.
+      // A member's name in this household. Deleted when they leave, or with the household.
       match /members/{uid} {
         allow read: if isMember(get(householdPath(householdId)));
         allow create: if isSignedIn()
@@ -190,11 +190,14 @@ service cloud.firestore {
           && uid in getAfter(householdPath(householdId)).data.memberIds
           && isValidMember(request.resource.data)
           && request.resource.data.createdAt == resource.data.createdAt;
-        // Only in the batch that takes the member out of memberIds.
-        allow delete: if isSignedIn()
-          && request.auth.uid == uid
-          && uid in get(householdPath(householdId)).data.memberIds
-          && !(uid in getAfter(householdPath(householdId)).data.memberIds);
+        // Only in the batch that takes the member out of memberIds, or the owner's batch
+        // that deletes the household.
+        allow delete: if (isSignedIn()
+            && request.auth.uid == uid
+            && uid in get(householdPath(householdId)).data.memberIds
+            && !(uid in getAfter(householdPath(householdId)).data.memberIds))
+          || (isOwner(get(householdPath(householdId)))
+            && !existsAfter(householdPath(householdId)));
       }
 
       match /pets/{petId} {
