@@ -202,6 +202,21 @@ void main() {
     expect((await firestore.doc('households/h1/members/u1').get()).exists, isFalse);
   });
 
+  test('an admin who leaves stops being an admin', () async {
+    await firestore.doc('households/h1').set({
+      'name': 'The Den',
+      'memberIds': ['admin', 'u1'],
+      'adminIds': ['admin', 'u1'],
+      'ownerId': 'admin',
+    });
+
+    await repository.leaveHousehold(householdId: 'h1', uid: 'u1');
+
+    final household = (await firestore.doc('households/h1').get()).data()!;
+    expect(household['memberIds'], ['admin']);
+    expect(household['adminIds'], ['admin']);
+  });
+
   group('joinHousehold', () {
     const code = 'acorn tulip shelf';
     final now = DateTime(2026, 10, 10, 12);

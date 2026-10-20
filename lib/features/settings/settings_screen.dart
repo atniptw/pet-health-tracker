@@ -25,6 +25,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final household = _current(ref);
     final isAdmin = household.adminIds.contains(uid);
+    final isOwner = household.ownerId == uid;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: Column(
@@ -77,8 +78,8 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.exit_to_app),
             title: const Text('Leave household'),
-            subtitle: isAdmin ? const Text("Admins can't leave a household") : null,
-            enabled: !isAdmin,
+            subtitle: isOwner ? const Text("The owner can't leave a household") : null,
+            enabled: !isOwner,
             onTap: () => _leave(context, ref, household),
           ),
           ListTile(

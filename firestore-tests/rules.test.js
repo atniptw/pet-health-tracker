@@ -285,11 +285,18 @@ function join(uid, { inviteId = INVITE_ID, member = newMember({ inviteId }) } = 
   return batch.commit();
 }
 
-/** The leave batch: remove [uid] from h1's memberIds and delete their member doc. */
+/**
+ * The leave batch: remove [uid] from h1's memberIds and adminIds and delete
+ * their member doc.
+ */
 function leave(uid, { memberDoc = uid } = {}) {
   const firestore = db(uid);
   const batch = writeBatch(firestore);
-  batch.update(doc(firestore, HOUSEHOLD), { memberIds: arrayRemove(uid), updatedAt: serverTimestamp() });
+  batch.update(doc(firestore, HOUSEHOLD), {
+    memberIds: arrayRemove(uid),
+    adminIds: arrayRemove(uid),
+    updatedAt: serverTimestamp(),
+  });
   batch.delete(doc(firestore, `${HOUSEHOLD}/members/${memberDoc}`));
   return batch.commit();
 }
@@ -443,11 +450,34 @@ describe('leaving a household', () => {
     );
   });
 
-  test('admins cannot use the member leave path', async () => {
+  test('an admin who is not the owner can leave', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN], ownerId: ADMIN },
+      [`${HOUSEHOLD}/members/${SECOND_ADMIN}`]: { name: 'Sam' },
+    });
+    await assertSucceeds(leave(SECOND_ADMIN));
+    const household = await getDoc(doc(db(ADMIN), HOUSEHOLD));
+    assert.deepEqual(household.get('memberIds'), [ADMIN]);
+    assert.deepEqual(household.get('adminIds'), [ADMIN]);
+  });
+
+  test('the owner cannot leave, even with other admins', async () => {
     await seed({
       [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN], ownerId: ADMIN },
     });
-    await assertFails(leave(SECOND_ADMIN));
+    await assertFails(leave(ADMIN));
+  });
+
+  test('an admin who leaves must also stop being an admin', async () => {
+    await seed({
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN], ownerId: ADMIN },
+    });
+    await assertFails(
+      updateDoc(doc(db(SECOND_ADMIN), HOUSEHOLD), {
+        memberIds: arrayRemove(SECOND_ADMIN),
+        updatedAt: serverTimestamp(),
+      }),
+    );
   });
 });
 

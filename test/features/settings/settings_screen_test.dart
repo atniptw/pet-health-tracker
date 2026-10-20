@@ -241,13 +241,17 @@ void main() {
     });
 
     /// Opens settings on top of a placeholder root, as the app does.
-    Future<void> openSettings(WidgetTester tester, {required String uid}) async {
+    Future<void> openSettings(
+      WidgetTester tester, {
+      required String uid,
+      Household? inHousehold,
+    }) async {
       await tester.pumpScoped(
         Builder(
           builder: (context) => TextButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (context) => SettingsScreen(household: household, uid: uid),
+                builder: (context) => SettingsScreen(household: inHousehold ?? household, uid: uid),
               ),
             ),
             child: const Text('open'),
@@ -294,10 +298,28 @@ void main() {
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
-    testWidgets("admins can't leave, and are told why", (tester) async {
+    testWidgets("an admin who isn't the owner can leave", (tester) async {
+      const twoAdmins = Household(
+        id: 'h1',
+        name: 'The Den',
+        memberIds: ['admin', 'member'],
+        adminIds: ['admin', 'member'],
+        ownerId: 'admin',
+      );
+      await openSettings(tester, uid: 'member', inHousehold: twoAdmins);
+
+      await tester.tap(find.text('Leave household'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Leave'));
+      await tester.pumpAndSettle();
+
+      verify(() => households.leaveHousehold(householdId: 'h1', uid: 'member')).called(1);
+    });
+
+    testWidgets("the owner can't leave, and is told why", (tester) async {
       await openSettings(tester, uid: 'admin');
 
-      expect(find.text("Admins can't leave a household"), findsOneWidget);
+      expect(find.text("The owner can't leave a household"), findsOneWidget);
       await tester.tap(find.text('Leave household'));
       await tester.pumpAndSettle();
 
