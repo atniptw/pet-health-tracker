@@ -67,7 +67,7 @@ async function seed(docs) {
 
 async function seedHousehold() {
   await seed({
-    [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER], adminIds: [ADMIN] },
+    [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER], adminIds: [ADMIN], ownerId: ADMIN },
     [PET]: { name: 'Boogie', species: 'dog', createdAt: new Date(0), schemaVersion: 1 },
   });
 }
@@ -162,12 +162,58 @@ describe('households', () => {
     );
   });
 
-  test('only admins can update or delete a household', async () => {
+  test('only admins can update a household', async () => {
     await seedHousehold();
     await assertFails(updateDoc(doc(db(MEMBER), HOUSEHOLD), { name: 'Mine now' }));
-    await assertFails(deleteDoc(doc(db(MEMBER), HOUSEHOLD)));
     await assertSucceeds(updateDoc(doc(db(ADMIN), HOUSEHOLD), { name: 'Renamed' }));
+  });
+
+  test('only the owner can delete a household', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    await assertFails(deleteDoc(doc(db(MEMBER), HOUSEHOLD)));
+    await assertFails(deleteDoc(doc(db(SECOND_ADMIN), HOUSEHOLD)));
     await assertSucceeds(deleteDoc(doc(db(ADMIN), HOUSEHOLD)));
+  });
+
+  test('the owner always stays an admin and a member', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    for (const uid of [ADMIN, SECOND_ADMIN]) {
+      const ref = doc(db(uid), HOUSEHOLD);
+      await assertFails(updateDoc(ref, { adminIds: [SECOND_ADMIN] }));
+      await assertFails(
+        updateDoc(ref, { memberIds: [SECOND_ADMIN, MEMBER], adminIds: [SECOND_ADMIN] }),
+      );
+    }
+  });
+
+  test('nobody can change or remove the owner', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    for (const uid of [ADMIN, SECOND_ADMIN]) {
+      const ref = doc(db(uid), HOUSEHOLD);
+      await assertFails(updateDoc(ref, { ownerId: SECOND_ADMIN }));
+      await assertFails(updateDoc(ref, { ownerId: deleteField() }));
+    }
   });
 
   test('an admin can rename the household to 1 to 100 characters', async () => {
@@ -303,7 +349,7 @@ describe('joining a household', () => {
 
   test('a former member can join again, keeping their member doc', async () => {
     await seed({
-      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN], ownerId: ADMIN },
       [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
     });
     await seedInvite();
@@ -312,7 +358,7 @@ describe('joining a household', () => {
   });
   test('a former member can rejoin with a merge that keeps their member doc', async () => {
     await seed({
-      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN], ownerId: ADMIN },
       [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
     });
     await seedInvite();
@@ -344,7 +390,7 @@ describe('leaving a household', () => {
   test('a member can only remove themselves', async () => {
     await seedHousehold();
     await seed({
-      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER, OUTSIDER], adminIds: [ADMIN] },
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, MEMBER, OUTSIDER], adminIds: [ADMIN], ownerId: ADMIN },
     });
     await assertFails(
       updateDoc(doc(db(MEMBER), HOUSEHOLD), { memberIds: arrayRemove(OUTSIDER), updatedAt: serverTimestamp() }),
@@ -376,7 +422,7 @@ describe('leaving a household', () => {
 
   test('admins cannot use the member leave path', async () => {
     await seed({
-      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN] },
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN], ownerId: ADMIN },
     });
     await assertFails(leave(SECOND_ADMIN));
   });
@@ -441,7 +487,7 @@ describe('members', () => {
 
   test('a former member cannot change their name', async () => {
     await seed({
-      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN] },
+      [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN], adminIds: [ADMIN], ownerId: ADMIN },
       [OWN]: { name: 'Tom', createdAt: new Date(0), schemaVersion: 1 },
     });
     await assertFails(updateDoc(doc(db(MEMBER), OWN), { name: 'Dad', updatedAt: serverTimestamp() }));
@@ -484,7 +530,7 @@ describe('invites', () => {
 
   test('an unexpired code cannot be taken over, an expired one can', async () => {
     await seedHousehold();
-    await seed({ 'households/h2': { name: 'Other', memberIds: [OUTSIDER], adminIds: [OUTSIDER] } });
+    await seed({ 'households/h2': { name: 'Other', memberIds: [OUTSIDER], adminIds: [OUTSIDER], ownerId: OUTSIDER } });
     await seedInvite();
     const ref = doc(db(OUTSIDER), INVITE);
     const theirs = newInvite({ householdId: 'h2', createdBy: OUTSIDER });
