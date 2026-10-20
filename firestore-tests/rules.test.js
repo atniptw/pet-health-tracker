@@ -1,5 +1,6 @@
 // Security rules tests for firestore.rules. Run with `npm test` in this
 // directory; it starts the Firestore emulator for the duration of the run.
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { after, afterEach, before, describe, test } from 'node:test';
 
@@ -284,12 +285,13 @@ function join(uid, { inviteId = INVITE_ID, member = newMember({ inviteId }) } = 
   return batch.commit();
 }
 
-/** The leave write: remove [uid] from h1's memberIds. */
-function leave(uid) {
-  return updateDoc(doc(db(uid), HOUSEHOLD), {
-    memberIds: arrayRemove(uid),
-    updatedAt: serverTimestamp(),
-  });
+/** The leave batch: remove [uid] from h1's memberIds and delete their member doc. */
+function leave(uid, { memberDoc = uid } = {}) {
+  const firestore = db(uid);
+  const batch = writeBatch(firestore);
+  batch.update(doc(firestore, HOUSEHOLD), { memberIds: arrayRemove(uid), updatedAt: serverTimestamp() });
+  batch.delete(doc(firestore, `${HOUSEHOLD}/members/${memberDoc}`));
+  return batch.commit();
 }
 
 describe('joining a household', () => {
@@ -387,6 +389,27 @@ describe('leaving a household', () => {
     await assertFails(getDoc(doc(db(MEMBER), HOUSEHOLD)));
   });
 
+  test('leaving deletes your name', async () => {
+    await seedHousehold();
+    await seed({ [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Sam' } });
+    await assertSucceeds(leave(MEMBER));
+    const member = await getDoc(doc(db(ADMIN), `${HOUSEHOLD}/members/${MEMBER}`));
+    assert.equal(member.exists(), false);
+  });
+
+  test("leaving cannot delete someone else's name", async () => {
+    await seedHousehold();
+    await seed({ [`${HOUSEHOLD}/members/${ADMIN}`]: { name: 'Tom' } });
+    await assertFails(leave(MEMBER, { memberDoc: ADMIN }));
+  });
+
+  test('app builds that keep the name can still leave', async () => {
+    await seedHousehold();
+    await assertSucceeds(
+      updateDoc(doc(db(MEMBER), HOUSEHOLD), { memberIds: arrayRemove(MEMBER), updatedAt: serverTimestamp() }),
+    );
+  });
+
   test('a member can only remove themselves', async () => {
     await seedHousehold();
     await seed({
@@ -478,7 +501,7 @@ describe('members', () => {
     await assertFails(updateDoc(ref, { createdAt: new Date(1), updatedAt: serverTimestamp() }));
   });
 
-  test('nobody can delete a member doc', async () => {
+  test('nobody can delete a member doc except by leaving', async () => {
     await seedHousehold();
     await seed({ [OWN]: { name: 'Tom' } });
     await assertFails(deleteDoc(doc(db(MEMBER), OWN)));

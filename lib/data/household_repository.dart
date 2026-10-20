@@ -87,14 +87,18 @@ class HouseholdRepository {
     });
   }
 
-  /// Removes [uid] from the household's members. The rules allow this only
-  /// for members who aren't admins. Their member doc stays, so their logs
-  /// keep their name.
+  /// Removes [uid] from the household's members and deletes their member
+  /// doc, so their logs show "Former member". The rules allow this only for
+  /// members who aren't admins.
   Future<void> leaveHousehold({required String householdId, required String uid}) {
-    return _households.doc(householdId).update({
-      'memberIds': FieldValue.arrayRemove([uid]),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    final household = _households.doc(householdId);
+    return (_firestore.batch()
+          ..update(household, {
+            'memberIds': FieldValue.arrayRemove([uid]),
+            'updatedAt': FieldValue.serverTimestamp(),
+          })
+          ..delete(household.collection('members').doc(uid)))
+        .commit();
   }
 
   /// Joins the household whose invite matches [code], as a member named

@@ -268,6 +268,7 @@ void main() {
       await tester.tap(find.text('Leave household'));
       await tester.pumpAndSettle();
       expect(find.text('Leave The Den?'), findsOneWidget);
+      expect(find.textContaining('show "Former member"'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(TextButton, 'Leave'));
       await tester.pumpAndSettle();

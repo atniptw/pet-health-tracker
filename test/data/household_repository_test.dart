@@ -184,7 +184,7 @@ void main() {
     expect(household['updatedAt'], isA<Timestamp>());
   });
 
-  test('leaving removes only the user from the members, keeping their name', () async {
+  test('leaving removes only the user from the members, and deletes their name', () async {
     await firestore.doc('households/h1').set({
       'name': 'The Den',
       'memberIds': ['admin', 'u1'],
@@ -199,7 +199,7 @@ void main() {
     expect(household['memberIds'], ['admin']);
     expect(household['adminIds'], ['admin']);
     expect(household['updatedAt'], isA<Timestamp>());
-    expect((await firestore.doc('households/h1/members/u1').get()).data(), {'name': 'Tom'});
+    expect((await firestore.doc('households/h1/members/u1').get()).exists, isFalse);
   });
 
   group('joinHousehold', () {

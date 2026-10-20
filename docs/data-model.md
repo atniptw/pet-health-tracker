@@ -42,7 +42,7 @@ A person can be in several households. The app shows one household at a time and
 
 Each member has a name per household, so someone can be "Tom" in one and "Dad" in another. It is pre-filled from the login's display name. The creator sets theirs on the create screen and an invitee sets theirs when joining. A member with no name in a household (households created before names existed) is asked for one once, the next time they open it. The app asks only when the server confirms the name is missing, and shows the home screen until then, so logging without signal is never blocked. Anyone can change their own name.
 
-A pet's history shows who logged each entry, once the household has more than one member. A log by someone else always shows their name. Planned: a log by someone who has left the household, or whose account was deleted, shows "Former member".
+A pet's history shows who logged each entry, once the household has more than one member. A log by someone else shows their name. A log by someone who has left the household shows "Former member" (planned: also someone whose account was deleted). People who left before names were deleted on leaving keep their name. A member who hasn't given a name yet shows none.
 
 ### Invite codes
 
@@ -60,7 +60,7 @@ An admin can rename the household from Settings (Household name), 1 to 100 chara
 
 ### Leaving
 
-A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Planned: admins who aren't the owner can leave too, and only the owner can't. Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. A member who leaves keeps their `members/{uid}` doc, so their logs still show their name, and it is reused if they join again. Planned: leaving deletes their member doc instead; their logs stay with the household and show "Former member".
+A member who isn't an admin can leave a household from Settings, after confirming. Admins see the option disabled, with "Admins can't leave a household". Planned: admins who aren't the owner can leave too, and only the owner can't. Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. Leaving deletes their `members/{uid}` doc in the same batch; their logs stay with the household and show "Former member". If they join again they give their name again.
 
 ## Collections
 
@@ -79,7 +79,7 @@ Membership and role live on the household doc as two arrays, so security rules c
 
 ### `households/{householdId}/members/{uid}`
 
-A member's name in this household. The doc ID is the member's uid. It is kept when they leave (planned: deleted when they leave).
+A member's name in this household. The doc ID is the member's uid. It is deleted when they leave.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -162,8 +162,8 @@ Each question is a map: `key`, `label`, `type`, `retired?`, for number types an 
 Rules are checked against the household doc's `memberIds` and `adminIds`:
 
 - **Household doc:** read if in `memberIds`; update if in `adminIds`; delete if the owner. Rules keep `adminIds` a non-empty subset of `memberIds`. A new household's `ownerId` must be its creator, and an update can't change or remove it or take the owner out of `adminIds`. A non-admin can make two changes only: add their own uid to `memberIds` when joining, and remove it when leaving.
-- **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId`. A former member's doc is kept but can't be read before joining, so when creating it is refused the app merges into it instead, keeping its `createdAt`. The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and is less than 7 days old.
-- **Members:** read if in `memberIds`. A member can create and update only their own doc, and only while their uid is in `memberIds` (checked with `getAfter`, so it can be in the same batch as creating or joining the household). No one can delete a member doc.
+- **Joining:** one batch adds the caller's uid to `memberIds` and creates their `members/{uid}` doc with `inviteId`. A doc kept from someone who left before leaving deleted it can't be read before joining, so when creating it is refused the app merges into it instead, keeping its `createdAt`. The household rule uses `getAfter` on that member doc to find the invite, and checks that it exists, points at this household and is less than 7 days old.
+- **Members:** read if in `memberIds`. A member can create and update only their own doc, and only while their uid is in `memberIds` (checked with `getAfter`, so it can be in the same batch as creating or joining the household). A member can delete only their own doc, and only in the batch that removes them from `memberIds` (checked with `get` and `getAfter`).
 - **Invites:** any signed-in user can `get` an invite by its ID; only the household's admins can list them (to see the active one's expiry) and create or delete them. An invite's ID must be a SHA-256 hex hash. An expired invite's ID can be reused by any household's admin.
 - **Pets:** read if in `memberIds`; create, update, delete if in `adminIds`. Creates and updates must match the pet schema above: `name` 1 to 100 characters, a known `species` and `sex`, `breed` up to 100 characters, `birthDate` as `YYYY-MM-DD`, server timestamps, no other fields. A new pet can't be archived, and updates keep `createdAt`.
 - **Symptom logs:** read and create if in `memberIds` (with `createdBy` set to the caller); update and delete if the caller is `createdBy` or in `adminIds`. `createdBy` and `createdAt` cannot be changed. Creates and updates must match the log schema above: a `symptom` key of 1 to 50 characters, a `title` of 1 to 100 characters when `symptom` is `other` and no `title` otherwise, `answers` a map, `occurredAt` a timestamp, `notes` up to 2000 characters, server timestamps, no other fields.

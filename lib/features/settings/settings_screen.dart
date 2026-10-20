@@ -131,7 +131,8 @@ class SettingsScreen extends ConsumerWidget {
         title: Text('Leave ${household.name}?'),
         content: const Text(
           "You'll lose access to its pets and logs. The symptoms you logged stay, "
-          "with your name. To come back, you'll need a new invite code.",
+          'and show "Former member" instead of your name. To come back, '
+          "you'll need a new invite code.",
         ),
         actions: [
           TextButton(

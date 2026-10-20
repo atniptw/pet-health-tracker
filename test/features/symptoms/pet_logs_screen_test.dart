@@ -33,7 +33,7 @@ void main() {
     WidgetTester tester, {
     SymptomLogRepository? repository,
     bool isAdmin = false,
-    bool hasOtherMembers = false,
+    List<String> memberIds = const ['u1'],
   }) {
     return tester.pumpScoped(
       PetLogsScreen(
@@ -41,7 +41,7 @@ void main() {
         pet: boogie,
         uid: 'u1',
         isAdmin: isAdmin,
-        hasOtherMembers: hasOtherMembers,
+        memberIds: memberIds,
       ),
       overrides: [
         householdRepositoryProvider.overrideWithValue(HouseholdRepository(membersFirestore)),
@@ -189,7 +189,7 @@ void main() {
       await addLog('Ate a sock', createdBy: 'u1');
       await addLog('Limping', createdBy: 'u2');
 
-      await pumpLogs(tester, hasOtherMembers: true);
+      await pumpLogs(tester, memberIds: ['u1', 'u2']);
       await tester.pumpAndSettle();
 
       expect(find.text('Monday, October 5, 2026 · 9:05 AM · Tom'), findsOneWidget);
@@ -217,10 +217,19 @@ void main() {
     testWidgets('shows no name for someone who has not given one', (tester) async {
       await addLog('Limping', createdBy: 'u3');
 
-      await pumpLogs(tester, hasOtherMembers: true);
+      await pumpLogs(tester, memberIds: ['u1', 'u3']);
       await tester.pumpAndSettle();
 
       expect(find.text('Monday, October 5, 2026 · 9:05 AM'), findsOneWidget);
+    });
+
+    testWidgets('shows "Former member" for someone who left and took their name', (tester) async {
+      await addLog('Limping', createdBy: 'u4');
+
+      await pumpLogs(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Monday, October 5, 2026 · 9:05 AM · Former member'), findsOneWidget);
     });
   });
 

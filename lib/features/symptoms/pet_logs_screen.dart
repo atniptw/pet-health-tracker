@@ -24,7 +24,7 @@ void openPetLogs(
         pet: pet,
         uid: uid,
         isAdmin: household.adminIds.contains(uid),
-        hasOtherMembers: household.memberIds.length > 1,
+        memberIds: household.memberIds,
       ),
     ),
   );
@@ -38,7 +38,7 @@ class PetLogsScreen extends ConsumerWidget {
     required this.pet,
     required this.uid,
     required this.isAdmin,
-    required this.hasOtherMembers,
+    required this.memberIds,
     super.key,
   });
 
@@ -51,12 +51,21 @@ class PetLogsScreen extends ConsumerWidget {
   /// Whether the signed-in user is a household admin, who can edit anyone's logs.
   final bool isAdmin;
 
-  /// Whether anyone else is in the household. Logs show who logged them only
-  /// when they could be someone else's.
-  final bool hasOtherMembers;
+  /// Everyone in the household, to tell a member who hasn't given a name
+  /// from someone who left.
+  final List<String> memberIds;
 
   /// Members can edit their own logs, admins anyone's.
   bool _canEdit(SymptomLog log) => isAdmin || log.createdBy == uid;
+
+  /// Who logged [log], or null to show no one. Your own logs go unnamed when
+  /// no one else is in the household. Someone who left without a name
+  /// left behind is "Former member".
+  String? _loggedBy(SymptomLog log, Map<String, String>? names) {
+    if (memberIds.length == 1 && log.createdBy == uid) return null;
+    if (names == null) return null;
+    return names[log.createdBy] ?? (memberIds.contains(log.createdBy) ? null : 'Former member');
+  }
 
   /// The form for an `other` log, or the catalog questions for any other.
   void _open(BuildContext context, SymptomLog log) {
@@ -79,7 +88,7 @@ class PetLogsScreen extends ConsumerWidget {
     final key = (householdId: householdId, petId: pet.id);
     final logsState = ref.watch(symptomLogsProvider(key));
     final catalog = ref.watch(symptomCatalogProvider).value;
-    final names = ref.watch(memberNamesProvider(householdId)).value ?? const {};
+    final names = ref.watch(memberNamesProvider(householdId)).value;
 
     return Scaffold(
       appBar: AppBar(title: Text(pet.name)),
@@ -98,7 +107,7 @@ class PetLogsScreen extends ConsumerWidget {
                   return _LogTile(
                     log: log,
                     title: log.title ?? catalog?.symptom(log.symptom)?.label ?? log.symptom,
-                    loggedBy: hasOtherMembers || log.createdBy != uid ? names[log.createdBy] : null,
+                    loggedBy: _loggedBy(log, names),
                     onTap: _canEdit(log) ? () => _open(context, log) : null,
                   );
                 },
