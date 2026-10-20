@@ -87,6 +87,16 @@ class HouseholdRepository {
     });
   }
 
+  /// Makes [toUid] the household's owner, and an admin if they weren't.
+  /// The old owner stays an admin. The rules allow this only for the owner.
+  Future<void> transferOwnership({required String householdId, required String toUid}) {
+    return _households.doc(householdId).update({
+      'ownerId': toUid,
+      'adminIds': FieldValue.arrayUnion([toUid]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Removes [uid] from the household's members and admins and deletes
   /// their member doc, so their logs show "Former member". The rules allow
   /// this for anyone but the owner.

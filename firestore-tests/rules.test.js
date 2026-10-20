@@ -201,7 +201,7 @@ describe('households', () => {
     }
   });
 
-  test('nobody can change or remove the owner', async () => {
+  test('nobody can remove the owner', async () => {
     await seed({
       [HOUSEHOLD]: {
         name: 'Home',
@@ -211,10 +211,57 @@ describe('households', () => {
       },
     });
     for (const uid of [ADMIN, SECOND_ADMIN]) {
-      const ref = doc(db(uid), HOUSEHOLD);
-      await assertFails(updateDoc(ref, { ownerId: SECOND_ADMIN }));
-      await assertFails(updateDoc(ref, { ownerId: deleteField() }));
+      await assertFails(updateDoc(doc(db(uid), HOUSEHOLD), { ownerId: deleteField() }));
     }
+  });
+
+  /** What the app writes to make [to] the owner. */
+  const transfer = (uid, to) =>
+    updateDoc(doc(db(uid), HOUSEHOLD), {
+      ownerId: to,
+      adminIds: arrayUnion(to),
+      updatedAt: serverTimestamp(),
+    });
+
+  test('the owner can transfer ownership to any member, who becomes an admin', async () => {
+    await seedHousehold();
+    await assertSucceeds(transfer(ADMIN, MEMBER));
+    const household = await getDoc(doc(db(MEMBER), HOUSEHOLD));
+    assert.equal(household.get('ownerId'), MEMBER);
+    assert.deepEqual(household.get('adminIds'), [ADMIN, MEMBER]);
+  });
+
+  test('only the owner can transfer ownership', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    await assertFails(transfer(SECOND_ADMIN, SECOND_ADMIN));
+    await assertFails(transfer(SECOND_ADMIN, MEMBER));
+    await assertFails(transfer(MEMBER, MEMBER));
+  });
+
+  test('ownership can only go to someone already in the household', async () => {
+    await seedHousehold();
+    await assertFails(
+      updateDoc(doc(db(ADMIN), HOUSEHOLD), {
+        ownerId: OUTSIDER,
+        memberIds: arrayUnion(OUTSIDER),
+        adminIds: arrayUnion(OUTSIDER),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  test('the new owner must be an admin, and the old owner stays one', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), HOUSEHOLD);
+    await assertFails(updateDoc(ref, { ownerId: MEMBER }));
+    await assertFails(updateDoc(ref, { ownerId: MEMBER, adminIds: [MEMBER] }));
   });
 
   test('an admin can rename the household to 1 to 100 characters', async () => {

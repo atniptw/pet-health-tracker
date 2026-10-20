@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Raise this as coverage goes up; never lower it.
-MIN=99
+MIN=99.1
 
 # main.dart only boots Firebase and runApp; firebase_options.dart is generated.
 EXCLUDE='^lib/(main|firebase_options)\.dart$'
@@ -26,7 +26,7 @@ awk -F: -v min="$MIN" -v exclude="$EXCLUDE" '
   /^LH:/ && !skip { hit += $2 }
   END {
     pct = 100 * hit / found
-    printf "line coverage %.1f%% (minimum %d%%)\n", pct, min
+    printf "line coverage %.1f%% (minimum %g%%)\n", pct, min
     if (pct < min) exit 1
   }
 ' coverage/lcov.info

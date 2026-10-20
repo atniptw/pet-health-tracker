@@ -10,6 +10,7 @@ import '../household/household_providers.dart';
 import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
+import 'transfer_ownership_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({required this.household, required this.uid, super.key});
@@ -72,6 +73,18 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (context) => InviteScreen(household: household, uid: uid),
+                ),
+              ),
+            ),
+          if (isOwner)
+            ListTile(
+              leading: const Icon(Icons.swap_horiz),
+              title: const Text('Transfer ownership'),
+              subtitle: household.memberIds.length > 1 ? null : const Text('Invite someone first'),
+              enabled: household.memberIds.length > 1,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => TransferOwnershipScreen(household: household, uid: uid),
                 ),
               ),
             ),

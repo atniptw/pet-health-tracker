@@ -217,6 +217,23 @@ void main() {
     expect(household['adminIds'], ['admin']);
   });
 
+  test('transferring ownership makes the member the owner and an admin, keeping the old owner an admin', () async {
+    await firestore.doc('households/h1').set({
+      'name': 'The Den',
+      'memberIds': ['admin', 'u1'],
+      'adminIds': ['admin'],
+      'ownerId': 'admin',
+    });
+
+    await repository.transferOwnership(householdId: 'h1', toUid: 'u1');
+
+    final household = (await firestore.doc('households/h1').get()).data()!;
+    expect(household['ownerId'], 'u1');
+    expect(household['adminIds'], ['admin', 'u1']);
+    expect(household['memberIds'], ['admin', 'u1']);
+    expect(household['updatedAt'], isA<Timestamp>());
+  });
+
   group('joinHousehold', () {
     const code = 'acorn tulip shelf';
     final now = DateTime(2026, 10, 10, 12);

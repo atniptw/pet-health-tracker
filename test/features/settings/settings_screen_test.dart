@@ -13,6 +13,7 @@ import 'package:pet_health_tracker/features/household/invite_providers.dart';
 import 'package:pet_health_tracker/features/household/invite_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
+import 'package:pet_health_tracker/features/settings/transfer_ownership_screen.dart';
 
 import '../../helpers.dart';
 
@@ -98,6 +99,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invite someone'), findsNothing);
+  });
+
+  testWidgets('the owner can open transfer ownership', (tester) async {
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transfer ownership'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TransferOwnershipScreen), findsOneWidget);
+  });
+
+  testWidgets('only the owner can transfer ownership', (tester) async {
+    await firestore.doc('households/h1').update({
+      'adminIds': ['admin', 'member'],
+    });
+
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Transfer ownership'), findsNothing);
+  });
+
+  testWidgets('with no one else in the household, transfer is off and says why', (tester) async {
+    await firestore.doc('households/h1').update({
+      'memberIds': ['admin'],
+    });
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transfer ownership'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Invite someone first'), findsOneWidget);
+    expect(find.byType(TransferOwnershipScreen), findsNothing);
   });
 
   testWidgets('members who are not admins cannot add pets', (tester) async {
