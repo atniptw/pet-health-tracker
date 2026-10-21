@@ -9,6 +9,7 @@ import '../../core/theme.dart';
 import '../../data/symptom_catalog.dart';
 import '../../data/symptom_log.dart';
 import '../../data/symptom_log_repository.dart';
+import 'delete_log.dart';
 import 'occurred_at.dart';
 import 'symptom_providers.dart';
 
@@ -82,6 +83,17 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
         _messenger.showSnackBar(SnackBar(content: Text("Couldn't save the log: $e")));
       }),
     );
+  }
+
+  Future<void> _delete() async {
+    final deleted = await confirmDeleteLog(
+      context,
+      _repository,
+      householdId: widget.householdId,
+      petId: widget.petId,
+      logId: widget.log.id,
+    );
+    if (deleted && mounted) Navigator.of(context).pop();
   }
 
   /// Writes one answer. Null removes it.
@@ -230,6 +242,11 @@ class _SymptomDetailsScreenState extends ConsumerState<SymptomDetailsScreen> {
           occurredAt: _occurredAt,
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete log',
+            onPressed: _delete,
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton(

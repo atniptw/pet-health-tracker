@@ -172,4 +172,27 @@ void main() {
     await households.deleteHousehold(h.householdId);
     expect(await exists('households/${h.householdId}'), isFalse);
   });
+
+  testWidgets("a member deletes only their own logs, the owner anyone's", (tester) async {
+    final h = await householdWithPet('Logs', owner: 'ida', member: 'jim');
+    final logs = SymptomLogRepository(firestore);
+    final path = 'households/${h.householdId}/pets/${h.petId}/symptomLogs';
+    await logSymptom(h.householdId, h.petId, 'jims-log', h.memberUid);
+    await logSymptom(h.householdId, h.petId, 'jims-other-log', h.memberUid);
+    await signInAs('ida');
+    await logSymptom(h.householdId, h.petId, 'idas-log', h.ownerUid);
+    await signInAs('jim');
+
+    await expectLater(
+      logs.deleteLog(householdId: h.householdId, petId: h.petId, logId: 'idas-log'),
+      throwsA(deniedPermission()),
+    );
+    await logs.deleteLog(householdId: h.householdId, petId: h.petId, logId: 'jims-log');
+    await signInAs('ida');
+    await logs.deleteLog(householdId: h.householdId, petId: h.petId, logId: 'jims-other-log');
+
+    expect(await exists('$path/jims-log'), isFalse);
+    expect(await exists('$path/jims-other-log'), isFalse);
+    expect(await exists('$path/idas-log'), isTrue);
+  });
 }

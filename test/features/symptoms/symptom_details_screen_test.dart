@@ -412,4 +412,75 @@ void main() {
       verifyNoTimeWrite();
     });
   });
+
+  group('deleting', () {
+    late List<String> calls;
+
+    setUp(() {
+      calls = [];
+      when(
+        () => repository.deleteLog(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          logId: any(named: 'logId'),
+        ),
+      ).thenAnswer((_) async => calls.add('delete'));
+      when(
+        () => repository.updateNotes(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          logId: any(named: 'logId'),
+          notes: any(named: 'notes'),
+        ),
+      ).thenAnswer((_) async => calls.add('notes'));
+    });
+
+    testWidgets('deletes the log after confirming, and closes', (tester) async {
+      await open(tester, log());
+
+      await tapAndSettle(tester, find.byTooltip('Delete log'));
+      expect(find.text('Delete this log?'), findsOneWidget);
+      await tapAndSettle(tester, find.widgetWithText(TextButton, 'Delete'));
+
+      verify(() => repository.deleteLog(householdId: 'h1', petId: 'p1', logId: 'l1')).called(1);
+      expect(find.text('open'), findsOneWidget);
+      verifyNoWrites();
+    });
+
+    testWidgets('cancelling keeps the log and the screen', (tester) async {
+      await open(tester, log());
+
+      await tapAndSettle(tester, find.byTooltip('Delete log'));
+      await tapAndSettle(tester, find.text('Cancel'));
+
+      expect(calls, isEmpty);
+      expect(find.text('Seizure'), findsOneWidget);
+    });
+
+    testWidgets('nothing is saved after the log is deleted', (tester) async {
+      await open(tester, log());
+
+      await tester.enterText(noteField(), 'Ate grass first');
+      await tapAndSettle(tester, find.byTooltip('Delete log'));
+      await tapAndSettle(tester, find.widgetWithText(TextButton, 'Delete'));
+
+      expect(calls.last, 'delete');
+    });
+
+    testWidgets('says so when the log cannot be deleted', (tester) async {
+      when(
+        () => repository.deleteLog(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          logId: any(named: 'logId'),
+        ),
+      ).thenAnswer((_) => Future.error('permission-denied'));
+      await open(tester, log());
+
+      await tapAndSettle(tester, find.byTooltip('Delete log'));
+      await tapAndSettle(tester, find.widgetWithText(TextButton, 'Delete'));
+
+      expect(find.text("Couldn't delete the log: permission-denied"), findsOneWidget);
+    });
+  });
 }

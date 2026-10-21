@@ -187,4 +187,73 @@ void main() {
 
     expect(find.text('Sunday, October 4, 2026 · 2:30 PM'), findsOneWidget);
   });
+
+  group('deleting', () {
+    void stubDelete(Future<void> Function() answer) {
+      when(
+        () => repository.deleteLog(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          logId: any(named: 'logId'),
+        ),
+      ).thenAnswer((_) => answer());
+    }
+
+    testWidgets('deletes the log after confirming, and closes', (tester) async {
+      stubDelete(() async {});
+      await openEditScreen(tester);
+
+      await tester.tap(find.byTooltip('Delete log'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete this log?'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      verify(() => repository.deleteLog(householdId: 'h1', petId: 'p1', logId: 'l1')).called(1);
+      expect(find.text('open'), findsOneWidget);
+    });
+
+    testWidgets('cancelling keeps the log and the screen', (tester) async {
+      stubDelete(() async {});
+      await openEditScreen(tester);
+
+      await tester.tap(find.byTooltip('Delete log'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        () => repository.deleteLog(
+          householdId: any(named: 'householdId'),
+          petId: any(named: 'petId'),
+          logId: any(named: 'logId'),
+        ),
+      );
+      expect(find.text('Edit log'), findsOneWidget);
+    });
+
+    testWidgets("doesn't wait for the server", (tester) async {
+      stubDelete(() => Completer<void>().future);
+      await openEditScreen(tester);
+
+      await tester.tap(find.byTooltip('Delete log'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('open'), findsOneWidget);
+    });
+
+    testWidgets('says so when the log cannot be deleted', (tester) async {
+      stubDelete(() => Future.error('permission-denied'));
+      await openEditScreen(tester);
+
+      await tester.tap(find.byTooltip('Delete log'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      expect(find.text("Couldn't delete the log: permission-denied"), findsOneWidget);
+    });
+  });
 }

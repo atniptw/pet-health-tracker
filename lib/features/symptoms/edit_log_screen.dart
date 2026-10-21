@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
 import '../../data/symptom_log.dart';
+import 'delete_log.dart';
 import 'occurred_at.dart';
 
 /// Edits an `other` log: its title, when it happened, and its notes.
@@ -72,10 +73,30 @@ class _EditLogScreenState extends ConsumerState<EditLogScreen> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _delete() async {
+    final deleted = await confirmDeleteLog(
+      context,
+      ref.read(symptomLogRepositoryProvider),
+      householdId: widget.householdId,
+      petId: widget.petId,
+      logId: widget.log.id,
+    );
+    if (deleted && mounted) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit log')),
+      appBar: AppBar(
+        title: const Text('Edit log'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete log',
+            onPressed: _delete,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

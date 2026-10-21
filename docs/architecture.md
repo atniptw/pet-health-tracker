@@ -1,6 +1,6 @@
 # Architecture
 
-Status: partly implemented. The Firebase project is set up, and Google sign-in, Apple sign-in on iOS, creating, joining (with an invite code), switching, renaming and leaving households, member names, adding and editing pets, the home screen with its "Log a symptom" sheet (catalog and `other` symptoms, with Undo for `other` logs), editing `other` logs, the symptom catalog (bundled, published and read, with catalog labels on logs), and answering a catalog log's questions and changing its time are built. The rest is still a plan.
+Status: partly implemented. The Firebase project is set up, and Google sign-in, Apple sign-in on iOS, creating, joining (with an invite code), switching, renaming and leaving households, member names, adding and editing pets, the home screen with its "Log a symptom" sheet (catalog and `other` symptoms, with Undo for `other` logs), editing and deleting logs, the symptom catalog (bundled, published and read, with catalog labels on logs), and answering a catalog log's questions and changing its time are built. The rest is still a plan.
 
 ## Cost
 
@@ -40,14 +40,14 @@ lib/
     household/     # create household, home screen with pets and recent logs (built)
     settings/      # settings: add and edit pets, sign out (built)
     pets/          # pet form, list, avatars, all pets (built)
-    symptoms/      # log sheet, edit an `other` log, a pet's log history, a catalog log's questions and time (built)
+    symptoms/      # log sheet, edit or delete a log, a pet's log history, a catalog log's questions and time (built)
 ```
 
 ## Order of work
 
 1. Create the Firebase project, run `flutterfire configure`, add `firebase_core`, `firebase_auth`, `cloud_firestore`, `flutter_riverpod`. Done.
 2. Google sign-in, then models, repositories, and security rules (rules and rules tests first). Google sign-in, the household model and repository, and `firestore.rules` are done; rules tests are not written yet.
-3. Pets screens, then the quick-log flow. Adding, listing and editing pets is done; only admins can add or edit. Logging an `other` symptom (title, time, notes) and a pet's log history are done; any member can log. Tapping a log edits it: members their own, admins anyone's. Saving doesn't wait for the server, so logging works without signal.
+3. Pets screens, then the quick-log flow. Adding, listing and editing pets is done; only admins can add or edit. Logging an `other` symptom (title, time, notes) and a pet's log history are done; any member can log. Tapping a log edits it: members their own, admins anyone's. The same people can delete it from there, after confirming. Saving doesn't wait for the server, so logging works without signal.
 4. Apple sign-in. Done, iOS only.
 
 See [data-model.md](data-model.md) for the Firestore schema.
