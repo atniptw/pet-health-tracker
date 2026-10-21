@@ -16,6 +16,7 @@ echo '==> test'
 flutter test --coverage
 
 echo '==> coverage'
+./scripts/test-coverage.sh
 ./scripts/coverage.sh
 
 echo '==> hooks'

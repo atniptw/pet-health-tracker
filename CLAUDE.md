@@ -12,7 +12,7 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 - Every push to `main` ships to testers. Keep each commit one small, complete change that is safe to release on its own.
 - Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`. Write the failing test first when practical.
 - Run `./scripts/check.sh` before committing, and never push with failing checks. Don't bypass the pre-push hook (`--no-verify`).
-- The coverage minimum in `scripts/coverage.sh` only goes up. Raise it when coverage rises; never lower it to get a change through.
+- The coverage minimum in `scripts/coverage.sh` only goes up. The check fails when coverage is more than 0.2% above it, so raise it then; never lower it to get a change through.
 
 ## Project state
 
@@ -38,6 +38,7 @@ flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
 npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
 ./scripts/test-hooks.sh                  # tests for the Claude Code hooks in .claude/hooks
+./scripts/test-coverage.sh               # tests for the coverage minimum and ratchet in scripts/coverage.sh
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 ./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
 flutter test integration_test            # smoke test and repository tests against the real rules, on a running device; needs the Firebase emulators up

@@ -22,7 +22,7 @@ The `targeted-review` skill launches the required agents in parallel and merges 
 ## Mechanical checks (`scripts/check.sh`)
 - **Size limits:** files up to 300 lines, functions and methods up to 40 lines. Files that are already over the limit are listed in a baseline file. An entry can only be removed, and each removal is its own refactor commit.
 - **Banned comment phrases:** a grep with an allowlist for real uses.
-- **Coverage ratchet:** `scripts/coverage.sh` fails if actual coverage is well above the minimum, so the minimum has to be raised.
+- **Coverage ratchet:** `scripts/coverage.sh` fails if actual coverage is more than 0.2% above the minimum, so the minimum has to be raised.
 - **Tests present:** if `lib/` changed but nothing under `test/` did, the check fails unless the commit is a `refactor:`.
 
 ## Hooks (`.claude/settings.json`)
@@ -34,7 +34,7 @@ The `targeted-review` skill launches the required agents in parallel and merges 
 ## Build order
 One commit per step, each safe to ship on its own.
 1. Hook: block `--no-verify` (done)
-2. Coverage ratchet
+2. Coverage ratchet (done)
 3. Agent definitions
 4. Rewrite `targeted-review` to use the named agents
 5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present
