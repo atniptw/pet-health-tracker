@@ -16,7 +16,7 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 ## Project state
 
-Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, Apple sign-in (iOS only), creating, joining (invite codes), switching, renaming, leaving, transferring and deleting households, member names, adding and editing pets, the home screen with recent logs and a "Log a symptom" sheet (catalog and `other` symptoms), a per-pet history with editing and deleting, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
+Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, Apple sign-in (iOS only), creating, joining (invite codes), switching, renaming, leaving, transferring and deleting households, member names, deleting an account, adding and editing pets, the home screen with recent logs and a "Log a symptom" sheet (catalog and `other` symptoms), a per-pet history with editing and deleting, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
 
 ## CI
 

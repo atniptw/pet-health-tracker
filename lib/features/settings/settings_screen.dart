@@ -10,6 +10,7 @@ import '../household/household_providers.dart';
 import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
+import 'delete_account_screen.dart';
 import 'transfer_ownership_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -106,6 +107,12 @@ class SettingsScreen extends ConsumerWidget {
               ref.watch(appVersionProvider).value ?? '',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person_remove_outlined),
+            title: const Text('Delete account'),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (context) => DeleteAccountScreen(uid: uid))),
           ),
           SafeArea(
             top: false,

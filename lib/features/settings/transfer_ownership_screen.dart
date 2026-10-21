@@ -21,7 +21,7 @@ class TransferOwnershipScreen extends ConsumerWidget {
     final members = [
       for (final memberId in household.memberIds)
         if (memberId != uid) (uid: memberId, name: names[memberId]),
-    ]..sort(_byName);
+    ]..sort(byMemberName);
     return Scaffold(
       appBar: AppBar(title: const Text('Transfer ownership')),
       body: ListView(
@@ -34,12 +34,6 @@ class TransferOwnershipScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  /// Named members by name, then members with no name yet.
-  static int _byName(({String uid, String? name}) a, ({String uid, String? name}) b) {
-    if (a.name == null || b.name == null) return a.name == null ? (b.name == null ? 0 : 1) : -1;
-    return a.name!.toLowerCase().compareTo(b.name!.toLowerCase());
   }
 
   Future<void> _transfer(BuildContext context, WidgetRef ref, String toUid, String name) async {
@@ -71,4 +65,10 @@ class TransferOwnershipScreen extends ConsumerWidget {
     );
     Navigator.of(context).pop();
   }
+}
+
+/// Named members by name, then members with no name yet.
+int byMemberName(({String uid, String? name}) a, ({String uid, String? name}) b) {
+  if (a.name == null || b.name == null) return a.name == null ? (b.name == null ? 0 : 1) : -1;
+  return a.name!.toLowerCase().compareTo(b.name!.toLowerCase());
 }

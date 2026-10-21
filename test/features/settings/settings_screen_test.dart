@@ -15,6 +15,7 @@ import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/invite_providers.dart';
 import 'package:pet_health_tracker/features/household/invite_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
+import 'package:pet_health_tracker/features/settings/delete_account_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
 import 'package:pet_health_tracker/features/settings/transfer_ownership_screen.dart';
 
@@ -97,6 +98,21 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Sign out'), findsOneWidget);
+  });
+
+  testWidgets('anyone can open delete account', (tester) async {
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Delete account'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Delete account'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DeleteAccountScreen), findsOneWidget);
   });
 
   testWidgets('admins can open the add-pet screen', (tester) async {
