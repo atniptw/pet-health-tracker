@@ -86,4 +86,23 @@ void main() {
       expect(savedCodeFor(inviteFor('acorn tulip shelf'), null), isNull);
     });
   });
+
+  test("deletes all of one account's codes, and only theirs", () async {
+    when(storage.readAll).thenAnswer(
+      (_) async => {
+        'inviteCode.u1.h1': 'acorn tulip shelf',
+        'inviteCode.u1.h2': 'plum otter lamp',
+        'inviteCode.u10.h1': 'fern quilt harbor',
+        'inviteCode.u2.h1': 'mint cello badge',
+      },
+    );
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
+
+    await store.deleteAll('u1');
+
+    verify(() => storage.delete(key: 'inviteCode.u1.h1')).called(1);
+    verify(() => storage.delete(key: 'inviteCode.u1.h2')).called(1);
+    verify(storage.readAll).called(1);
+    verifyNoMoreInteractions(storage);
+  });
 }

@@ -11,4 +11,6 @@ class LastHouseholdStore {
   Future<String?> read(String uid) => _prefs.getString(_key(uid));
 
   Future<void> write(String uid, String householdId) => _prefs.setString(_key(uid), householdId);
+
+  Future<void> delete(String uid) => _prefs.remove(_key(uid));
 }

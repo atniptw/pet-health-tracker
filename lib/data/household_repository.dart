@@ -29,6 +29,15 @@ class HouseholdRepository {
     });
   }
 
+  /// Every household [uid] is a member of, read from the server, so with no
+  /// connection it fails instead of missing households only the server has.
+  Future<List<Household>> myHouseholdsFromServer(String uid) async {
+    final snapshot = await _households
+        .where('memberIds', arrayContains: uid)
+        .get(const GetOptions(source: Source.server));
+    return snapshot.docs.map(Household.fromFirestore).toList();
+  }
+
   /// Creates the household and the owner's member doc in one batch, and
   /// returns the household's ID.
   Future<String> createHousehold({

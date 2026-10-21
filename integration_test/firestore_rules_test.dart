@@ -4,15 +4,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:pet_health_tracker/data/household.dart';
 import 'package:pet_health_tracker/data/household_repository.dart';
 import 'package:pet_health_tracker/data/invite_code.dart';
+import 'package:pet_health_tracker/data/invite_code_store.dart';
 import 'package:pet_health_tracker/data/invite_repository.dart';
+import 'package:pet_health_tracker/data/last_household_store.dart';
 import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/data/symptom_log_repository.dart';
+import 'package:pet_health_tracker/features/auth/account_deletion.dart';
+import 'package:pet_health_tracker/features/auth/auth_repository.dart';
 import 'package:pet_health_tracker/firebase_options.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Runs the app's repositories against the Firebase emulators, so their writes
 /// are checked by the real security rules. Widget and unit tests use a fake
@@ -194,5 +201,45 @@ void main() {
     expect(await exists('$path/jims-log'), isFalse);
     expect(await exists('$path/jims-other-log'), isFalse);
     expect(await exists('$path/idas-log'), isTrue);
+  });
+
+  testWidgets('deleting an account hands on, deletes and leaves households as chosen', (
+    tester,
+  ) async {
+    final handed = await householdWithPet('Handed', owner: 'kim', member: 'leo');
+    final gone = await householdWithPet('Gone', owner: 'kim', member: 'leo');
+    final stay = await householdWithPet('Stay', owner: 'leo', member: 'kim');
+    final (kim, leo) = (handed.ownerUid, handed.memberUid);
+    await logSymptom(stay.householdId, stay.petId, 'kims-log', kim);
+
+    await AccountDeletion(
+      auth: AuthRepository(FirebaseAuth.instance),
+      households: households,
+      lastHouseholds: LastHouseholdStore(SharedPreferencesAsync()),
+      inviteCodes: InviteCodeStore(const FlutterSecureStorage()),
+    ).delete(uid: kim, newOwners: {handed.householdId: leo, gone.householdId: null});
+
+    expect(FirebaseAuth.instance.currentUser, isNull);
+    expect(await exists('households/${gone.householdId}'), isFalse);
+    expect(await exists('households/${handed.householdId}/members/$kim'), isFalse);
+    expect(await exists('households/${stay.householdId}/members/$kim'), isFalse);
+    expect(
+      await exists('households/${stay.householdId}/pets/${stay.petId}/symptomLogs/kims-log'),
+      isTrue,
+    );
+    await signInAs('leo');
+    final handedNow = Household.fromFirestore(
+      await firestore.doc('households/${handed.householdId}').get(),
+    );
+    expect(handedNow.ownerId, leo);
+    expect(handedNow.memberIds, [leo]);
+    expect(handedNow.adminIds, [leo]);
+    await expectLater(
+      FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: 'kim-$run@example.com',
+        password: 'password',
+      ),
+      throwsA(isA<FirebaseAuthException>()),
+    );
   });
 }

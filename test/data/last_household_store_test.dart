@@ -27,4 +27,12 @@ void main() {
 
     verify(() => prefs.setString('lastHouseholdId.u1', 'h2')).called(1);
   });
+
+  test("forgets the user's last household", () async {
+    when(() => prefs.remove(any())).thenAnswer((_) async {});
+
+    await store.delete('u1');
+
+    verify(() => prefs.remove('lastHouseholdId.u1')).called(1);
+  });
 }

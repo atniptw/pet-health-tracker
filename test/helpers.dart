@@ -21,6 +21,9 @@ class FakeLastHouseholdStore implements LastHouseholdStore {
 
   @override
   Future<void> write(String uid, String householdId) async => saved[uid] = householdId;
+
+  @override
+  Future<void> delete(String uid) async => saved.remove(uid);
 }
 
 MockUser fakeUser({String uid = 'user-1', String? displayName = 'Tom'}) {
@@ -69,4 +72,8 @@ class FakeInviteCodeStore implements InviteCodeStore {
   }) async {
     if (saved['$uid.$householdId'] == code) saved.remove('$uid.$householdId');
   }
+
+  @override
+  Future<void> deleteAll(String uid) async =>
+      saved.removeWhere((key, _) => key.startsWith('$uid.'));
 }

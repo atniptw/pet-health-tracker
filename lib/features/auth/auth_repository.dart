@@ -31,6 +31,46 @@ class AuthRepository {
     return _auth.signInWithProvider(provider);
   }
 
+  /// Signs in again with Google or Apple, as Firebase requires shortly
+  /// before deleting an account. Returns Apple's authorization code, which
+  /// [deleteUser] needs to revoke the app's access, or null.
+  Future<String?> reauthenticate() async {
+    final user = _auth.currentUser!;
+    final providers = user.providerData.map((info) => info.providerId);
+    if (providers.contains('apple.com')) {
+      final credential = await user.reauthenticateWithProvider(AppleAuthProvider());
+      return credential.additionalUserInfo?.authorizationCode;
+    }
+    if (providers.contains('google.com')) {
+      await _ensureInitialized();
+      final account = await _googleSignIn.authenticate();
+      await user.reauthenticateWithCredential(
+        GoogleAuthProvider.credential(idToken: account.authentication.idToken),
+      );
+    }
+    return null;
+  }
+
+  /// Deletes the signed-in user's account, which signs them out. Revokes the
+  /// app's access to their Apple ID first, given [appleAuthorizationCode] from
+  /// [reauthenticate], or to their Google account after.
+  Future<void> deleteUser({String? appleAuthorizationCode}) async {
+    final user = _auth.currentUser!;
+    final usedGoogle = user.providerData.any((info) => info.providerId == 'google.com');
+    if (appleAuthorizationCode != null) {
+      await _auth.revokeTokenWithAuthorizationCode(appleAuthorizationCode);
+    }
+    await user.delete();
+    if (usedGoogle) {
+      try {
+        await _ensureInitialized();
+        await _googleSignIn.disconnect();
+      } on GoogleSignInException {
+        // The account is already deleted; the Google grant is all that's left.
+      }
+    }
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();

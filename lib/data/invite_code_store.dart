@@ -28,6 +28,15 @@ class InviteCodeStore {
   Future<void> write({required String uid, required String householdId, required String code}) =>
       _serially(() => _storage.write(key: _key(uid, householdId), value: code));
 
+  /// Deletes every code [uid] saved on this phone, for any household.
+  Future<void> deleteAll(String uid) {
+    return _serially(() async {
+      for (final key in (await _storage.readAll()).keys) {
+        if (key.startsWith('inviteCode.$uid.')) await _storage.delete(key: key);
+      }
+    });
+  }
+
   /// Deletes the saved code only if it is still [code].
   Future<void> deleteIfStill({
     required String uid,
