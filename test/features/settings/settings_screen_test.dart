@@ -80,6 +80,25 @@ void main() {
     expect(find.text('Dog · Beagle'), findsOneWidget);
   });
 
+  testWidgets('fits a small phone by scrolling as one list', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Boogie'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Sign out'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Sign out'), findsOneWidget);
+  });
+
   testWidgets('admins can open the add-pet screen', (tester) async {
     await pumpSettings(tester);
     await tester.tap(find.text('Add pet'));

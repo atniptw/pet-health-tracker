@@ -5,9 +5,13 @@ import '../../data/pet.dart';
 import 'pet_providers.dart';
 
 class PetList extends ConsumerWidget {
-  const PetList({required this.householdId, this.onTap, super.key});
+  const PetList({required this.householdId, this.onTap, this.shrinkWrap = false, super.key});
 
   final String householdId;
+
+  /// Lays the pets out at their full height inside another scrolling list,
+  /// instead of scrolling on their own.
+  final bool shrinkWrap;
 
   /// Called when a pet is tapped. Pets aren't tappable when null.
   final ValueChanged<Pet>? onTap;
@@ -20,6 +24,8 @@ class PetList extends ConsumerWidget {
       data: (pets) => pets.isEmpty
           ? const Center(child: Text('No pets yet'))
           : ListView(
+              shrinkWrap: shrinkWrap,
+              physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
               children: [
                 for (final pet in pets)
                   _PetTile(pet: pet, onTap: onTap == null ? null : () => onTap!(pet)),

@@ -29,8 +29,7 @@ class SettingsScreen extends ConsumerWidget {
     final isOwner = household.ownerId == uid;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: ListView(
         children: [
           ListTile(
             title: Text('Pets', style: Theme.of(context).textTheme.titleSmall),
@@ -46,17 +45,16 @@ class SettingsScreen extends ConsumerWidget {
                   )
                 : null,
           ),
-          Expanded(
-            child: PetList(
-              householdId: household.id,
-              onTap: isAdmin
-                  ? (pet) => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => PetFormScreen(householdId: household.id, pet: pet),
-                      ),
-                    )
-                  : null,
-            ),
+          PetList(
+            householdId: household.id,
+            shrinkWrap: true,
+            onTap: isAdmin
+                ? (pet) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => PetFormScreen(householdId: household.id, pet: pet),
+                    ),
+                  )
+                : null,
           ),
           const Divider(height: 1),
           if (isAdmin)
