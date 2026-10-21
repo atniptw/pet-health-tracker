@@ -32,11 +32,12 @@ Stack, auth approach, and Firestore schema (with open questions) are in `docs/ar
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests, coverage, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests, coverage, hook tests, rules tests
 flutter test                             # run all Flutter tests
 flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
 npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
+./scripts/test-hooks.sh                  # tests for the Claude Code hooks in .claude/hooks
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 ./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
 flutter test integration_test            # smoke test and repository tests against the real rules, on a running device; needs the Firebase emulators up

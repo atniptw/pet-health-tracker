@@ -18,6 +18,9 @@ flutter test --coverage
 echo '==> coverage'
 ./scripts/coverage.sh
 
+echo '==> hooks'
+./scripts/test-hooks.sh
+
 echo '==> firestore rules'
 [ -d firestore-tests/node_modules ] || npm --prefix firestore-tests ci --no-fund --no-audit
 npm --prefix firestore-tests test

@@ -33,7 +33,7 @@ The `targeted-review` skill launches the required agents in parallel and merges 
 
 ## Build order
 One commit per step, each safe to ship on its own.
-1. Hook: block `--no-verify`
+1. Hook: block `--no-verify` (done)
 2. Coverage ratchet
 3. Agent definitions
 4. Rewrite `targeted-review` to use the named agents
