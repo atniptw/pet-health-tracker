@@ -4,18 +4,20 @@
 Every push to `main` ships to testers, so each commit has to pass checks that can't be skipped. Anything a script can measure goes in `scripts/check.sh`, so it applies to people, Claude and CI alike. Questions that need judgment go to narrow reviewer agents. Claude Code hooks decide which reviewers a commit needs, and block the commit until each of them passes.
 
 ## Reviewer agents
-Each agent is defined in `.claude/agents/<name>.md` and is read-only (Read, Grep, Glob, `git diff`). It reviews the staged diff against a fixed checklist, and lists what it must not report because another agent owns it. It reports findings as `file:line`, what goes wrong and how it's triggered. Its last line is `VERDICT: PASS` or `VERDICT: FAIL`.
+Each agent is defined in `.claude/agents/<name>.md`. It reviews the staged diff against a fixed checklist, and lists what it must not report because another agent owns it. All of them preload the `review-protocol` skill (`.claude/skills/review-protocol/`), which sets the report format: findings as `file:line`, what goes wrong, why and the fix, and a last line of `VERDICT: PASS` or `VERDICT: FAIL`. They are read-only: Read, Grep, Glob, and Bash limited to read-only git commands by `.claude/hooks/reviewer-bash.sh`.
+
+Each agent's `Paths:` line lists the git pathspecs that make it required. That line is the source of truth; the table summarises it.
 
 | Agent | Checks | Required when staged changes touch |
 |---|---|---|
-| `clean-code` | Large methods, files and `build()` methods; complex methods (nesting, branching); single responsibility; duplication with existing code in `lib/`; naming | `lib/**` |
-| `comment-hygiene` | Doc comments stay lean. Flags temporal comments ("now", "previously", "after the redesign", "new"), story-telling, comments that restate the code, and roadmap wording ("later", "v2", "for now") | `*.dart`, `*.rules`, `*.sh`, `*.yml` |
-| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and design READMEs match the code and `firestore.rules`. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/**`, `firestore.rules`, `docs/**`, `CLAUDE.md` |
-| `security` | Rules: privilege escalation, field validation, membership checks. Personal or health data reaching logs or Crashlytics. Secrets. Auth edge cases | `firestore.rules`, `lib/data/**`, auth code, `android/**`, `ios/**`, `.github/**` |
-| `test-quality` | Every behavior change has a test that would fail without it. Tests check behavior, not implementation. Every new rule path has allow and deny tests. No assertions got weaker | `lib/**`, `firestore.rules`, `test/**`, `firestore-tests/**` |
-| `release-safety` | Rules changes don't break app versions testers still have. Schema changes handle existing documents that lack new fields. The commit is safe to ship on its own | `firestore.rules`, `lib/data/**`, `lib/core/**` |
-| `flutter-lifecycle` | `setState` after dispose, double-submit, stream and provider lifecycle, stale data after switching account or household | `lib/features/**`, providers |
-| `scope-guard` | Features, settings, options or wording that nobody asked for (the `CLAUDE.md` working rule) | `lib/**`, `docs/**`, `CLAUDE.md` |
+| `clean-code` | Large methods, files and `build()` methods; complex methods (nesting, branching); single responsibility; duplication with existing code in `lib/`; naming | `lib/` |
+| `comment-hygiene` | Doc comments stay lean. Flags temporal comments ("now", "previously", "after the redesign", "new"), story-telling, comments that restate the code, and roadmap wording ("later", "v2", "for now") | Dart, rules, shell, JavaScript and workflow files, `.githooks/` |
+| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and design READMEs match the code and `firestore.rules`. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/`, `firestore.rules`, `docs/`, `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, `.githooks/` |
+| `security` | Rules: privilege escalation, field validation, membership checks. Personal or health data reaching logs or Crashlytics. Secrets. Auth edge cases | `firestore.rules`, `lib/data/`, `lib/core/`, `lib/features/auth/`, `android/`, `ios/`, `.github/`, `scripts/`, `firestore-tests/` scripts |
+| `test-quality` | Every behavior change has a test that would fail without it. Tests check behavior, not implementation. Every new rule path has allow and deny tests. No assertions got weaker | `lib/`, `firestore.rules`, `test/`, `firestore-tests/`, `integration_test/`, `scripts/`, `.claude/hooks/`, `.githooks/` |
+| `release-safety` | Rules changes don't break app versions testers still have. Schema changes handle existing documents that lack new fields. The commit is safe to ship on its own | `firestore.rules`, `lib/data/`, `lib/core/`, `pubspec.yaml`, `android/`, `ios/`, `.github/`, `assets/catalog/` |
+| `flutter-lifecycle` | `setState` after dispose, double-submit, stream and provider lifecycle, stale data after switching account or household | `lib/features/`, `lib/core/` |
+| `scope-guard` | Features, settings, options or wording that nobody asked for (the `CLAUDE.md` working rule) | `lib/`, `docs/`, `CLAUDE.md` |
 
 The `targeted-review` skill launches the required agents in parallel and merges their output into one punch list.
 
@@ -35,7 +37,7 @@ The `targeted-review` skill launches the required agents in parallel and merges 
 One commit per step, each safe to ship on its own.
 1. Hook: block `--no-verify` (done)
 2. Coverage ratchet (done)
-3. Agent definitions
+3. Agent definitions (done)
 4. Rewrite `targeted-review` to use the named agents
 5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present
 6. Review gate and stamp hooks

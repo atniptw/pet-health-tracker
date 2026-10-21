@@ -40,6 +40,28 @@ allows block-no-verify.sh 'git config core.hooksPath'
 allows block-no-verify.sh 'git log --oneline -n 5'
 allows block-no-verify.sh 'echo done'
 
+allows reviewer-bash.sh "git diff --cached -- ':(glob)lib/**' ':(exclude)lib/firebase_options.dart'"
+allows reviewer-bash.sh 'git diff HEAD -- firestore.rules'
+allows reviewer-bash.sh 'git log --oneline -5'
+allows reviewer-bash.sh 'git show HEAD:CLAUDE.md'
+allows reviewer-bash.sh 'git grep -n setState -- lib'
+allows reviewer-bash.sh 'git status --short'
+
+blocks reviewer-bash.sh 'git commit -m x'
+blocks reviewer-bash.sh 'git checkout -- lib'
+blocks reviewer-bash.sh 'rm -rf lib'
+blocks reviewer-bash.sh 'git diff > out.txt'
+blocks reviewer-bash.sh 'git diff --output=out.txt'
+blocks reviewer-bash.sh 'git diff --ext-diff'
+blocks reviewer-bash.sh 'git grep -O vim foo'
+blocks reviewer-bash.sh 'git diff | sh'
+blocks reviewer-bash.sh 'git diff; rm -rf lib'
+blocks reviewer-bash.sh 'git diff && rm -rf lib'
+blocks reviewer-bash.sh 'git diff $(rm -rf lib)'
+blocks reviewer-bash.sh 'git -c core.pager=sh diff'
+blocks reviewer-bash.sh "git diff
+rm -rf lib"
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures hook test(s) failed"
   exit 1
