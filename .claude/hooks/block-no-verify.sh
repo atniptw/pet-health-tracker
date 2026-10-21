@@ -1,23 +1,66 @@
 #!/usr/bin/env bash
-# PreToolUse hook on Bash: denies git commands that skip the git hooks.
+# PreToolUse hook on Bash: denies commands that skip or weaken the git hooks.
+# It guards against taking a shortcut, not against a determined attacker: CI
+# runs every check again before anything deploys.
 set -euo pipefail
 
 command=$(jq -r '.tool_input.command // ""')
-# Quoted text (commit messages) may mention the flags without using them.
-unquoted=$(printf '%s' "$command" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")
 
-matches() { printf '%s' "$unquoted" | grep -Eq -e "$1"; }
+# Commit messages may mention the flags without using them, so the -m and
+# --message values of git commit are dropped, including the heredoc form.
+without_messages=$(printf '%s' "$command" | perl -0pe '
+  my $quoted = qr{"\$\(cat\s+<<-?\x27?(\w+)\x27?\n.*?\n\g{-1}\n\)"|"(?:[^"\\]|\\.)*"|\x27[^\x27]*\x27}s;
+  1 while s/(git(?:\s+[^\s;&|]+)*?\s+commit\b[^;&|]*?(?:^|\s)(?:-[a-zA-Z]*m|--message=?))\s*$quoted/$1 /s;
+')
+
+# Quotes and backslashes are dropped next: the shell removes them before git
+# reads the flags, so `"--no-verify"` and `commit\ -n` count as used.
+text=$(printf '%s' "$without_messages" | tr -d "\"'\\\\")
+
+matches() { printf '%s' "$text" | grep -Eiq -e "$1"; }
 
 end='([[:space:];&|)]|$)'
-git_opts='([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*'
-git="git${git_opts}[[:space:]]+"
+git="git([[:space:]]+[^[:space:];&|]+)*[[:space:]]+"
 
-if matches "${git}(commit|push)${end}.*--no-verify${end}" ||
-  matches "${git}commit${end}([^;&|]*[[:space:]])?-[a-zA-Z]*n[a-zA-Z]*${end}" ||
-  matches "core\.hooksPath[[:space:]=]+[^[:space:].]" ||
-  matches "core\.hooksPath[[:space:]=]+\.[^g]" ||
-  printf "%s" "$command" | grep -Eq -e "core\.hooksPath[[:space:]=]+(\"\"|'')" ||
-  matches "--unset(-all)?[[:space:]]+core\.hooksPath"; then
-  echo "Blocked: this skips the git hooks (--no-verify, commit -n, or changing core.hooksPath). Fix what the checks report instead." >&2
+# Expansion ($, braces, backslashes) can build a flag after this hook has read
+# the command, so git commit, git push and COVERAGE_ variables must be literal.
+expands_guarded_command() {
+  printf '%s' "$without_messages" | grep -Eiq -e "${git}(commit|push)${end}|COVERAGE_" &&
+    printf '%s' "$without_messages" | grep -q -e '[$\\{]'
+}
+
+# git accepts any unambiguous prefix of a long option; --no-veri is the shortest.
+skips_verify() { matches "${git}(commit|push)${end}.*--no-veri"; }
+
+skips_commit_hooks() {
+  matches "${git}commit${end}([^;&|]*[[:space:]])?-[a-zA-Z]*n[a-zA-Z]*${end}"
+}
+
+# An alias can hide either flag from the checks above.
+aliases_commit_or_push() {
+  matches "alias\.[^[:space:]=]+[[:space:]=]+[^;&|]*(commit|push)${end}"
+}
+
+# send-pack updates a remote without running the pre-push hook.
+sends_pack() { matches "${git}send-pack${end}"; }
+
+# Setting core.hooksPath to anything but .githooks, or unsetting it. Reading or
+# searching for it is fine.
+changes_hooks_path() {
+  printf '%s' "$command" | grep -Eiq -e "core\.hookspath[[:space:]=]+(\"\"|'')" && return 0
+  printf '%s' "$text" | perl -0ne '
+    my $other_value = qr/[\s=]+(?!\.githooks(?:[\s;&|)<>]|$)|\d*[<>])[^\s;&|)<>-]/;
+    exit(/\bgit\b[^;&|]*?\s(?:config\b[^;&|]*?\s|-c\s+)core\.hookspath$other_value/i
+      || /(?:--unset(?:-all)?|\bunset)\s+core\.hookspath/i
+      || /GIT_CONFIG_(?:KEY_\d+|PARAMETERS)=\S*core\.hookspath/i ? 0 : 1);
+  '
+}
+
+# coverage.sh reads its files from COVERAGE_ROOT, so setting it fakes the check.
+fakes_coverage() { matches 'COVERAGE_ROOT[[:space:]]*='; }
+
+if expands_guarded_command || skips_verify || skips_commit_hooks || aliases_commit_or_push ||
+  sends_pack || changes_hooks_path || fakes_coverage; then
+  echo "Blocked: this skips or weakens the git hooks (--no-verify, commit -n, a commit or push alias, git send-pack, changing core.hooksPath, setting COVERAGE_ROOT, or building git commit/push with \$, braces or backslashes). Fix what the checks report instead." >&2
   exit 2
 fi

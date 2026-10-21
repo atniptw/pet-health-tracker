@@ -28,7 +28,14 @@ The `targeted-review` skill launches the required agents in parallel and merges 
 - **Tests present:** if `lib/` changed but nothing under `test/` did, the check fails unless the commit is a `refactor:`.
 
 ## Hooks (`.claude/settings.json`)
-1. **No `--no-verify`:** a PreToolUse hook on Bash denies `git commit` or `git push` with `--no-verify`.
+1. **No skipping git hooks:** a PreToolUse hook on Bash (`.claude/hooks/block-no-verify.sh`) denies these, quoted or not:
+   - `git commit` or `git push` with `--no-verify` or a prefix of it (`--no-veri`), including inside `bash -c`, outside a commit message
+   - `git commit -n`, git aliases for `commit` or `push`, and `git send-pack`
+   - setting `core.hooksPath` to anything but `.githooks`, or unsetting it
+   - setting `COVERAGE_ROOT`, which would point the coverage check at other files
+   - `git commit`, `git push` or a `COVERAGE_` variable in a command that also uses `$`, braces or backslashes outside a commit message, since expansion can build a flag after the hook has read the command
+
+   It guards against taking a shortcut, not against a determined attacker. CI runs every check again, and every deploy job waits for it.
 2. **Review gate on every commit:** a PreToolUse hook on `git commit` maps the staged paths to the required reviewers (table above). It denies the commit, naming the reviewers still missing, unless each one has a passing stamp for the current staged diff of its paths.
 3. **Stamps:** a SubagentStop hook writes the stamps, so Claude doesn't. It reads `agent_type` and the final report (`last_assistant_message`, or `tool_input.message` on `SubagentHandback`). On `VERDICT: PASS` it writes a stamp holding the hash of `git diff --cached` for that agent's paths. If the staged diff changes, the stamp no longer matches and that reviewer has to run again.
 4. **Push reminder:** a PreToolUse hook on `git push` reminds Claude to confirm that the docs are updated and the coverage minimum was raised.
@@ -49,3 +56,4 @@ One commit per step, each safe to ship on its own.
 - All reviewers block: a `FAIL` verdict stops the commit until it's fixed.
 - Limits: 300 lines per file, 40 per function. Current offenders go in a baseline and get refactored in separate commits.
 - All eight reviewers above are in, including `test-quality`, `release-safety`, `flutter-lifecycle` and `scope-guard`.
+- The guard hooks in `.claude/hooks/` stop shortcuts, not attackers. `security` reports bypasses a session might plausibly type, not crafted obfuscation, because CI is the real gate.

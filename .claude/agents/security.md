@@ -23,6 +23,7 @@ Paths: `firestore.rules` `:(glob)lib/data/**` `:(glob)lib/core/**` `:(glob)lib/f
 - **Secrets:** keys, tokens, keystores or service-account JSON committed, echoed in CI, or passed to steps that don't need them. Workflow permissions broader than the job needs.
 - **Auth:** sign-out, account deletion and household switching leave no cached data, listeners or tokens that act for the previous user.
 - **Admin scripts:** scripts that write production data are explicit about the project and do nothing destructive without a flag.
+- **Guard hooks** (`.claude/hooks/`): these stop a Claude session or reviewer from taking a shortcut. They aren't a boundary against an attacker, since CI runs every check again before anything deploys. Report bypasses a session might plausibly type: plain, quoted or abbreviated flags, and wrappers like `bash -c` or aliases. Don't report crafted obfuscation built only to defeat the pattern match. Do report legitimate commands a hook wrongly blocks.
 
 ## Not yours
 Code style, comments, docs, test quality, widget lifecycle bugs that aren't security problems.

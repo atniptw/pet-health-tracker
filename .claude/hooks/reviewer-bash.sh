@@ -9,12 +9,18 @@ deny() {
 }
 
 case "$command" in
-  *'>'* | *'<'* | *'|'* | *';'* | *'&'* | *'`'* | *'$('* | *$'\n'*) deny 'Run one command at a time.' ;;
+  *'>'* | *'<'* | *'|'* | *';'* | *'&'* | *'`'* | *$'\n'*) deny 'Run one command at a time.' ;;
+  # Expansion can build an option after this hook has read the command.
+  *'$'* | *'{'* | *'\'*) deny 'Write the command out without $, braces or backslashes.' ;;
 esac
 if ! printf '%s' "$command" | grep -Eq -e '^[[:space:]]*git[[:space:]]+(diff|log|show|status|ls-files|grep|blame)([[:space:]]|$)'; then
   deny 'Use Read, Grep or Glob for anything else.'
 fi
-# Options that write files or run other programs.
-if printf '%s' "$command" | grep -Eq -e '(^|[[:space:]])(--output|--ext-diff|-O|--open-files-in-pager|--exec)'; then
+# Options that write files or run other programs: --output, --ext-diff, --exec and
+# -O/--open-files-in-pager. The shell drops quotes before git reads them, git
+# accepts any unambiguous prefix of a long option, and -O can sit in a group
+# of short flags.
+unquoted=$(printf '%s' "$command" | tr -d "\"'\\\\")
+if printf '%s' "$unquoted" | grep -Eq -e '(^|[[:space:]])(-[a-zA-Z]*O|--op|--ou|--ext|--exe)'; then
   deny 'That option writes files or runs a program.'
 fi
