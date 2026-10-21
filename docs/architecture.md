@@ -18,7 +18,7 @@ This is a hobby app, so lean toward free tiers. Stay on Firebase's free Spark pl
 | State management | Riverpod | In use |
 | Navigation | `go_router` | Proposed |
 | Model classes | Hand-written, immutable, `fromFirestore`/`toFirestore` | Decided. Can move to `freezed` later without changing stored data |
-| Tests | `fake_cloud_firestore`, `mocktail`, Firestore rules tests on the emulator (`@firebase/rules-unit-testing`), `integration_test` smoke test | In use |
+| Tests | `fake_cloud_firestore`, `mocktail`, Firestore rules tests on the emulator (`@firebase/rules-unit-testing`), `integration_test` smoke test and repository tests against the Firebase emulators | In use |
 | Crash reporting | Firebase Crashlytics, release builds only | In use |
 
 ## Auth

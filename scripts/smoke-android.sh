@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the integration smoke test on the connected Android device.
+# Runs the integration tests on the connected Android device.
 #
 # flutter test can hang with no output (seen in CI after the app launched), so
 # each attempt is capped. An attempt that times out is retried once: a real

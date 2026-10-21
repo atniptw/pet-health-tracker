@@ -20,7 +20,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## CI
 
-`.github/workflows/release.yml` runs `scripts/check.sh` and an Android emulator smoke test on every push to `main`, then deploys Firestore rules and uploads to the Play internal testing track (fastlane, `android/fastlane/`). Deploy jobs are gated by repo variables (`FIRESTORE_RULES_DEPLOY_ENABLED`, `ANDROID_DEPLOY_ENABLED`, `IOS_DEPLOY_ENABLED`). Android deploys are on and roll out straight to internal testers; iOS deploys are on and upload to TestFlight (`ios/fastlane/`). Setup steps and secrets are in `docs/ci.md`.
+`.github/workflows/release.yml` runs `scripts/check.sh` and the integration tests on an Android emulator on every push to `main`, then deploys Firestore rules and uploads to the Play internal testing track (fastlane, `android/fastlane/`). Deploy jobs are gated by repo variables (`FIRESTORE_RULES_DEPLOY_ENABLED`, `ANDROID_DEPLOY_ENABLED`, `IOS_DEPLOY_ENABLED`). Android deploys are on and roll out straight to internal testers; iOS deploys are on and upload to TestFlight (`ios/fastlane/`). Setup steps and secrets are in `docs/ci.md`.
 
 ## Design docs
 
@@ -39,7 +39,7 @@ flutter test --plain-name "<test name>"  # run a single test by name
 npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 ./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
-flutter test integration_test            # smoke test on a running device; needs the Firebase emulators up
+flutter test integration_test            # smoke test and repository tests against the real rules, on a running device; needs the Firebase emulators up
 ```
 
 `pubspec.lock`, `Gemfile.lock` (fastlane), and `firestore-tests/package-lock.json` are committed. Other `*.lock` files are git-ignored.
