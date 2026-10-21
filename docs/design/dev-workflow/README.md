@@ -6,7 +6,7 @@ Every push to `main` ships to testers, so each commit has to pass checks that ca
 ## Reviewer agents
 Each agent is defined in `.claude/agents/<name>.md`. It reviews the staged diff against a fixed checklist, and lists what it must not report because another agent owns it. All of them preload the `review-protocol` skill (`.claude/skills/review-protocol/`), which sets the report format: findings as `file:line`, what goes wrong, why and the fix, and a last line of `VERDICT: PASS` or `VERDICT: FAIL`. They are read-only: Read, Grep, Glob, and Bash limited to read-only git commands by `.claude/hooks/reviewer-bash.sh`.
 
-Each agent's `Paths:` line lists the git pathspecs that make it required. That line is the source of truth; the table summarises it.
+Each agent's `Paths:` line lists the git pathspecs that make it required. That line is the source of truth; the table summarises it. `scripts/required-reviewers.sh` reads those lines and prints the reviewers a diff needs: the staged change by default, or a commit range. It reads the agents from git, from both the last commit and the staged copy with their names and paths combined, so an edit to an agent file can't narrow which reviewers run. An agent without a `Paths:` line is an error.
 
 | Agent | Checks | Required when staged changes touch |
 |---|---|---|
@@ -19,7 +19,7 @@ Each agent's `Paths:` line lists the git pathspecs that make it required. That l
 | `flutter-lifecycle` | `setState` after dispose, double-submit, stream and provider lifecycle, stale data after switching account or household | `lib/features/`, `lib/core/` |
 | `scope-guard` | Features, settings, options or wording that nobody asked for (the `CLAUDE.md` working rule) | `lib/`, `docs/`, `CLAUDE.md` |
 
-The `targeted-review` skill launches the required agents in parallel and merges their output into one punch list.
+The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exactly those agents in parallel, and merges their output into one punch list. After fixes, every required reviewer whose paths the fixes touched has to pass again. The skill continues the reviewer's existing agent with `SendMessage` rather than starting a new one.
 
 ## Mechanical checks (`scripts/check.sh`)
 - **Size limits:** files up to 300 lines, functions and methods up to 40 lines. Files that are already over the limit are listed in a baseline file. An entry can only be removed, and each removal is its own refactor commit.
@@ -36,7 +36,7 @@ The `targeted-review` skill launches the required agents in parallel and merges 
    - `git commit`, `git push` or a `COVERAGE_` variable in a command that also uses `$`, braces or backslashes outside a commit message, since expansion can build a flag after the hook has read the command
 
    It guards against taking a shortcut, not against a determined attacker. CI runs every check again, and every deploy job waits for it.
-2. **Review gate on every commit:** a PreToolUse hook on `git commit` maps the staged paths to the required reviewers (table above). It denies the commit, naming the reviewers still missing, unless each one has a passing stamp for the current staged diff of its paths.
+2. **Review gate on every commit:** a PreToolUse hook on `git commit` runs `scripts/required-reviewers.sh` to find the required reviewers. It denies the commit, naming the reviewers still missing, unless each one has a passing stamp for the current staged diff of its paths.
 3. **Stamps:** a SubagentStop hook writes the stamps, so Claude doesn't. It reads `agent_type` and the final report (`last_assistant_message`, or `tool_input.message` on `SubagentHandback`). On `VERDICT: PASS` it writes a stamp holding the hash of `git diff --cached` for that agent's paths. If the staged diff changes, the stamp no longer matches and that reviewer has to run again.
 4. **Push reminder:** a PreToolUse hook on `git push` reminds Claude to confirm that the docs are updated and the coverage minimum was raised.
 
@@ -45,7 +45,7 @@ One commit per step, each safe to ship on its own.
 1. Hook: block `--no-verify` (done)
 2. Coverage ratchet (done)
 3. Agent definitions (done)
-4. Rewrite `targeted-review` to use the named agents
+4. Rewrite `targeted-review` to use the named agents (done)
 5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present
 6. Review gate and stamp hooks
 7. Push reminder hook

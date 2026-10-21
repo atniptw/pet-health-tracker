@@ -19,8 +19,9 @@ echo '==> coverage'
 ./scripts/test-coverage.sh
 ./scripts/coverage.sh
 
-echo '==> hooks'
+echo '==> hooks and reviewer mapping'
 ./scripts/test-hooks.sh
+./scripts/test-required-reviewers.sh
 
 echo '==> firestore rules'
 [ -d firestore-tests/node_modules ] || npm --prefix firestore-tests ci --no-fund --no-audit
