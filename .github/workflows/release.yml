@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # tests-changed.sh compares the pushed commits with the ones before.
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -35,6 +38,19 @@ jobs:
       - run: flutter pub get --enforce-lockfile
       - run: npm --prefix firestore-tests ci
       - run: ./scripts/check.sh
+      # check.sh compares with origin/main, which is this push in CI, so the
+      # pushed commits are checked here. After a force-push the old tip isn't
+      # in the clone, so it is fetched by id; if that fails the run fails
+      # rather than skip commits.
+      - run: |
+          before="${{ github.event.before }}"
+          if ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            git fetch --no-tags -q origin "$before" || {
+              echo "The old tip $before can't be fetched, so the pushed commits are unknown." >&2
+              exit 1
+            }
+          fi
+          ./scripts/tests-changed.sh "$before" "${{ github.sha }}"
 
   smoke-android:
     runs-on: ubuntu-latest

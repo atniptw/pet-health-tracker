@@ -25,7 +25,7 @@ The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exact
 - **Size limits:** files in `lib/` up to 300 lines, and functions, methods and constructors up to 40, measured with the Dart analyzer by `tool/size_check.dart`. Files and functions already over a limit are listed in `tool/size_baseline.txt` at their exact size. The check fails when an entry grows, when it shrinks and the baseline isn't lowered to match, and when it no longer exists. Entries can only be lowered or removed, and each removal is its own refactor commit. `clean-code` reviews every change to `tool/`, so an added or raised baseline entry, a raised limit or a newly excluded file is a finding.
 - **Banned comment phrases:** `scripts/comment-check.sh` fails when a comment in a tracked Dart, shell, rules, JavaScript or workflow file says "for now", "for the time being", "previously", "anymore", "eventually", "in the future", "later on", "TODO later", a version like "v2" or a phase like "phase 2". Words like "new", "old" and "no longer" have timeless uses in this code, so `comment-hygiene` judges those. `scripts/comment-allowlist.txt` allows a phrase in one file, and `comment-hygiene` reviews every entry.
 - **Coverage ratchet:** `scripts/coverage.sh` fails if actual coverage is more than 0.2% above the minimum, so the minimum has to be raised.
-- **Tests present:** if `lib/` changed but nothing under `test/` did, the check fails unless the commit is a `refactor:`.
+- **Tests present:** `scripts/tests-changed.sh` fails on a commit that changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`, unless its subject is a `refactor:` (with or without a scope). `check.sh` checks the commits not yet on `origin/main`. In CI that range is empty, so the test job runs the script on the pushed commits and checks out full history for it. After a force-push it fetches the old tip by id, and fails if it can't rather than skip commits.
 
 ## Hooks (`.claude/settings.json`)
 1. **No skipping git hooks:** a PreToolUse hook on Bash (`.claude/hooks/block-no-verify.sh`) denies these, quoted or not:
@@ -46,7 +46,7 @@ One commit per step, each safe to ship on its own.
 2. Coverage ratchet (done)
 3. Agent definitions (done)
 4. Rewrite `targeted-review` to use the named agents (done)
-5. Mechanical checks: size limits with a baseline (done), banned comment phrases (done), tests present
+5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present (done)
 6. Review gate and stamp hooks
 7. Push reminder hook
 8. Workflow section in `CLAUDE.md`
