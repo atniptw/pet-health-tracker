@@ -18,6 +18,10 @@ flutter test --coverage
 echo '==> size limits'
 dart tool/size_check.dart
 
+echo '==> comments'
+./scripts/test-comment-check.sh
+./scripts/comment-check.sh
+
 echo '==> coverage'
 ./scripts/test-coverage.sh
 ./scripts/coverage.sh

@@ -1,0 +1,3 @@
+# Phrases scripts/comment-check.sh allows in one file: "<path> <phrase>".
+# Fixtures that test the check itself:
+scripts/test-comment-check.sh eventually

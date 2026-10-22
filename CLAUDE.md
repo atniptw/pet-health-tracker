@@ -32,12 +32,14 @@ Stack, auth approach, and Firestore schema (with open questions) are in `docs/ar
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests, size limits, coverage, hook tests, reviewer-mapping tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests, size limits, comment phrases, coverage, hook tests, reviewer-mapping tests, rules tests
 flutter test                             # run all Flutter tests
 flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
 npm --prefix firestore-tests test        # security rules and publish-catalog tests (starts the Firestore emulator on 8180)
 dart tool/size_check.dart                # size limits for lib/ (300 lines a file, 40 a function) against tool/size_baseline.txt
+./scripts/comment-check.sh               # comments with wording like "for now" or "v2" (allowed uses in scripts/comment-allowlist.txt)
+./scripts/test-comment-check.sh          # tests for scripts/comment-check.sh
 ./scripts/test-hooks.sh                  # tests for the Claude Code hooks in .claude/hooks
 ./scripts/test-coverage.sh               # tests for the coverage minimum and ratchet in scripts/coverage.sh
 ./scripts/required-reviewers.sh [<from> <to>]  # reviewer agents a diff needs (default: the staged change)
