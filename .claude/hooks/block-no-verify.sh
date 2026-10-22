@@ -4,18 +4,12 @@
 # runs every check again before anything deploys.
 set -euo pipefail
 
+# shellcheck source=command-text.sh
+. "$(dirname "$0")/command-text.sh"
+
 command=$(jq -r '.tool_input.command // ""')
-
-# Commit messages may mention the flags without using them, so the -m and
-# --message values of git commit are dropped, including the heredoc form.
-without_messages=$(printf '%s' "$command" | perl -0pe '
-  my $quoted = qr{"\$\(cat\s+<<-?\x27?(\w+)\x27?\n.*?\n\g{-1}\n\)"|"(?:[^"\\]|\\.)*"|\x27[^\x27]*\x27}s;
-  1 while s/(git(?:\s+[^\s;&|]+)*?\s+commit\b[^;&|]*?(?:^|\s)(?:-[a-zA-Z]*m|--message=?))\s*$quoted/$1 /s;
-')
-
-# Quotes and backslashes are dropped next: the shell removes them before git
-# reads the flags, so `"--no-verify"` and `commit\ -n` count as used.
-text=$(printf '%s' "$without_messages" | tr -d "\"'\\\\")
+without_messages=$(printf '%s' "$command" | drop_messages)
+text=$(printf '%s' "$without_messages" | unquote)
 
 matches() { printf '%s' "$text" | grep -Eiq -e "$1"; }
 

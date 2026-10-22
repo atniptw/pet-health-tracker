@@ -32,7 +32,7 @@ Stack, auth approach, and Firestore schema (with open questions) are in `docs/ar
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, rules tests
 flutter test                             # run all Flutter tests
 flutter test test/auth_gate_test.dart    # run a single test file
 flutter test --plain-name "<test name>"  # run a single test by name
@@ -44,8 +44,9 @@ dart tool/size_check.dart                # size limits for lib/ (300 lines a fil
 ./scripts/test-tests-changed.sh          # tests for scripts/tests-changed.sh
 ./scripts/test-hooks.sh                  # tests for the Claude Code hooks in .claude/hooks
 ./scripts/test-coverage.sh               # tests for the coverage minimum and ratchet in scripts/coverage.sh
-./scripts/required-reviewers.sh [<from> <to>]  # reviewer agents a diff needs (default: the staged change)
+./scripts/required-reviewers.sh [<from> <to>]  # reviewer agents a diff needs (default: the staged change); --hashes for the commit gate
 ./scripts/test-required-reviewers.sh     # tests for scripts/required-reviewers.sh
+./scripts/test-review-gate.sh            # tests for the review stamp and commit gate hooks in .claude/hooks
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 ./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
 flutter test integration_test            # smoke test and repository tests against the real rules, on a running device; needs the Firebase emulators up

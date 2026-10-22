@@ -31,7 +31,9 @@ Check each finding before acting on it. A reviewer can be wrong, can have read a
 ### 5. Fix and re-check
 Fix the findings, with tests first where the fix changes behavior. Stage the fixes and run `./scripts/check.sh`.
 
-Then run `./scripts/required-reviewers.sh` again. Every listed reviewer whose paths the fixes touched has to pass the new staged diff, including reviewers that passed before. To save time, use `SendMessage` to continue the reviewer's existing agent with a short note on what changed, rather than starting a new one. A reviewer whose paths the fixes didn't touch keeps its pass.
+Then run `./scripts/required-reviewers.sh` again. Every listed reviewer whose paths the fixes touched has to pass the new staged diff, including reviewers that passed before. To save time, use `SendMessage` to continue the reviewer's existing agent with a short note on what changed, rather than starting a new one. The note says where to look hardest; the reviewer still reads its whole staged diff, because its pass covers all of it. A reviewer whose paths the fixes didn't touch keeps its pass.
 
 ### 6. Commit
 Commit only when every required reviewer's latest verdict is `VERDICT: PASS` for the staged diff. If a finding needs the user's decision, ask before committing.
+
+The commit gate (`.claude/hooks/review-gate.sh`) enforces this. A reviewer that ends with `VERDICT: PASS` leaves a stamp for the staged diff of its paths as it was when the run started (`.claude/hooks/review-stamp.sh`). `git commit` is denied until every required reviewer has a stamp matching the current staged diff. It also allows only options that commit exactly the staged change in this worktree: `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`, so no `-a`, pathspecs, `-F`, or `-C` into another worktree. So stage everything before launching or continuing reviewers, and don't stage while they run. If the gate names a reviewer, continue its agent or launch a new one.

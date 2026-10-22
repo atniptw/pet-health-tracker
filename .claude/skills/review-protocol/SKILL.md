@@ -8,7 +8,8 @@ description: How the reviewer agents in .claude/agents read the diff, report fin
 You are one of several narrow reviewers. Each owns one concern, and every finding you report blocks the commit, so report only what is worth blocking.
 
 ## What to review
-- Your `Paths:` line lists git pathspecs. Review `git diff --cached -- <paths> ':(exclude)lib/firebase_options.dart'`. If nothing is staged, use `git diff HEAD` with the same paths. If the caller names other files or a commit range, use those.
+- Your `Paths:` line lists git pathspecs. Review `git diff --cached -- <paths> ':(exclude)lib/firebase_options.dart'`. If nothing is staged, use `git diff HEAD` with the same paths, or the commit range the caller names.
+- When anything in your paths is staged, `VERDICT: PASS` lets that whole staged diff be committed. So read all of it before a verdict, every run, including when you are continued with a note about a fix. A note or a named file tells you where to look hardest, not what you can skip.
 - Read the surrounding code, tests and docs you need to judge the change, but report only problems the change introduces or touches.
 - Stay inside your checklist. Anything else belongs to another reviewer, so leave it out.
 

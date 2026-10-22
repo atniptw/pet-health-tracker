@@ -64,6 +64,20 @@ echo x >README.md && git add README.md
 expect 'a file no agent covers' ''
 
 expect 'a commit range' 'lib-reviewer rules-reviewer ' HEAD~3 HEAD~2
+
+# --hashes prints every agent with a hash of its part of the staged diff.
+hashes() { "$script" --hashes | sed -n "s/^$1 //p"; }
+lib_before=$(hashes lib-reviewer)
+rules_before=$(hashes rules-reviewer)
+[ -n "$lib_before" ] && [ -n "$rules_before" ] || fail '--hashes: every agent gets a hash'
+echo more >>lib/a.dart && git add lib/a.dart
+lib_staged=$(hashes lib-reviewer)
+[ "$lib_staged" != "$lib_before" ] || fail '--hashes: a staged change in its paths changes the hash'
+[ "$(hashes rules-reviewer)" = "$rules_before" ] || fail '--hashes: a change outside its paths keeps the hash'
+echo more >>lib/a.dart
+[ "$(hashes lib-reviewer)" = "$lib_staged" ] || fail '--hashes: an unstaged change keeps the hash'
+git reset -q lib/a.dart && git checkout -q -- lib/a.dart
+"$script" --hashes HEAD >/dev/null 2>&1 && fail '--hashes: takes no range'
 git rm -q --cached README.md
 
 # The agents come from git (the last commit and the staged copy), not from

@@ -3,12 +3,25 @@
 # .claude/agents whose Paths line matches a changed file. Arguments go to
 # git diff (default --cached, the staged change).
 #
+# With --hashes, prints "<name> <hash>" for every agent instead, where the
+# hash covers the staged diff of that agent's Paths. The commit gate compares
+# these with the stamps reviewers leave when they pass.
+#
 # Agents are read from git, not the working tree: an agent counts if it is in
 # the last commit or staged, with the names and Paths of both copies combined,
 # so neither an unstaged edit nor a staged one can narrow which reviewers run.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
+hashes=false
+if [ "${1:-}" = --hashes ]; then
+  if [ "$#" -ne 1 ]; then
+    echo "usage: $0 --hashes" >&2
+    exit 2
+  fi
+  hashes=true
+  set -- --cached
+fi
 [ "$#" -gt 0 ] || set -- --cached
 
 revisions=(:)
@@ -41,11 +54,17 @@ names=$(
     set -f
     # shellcheck disable=SC2086
     # set -e is off inside $(...), so a failing diff has to exit by hand.
-    changed=$(git diff --name-only "$@" -- $paths ':(exclude)lib/firebase_options.dart') || exit 1
-    set +f
-    if [ -n "$changed" ]; then
-      printf '%s\n' "$copies" | sed -n 's/^name: //p'
+    if $hashes; then
+      diff=$(git diff "$@" -- $paths ':(exclude)lib/firebase_options.dart') || exit 1
+      hash=$(printf '%s' "$diff" | git hash-object --stdin) || exit 1
+      printf '%s\n' "$copies" | sed -n "s/^name: \(.*\)/\1 $hash/p"
+    else
+      changed=$(git diff --name-only "$@" -- $paths ':(exclude)lib/firebase_options.dart') || exit 1
+      if [ -n "$changed" ]; then
+        printf '%s\n' "$copies" | sed -n 's/^name: //p'
+      fi
     fi
+    set +f
   done
 )
 printf '%s\n' "$names" | sort -u | sed '/^$/d'
