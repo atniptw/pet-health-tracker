@@ -1,0 +1,30 @@
+# Files and functions in lib/ over the size limits (tool/size_check.dart), at
+# their current size. Entries may only be lowered or removed.
+50 lib/data/household_repository.dart HouseholdRepository.joinHousehold
+41 lib/features/auth/sign_in_screen.dart _SignInScreenState.build
+44 lib/features/household/create_household_screen.dart _CreateHouseholdScreenState.build
+463 lib/features/household/home_screen.dart
+42 lib/features/household/home_screen.dart HomeScreen.build
+62 lib/features/household/home_screen.dart _PetGrid.build
+81 lib/features/household/home_screen.dart _Recent.build
+43 lib/features/household/home_screen.dart _RecentRow.build
+42 lib/features/household/invite_screen.dart _InviteScreenState._form
+43 lib/features/pets/pet_form_screen.dart _PetFormScreenState._save
+90 lib/features/pets/pet_form_screen.dart _PetFormScreenState.build
+54 lib/features/settings/delete_account_screen.dart _DeleteAccountScreenState._delete
+61 lib/features/settings/delete_account_screen.dart _DeleteAccountScreenState.build
+56 lib/features/settings/settings_screen.dart SettingsScreen._delete
+106 lib/features/settings/settings_screen.dart SettingsScreen.build
+49 lib/features/symptoms/edit_log_screen.dart _EditLogScreenState.build
+638 lib/features/symptoms/log_sheet.dart
+41 lib/features/symptoms/log_sheet.dart _LogSheetState._logCatalog
+70 lib/features/symptoms/log_sheet.dart _LogSheetState.build
+51 lib/features/symptoms/log_sheet.dart _PetAvatars._avatar
+66 lib/features/symptoms/log_sheet.dart _PetPills.build
+47 lib/features/symptoms/log_sheet.dart _PetPills.build.pill
+56 lib/features/symptoms/log_sheet.dart _SymptomRows.build
+45 lib/features/symptoms/pet_logs_screen.dart PetLogsScreen.build
+576 lib/features/symptoms/symptom_details_screen.dart
+48 lib/features/symptoms/symptom_details_screen.dart _SingleChoice.build
+47 lib/features/symptoms/symptom_details_screen.dart _SymptomDetailsScreenState._control
+93 lib/features/symptoms/symptom_details_screen.dart _SymptomDetailsScreenState.build

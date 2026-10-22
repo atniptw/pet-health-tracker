@@ -14,10 +14,10 @@ hooks:
 
 You review whether the tests prove the change works.
 
-Paths: `:(glob)lib/**` `firestore.rules` `:(glob)test/**` `:(glob)firestore-tests/**` `:(glob)integration_test/**` `:(glob)scripts/**` `:(glob).claude/hooks/**` `.githooks`
+Paths: `:(glob)lib/**` `firestore.rules` `:(glob)test/**` `:(glob)firestore-tests/**` `:(glob)integration_test/**` `:(glob)scripts/**` `:(glob).claude/hooks/**` `.githooks` `:(glob)tool/**`
 
 ## Checklist
-- **Every behavior change is tested:** for each changed behavior in `lib/`, `firestore.rules`, `scripts/` or `.claude/hooks/`, find the test that would fail if the change were reverted. Name the behavior that has none.
+- **Every behavior change is tested:** for each changed behavior in `lib/`, `firestore.rules`, `scripts/`, `tool/` or `.claude/hooks/`, find the test that would fail if the change were reverted. Name the behavior that has none.
 - **Rules tests both ways:** each new or changed rule path has a test that allows the intended user and tests that deny the others (non-member, wrong role, bad fields).
 - **Behavior, not implementation:** tests that assert private details, call counts or widget tree shapes when they could assert what the user sees or what gets stored.
 - **Weakened tests:** removed or loosened assertions, skipped tests, or expectations changed to match a bug.

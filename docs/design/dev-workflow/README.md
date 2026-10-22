@@ -10,11 +10,11 @@ Each agent's `Paths:` line lists the git pathspecs that make it required. That l
 
 | Agent | Checks | Required when staged changes touch |
 |---|---|---|
-| `clean-code` | Large methods, files and `build()` methods; complex methods (nesting, branching); single responsibility; duplication with existing code in `lib/`; naming | `lib/` |
+| `clean-code` | Large methods, files and `build()` methods; complex methods (nesting, branching); single responsibility; duplication with existing code in `lib/`; naming | `lib/`, `tool/` |
 | `comment-hygiene` | Doc comments stay lean. Flags temporal comments ("now", "previously", "after the redesign", "new"), story-telling, comments that restate the code, and roadmap wording ("later", "v2", "for now") | Dart, rules, shell, JavaScript and workflow files, `.githooks/` |
-| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and design READMEs match the code and `firestore.rules`. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/`, `firestore.rules`, `docs/`, `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, `.githooks/` |
+| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and design READMEs match the code and `firestore.rules`. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/`, `firestore.rules`, `docs/`, `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, `.githooks/`, `tool/` |
 | `security` | Rules: privilege escalation, field validation, membership checks. Personal or health data reaching logs or Crashlytics. Secrets. Auth edge cases | `firestore.rules`, `lib/data/`, `lib/core/`, `lib/features/auth/`, `android/`, `ios/`, `.github/`, `scripts/`, `firestore-tests/` scripts |
-| `test-quality` | Every behavior change has a test that would fail without it. Tests check behavior, not implementation. Every new rule path has allow and deny tests. No assertions got weaker | `lib/`, `firestore.rules`, `test/`, `firestore-tests/`, `integration_test/`, `scripts/`, `.claude/hooks/`, `.githooks/` |
+| `test-quality` | Every behavior change has a test that would fail without it. Tests check behavior, not implementation. Every new rule path has allow and deny tests. No assertions got weaker | `lib/`, `firestore.rules`, `test/`, `firestore-tests/`, `integration_test/`, `scripts/`, `.claude/hooks/`, `.githooks/`, `tool/` |
 | `release-safety` | Rules changes don't break app versions testers still have. Schema changes handle existing documents that lack new fields. The commit is safe to ship on its own | `firestore.rules`, `lib/data/`, `lib/core/`, `pubspec.yaml`, `android/`, `ios/`, `.github/`, `assets/catalog/` |
 | `flutter-lifecycle` | `setState` after dispose, double-submit, stream and provider lifecycle, stale data after switching account or household | `lib/features/`, `lib/core/` |
 | `scope-guard` | Features, settings, options or wording that nobody asked for (the `CLAUDE.md` working rule) | `lib/`, `docs/`, `CLAUDE.md` |
@@ -22,7 +22,7 @@ Each agent's `Paths:` line lists the git pathspecs that make it required. That l
 The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exactly those agents in parallel, and merges their output into one punch list. After fixes, every required reviewer whose paths the fixes touched has to pass again. The skill continues the reviewer's existing agent with `SendMessage` rather than starting a new one.
 
 ## Mechanical checks (`scripts/check.sh`)
-- **Size limits:** files up to 300 lines, functions and methods up to 40 lines. Files that are already over the limit are listed in a baseline file. An entry can only be removed, and each removal is its own refactor commit.
+- **Size limits:** files in `lib/` up to 300 lines, and functions, methods and constructors up to 40, measured with the Dart analyzer by `tool/size_check.dart`. Files and functions already over a limit are listed in `tool/size_baseline.txt` at their exact size. The check fails when an entry grows, when it shrinks and the baseline isn't lowered to match, and when it no longer exists. Entries can only be lowered or removed, and each removal is its own refactor commit. `clean-code` reviews every change to `tool/`, so an added or raised baseline entry, a raised limit or a newly excluded file is a finding.
 - **Banned comment phrases:** a grep with an allowlist for real uses.
 - **Coverage ratchet:** `scripts/coverage.sh` fails if actual coverage is more than 0.2% above the minimum, so the minimum has to be raised.
 - **Tests present:** if `lib/` changed but nothing under `test/` did, the check fails unless the commit is a `refactor:`.
@@ -46,7 +46,7 @@ One commit per step, each safe to ship on its own.
 2. Coverage ratchet (done)
 3. Agent definitions (done)
 4. Rewrite `targeted-review` to use the named agents (done)
-5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present
+5. Mechanical checks: size limits with a baseline (done), banned comment phrases, tests present
 6. Review gate and stamp hooks
 7. Push reminder hook
 8. Workflow section in `CLAUDE.md`
