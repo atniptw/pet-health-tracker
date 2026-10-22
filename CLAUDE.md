@@ -14,6 +14,17 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 - Run `./scripts/check.sh` before committing, and never push with failing checks. Don't bypass the pre-push hook (`--no-verify`).
 - The coverage minimum in `scripts/coverage.sh` only goes up. The check fails when coverage is more than 0.2% above it, so raise it then; never lower it to get a change through.
 
+## Workflow
+
+Each commit goes through these steps. Hooks and checks enforce steps 3 to 6, and that a change to `lib/` comes with test changes; planning and writing the test first are up to you. `docs/design/dev-workflow/README.md` has the details.
+
+1. **Plan.** Work that takes several commits gets a design README in `docs/design/` with the user's decisions and a build order, one commit per step.
+2. **Test and change.** Write the failing test, then the change, then run `./scripts/check.sh`.
+3. **Stage** exactly what the commit will hold.
+4. **Review** with the `targeted-review` skill. `./scripts/required-reviewers.sh` names the reviewer agents (`.claude/agents/`) the staged change needs, and they run in parallel. Fix what they find, stage the fixes, and continue the reviewers whose paths changed. Don't stage while reviewers run.
+5. **Commit** with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every required reviewer has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing.
+6. **Push** to `main`. The pre-push hook runs `check.sh`. CI runs it again, checks the pushed commits with `scripts/tests-changed.sh`, and runs the integration tests before anything deploys.
+
 ## Project state
 
 Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, Apple sign-in (iOS only), creating, joining (invite codes), switching, renaming, leaving, transferring and deleting households, member names, deleting an account, adding and editing pets, the home screen with recent logs and a "Log a symptom" sheet (catalog and `other` symptoms), a per-pet history with editing and deleting, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.

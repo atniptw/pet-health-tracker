@@ -38,7 +38,7 @@ The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exact
    It guards against taking a shortcut, not against a determined attacker. CI runs every check again, and every deploy job waits for it.
 2. **Review gate on every commit:** `.claude/hooks/review-gate.sh`, a PreToolUse hook on Bash, runs `scripts/required-reviewers.sh` when a command runs `git commit`. It denies the commit, naming the reviewers still missing, unless each one has a stamp matching the hash of the current staged diff of its paths (`scripts/required-reviewers.sh --hashes`). Because it checks only the staged change, a commit may use only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `-a`, pathspecs, `-F` and the rest are denied, and so is a commit whose `-C` or `cd` target is another worktree. It reads each command twice, both times with commit messages dropped (`.claude/hooks/command-text.sh`, shared with `block-no-verify.sh`). One reading removes the quotes, which finds commits inside `bash -c` or after a prefix like `env`. The other keeps each quoted argument whole, which finds a commit after an option value with a space in it, like `-c user.name="A B"`. A commit in either reading counts. It denies the commit if it fails in any way, including when `jq` can't read the command or the reviewer mapping fails.
 3. **Stamps:** `.claude/hooks/review-stamp.sh` writes them, so Claude doesn't. On SubagentStart it records the reviewer's hash for that run. On PostToolUse of `SubagentHandback` it keeps the report. On SubagentStop it writes the stamp, holding the hash from the start of the run, if the report's last line is `VERDICT: PASS`, and removes the reviewer's stamp otherwise. If no report was handed back, it reads `last_assistant_message`. Anything staged after a run started therefore needs another run. A change staged and then unstaged during a run goes unnoticed. Stamps live in the git directory (`review-stamps/`), so they are never committed and belong to one clone.
-4. **Push reminder:** a PreToolUse hook on `git push` reminds Claude to confirm that the docs are updated and the coverage minimum was raised.
+4. **Push reminder:** not built. What it would remind about is enforced instead: `docs-sync` blocks a commit whose docs are out of date, and the coverage ratchet fails a push when the minimum should be raised.
 
 ## Build order
 One commit per step, each safe to ship on its own.
@@ -48,8 +48,8 @@ One commit per step, each safe to ship on its own.
 4. Rewrite `targeted-review` to use the named agents (done)
 5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present (done)
 6. Review gate and stamp hooks (done)
-7. Push reminder hook
-8. Workflow section in `CLAUDE.md`
+7. Push reminder hook (dropped: see hook 4)
+8. Workflow section in `CLAUDE.md` (done)
 
 ## Decisions
 - Review runs on every commit, not every push.
@@ -57,3 +57,4 @@ One commit per step, each safe to ship on its own.
 - Limits: 300 lines per file, 40 per function. Current offenders go in a baseline and get refactored in separate commits.
 - All eight reviewers above are in, including `test-quality`, `release-safety`, `flutter-lifecycle` and `scope-guard`.
 - The guard hooks in `.claude/hooks/` stop shortcuts, not attackers. `security` reports bypasses a session might plausibly type, not crafted obfuscation, because CI is the real gate.
+- No push reminder hook: `docs-sync` and the coverage ratchet already enforce what it would check.
