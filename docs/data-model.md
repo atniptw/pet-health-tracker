@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (anyone but the owner, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins renaming the household (Settings, Household name), the owner transferring ownership (Settings, Transfer ownership), the owner deleting the household (Settings, Delete household), deleting an account (Settings, Delete account; see architecture.md), admins making and sharing an invite code (Settings, Invite someone), everyone seeing who's in the household (Settings, Members), admins removing people from there (members who aren't admins, or anyone but the owner for the owner; it waits for the server and cancels the active invite), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, deleting a log from its edit screen (its author or an admin, after confirming; like logging, it doesn't wait for the server), listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets, medications and changing roles are not built. Removing members followed [design/remove-members](design/remove-members/README.md). See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (anyone but the owner, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins renaming the household (Settings, Household name), the owner transferring ownership (Settings, Transfer ownership), the owner deleting the household (Settings, Delete household), deleting an account (Settings, Delete account; see architecture.md), admins making and sharing an invite code (Settings, Invite someone), everyone seeing who's in the household (Settings, Members), admins removing people from there (members who aren't admins, or anyone but the owner for the owner; it waits for the server and cancels the active invite), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, deleting a log from its edit screen (its author or an admin, after confirming; like logging, it doesn't wait for the server), listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets, medications and changing roles are not built (plan for roles in [design/change-roles](design/change-roles/README.md)). Removing members followed [design/remove-members](design/remove-members/README.md). See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -23,7 +23,7 @@ A household has members and pets. Every member can see the household's pets and 
 | Add, edit, archive pets | no | yes | yes |
 | See and share the invite code | no | yes | yes |
 | Remove members | no | members who aren't admins | anyone but themselves |
-| Change roles | no | yes | yes |
+| Change roles | no | no | yes |
 | Rename the household | no | yes | yes |
 | Delete the household | no | no | yes |
 | Transfer ownership | no | no | yes |
@@ -48,7 +48,7 @@ A pet's history shows who logged each entry, once the household has more than on
 
 ### Invite codes
 
-Admins add people with an invite code, redeemed with security rules only (no Cloud Functions, since those need a paid plan; see architecture.md). New people join as members, and admins promote from there. This works the same for Google and Apple users.
+Admins add people with an invite code, redeemed with security rules only (no Cloud Functions, since those need a paid plan; see architecture.md). New people join as members. Only the owner will be able to make someone an admin; that isn't built (see [design/change-roles](design/change-roles/README.md)). This works the same for Google and Apple users.
 
 - **The code:** the app suggests three random words from the bundled EFF Short Wordlist 1 (1,296 words, CC BY 3.0, credited on the licenses page), picked again until the suggestion is at least 12 characters. The admin can regenerate the suggestion or type their own of at least 12 characters, any characters allowed.
 - **Matching:** exact, after trimming trailing spaces. Autocorrect is off on the code field.
