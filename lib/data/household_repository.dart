@@ -127,10 +127,7 @@ class HouseholdRepository {
       }
     }
     refs.addAll(pets.map((pet) => pet.reference));
-    final invites = await _firestore
-        .collection('invites')
-        .where('householdId', isEqualTo: householdId)
-        .get(server);
+    final invites = await _invitesOf(householdId).get(server);
     refs.addAll(invites.docs.map((d) => d.reference));
     final members = (await household.collection('members').get(server)).docs;
 
@@ -154,15 +151,41 @@ class HouseholdRepository {
   /// their member doc, so their logs show "Former member". The rules allow
   /// this for anyone but the owner.
   Future<void> leaveHousehold({required String householdId, required String uid}) {
+    return _takeOut(householdId, uid).commit();
+  }
+
+  /// Takes [uid] out of the household's members and admins, deletes their
+  /// name, so their logs show "Former member", and deletes the household's
+  /// invites, so they can't rejoin with the active code. The rules allow
+  /// admins to remove members who aren't admins, and the owner anyone else.
+  ///
+  /// Like deleting the household, this waits for the server: it reads the
+  /// invites from the server first, so it fails with no connection instead
+  /// of missing an invite only the server has.
+  Future<void> removeMember({required String householdId, required String uid}) async {
+    final invites = await _invitesOf(householdId).get(const GetOptions(source: Source.server));
+    final batch = _takeOut(householdId, uid);
+    for (final invite in invites.docs) {
+      batch.delete(invite.reference);
+    }
+    await batch.commit();
+  }
+
+  /// A batch that takes [uid] out of the household's members and admins and
+  /// deletes their member doc, as leaving and removing both do.
+  WriteBatch _takeOut(String householdId, String uid) {
     final household = _households.doc(householdId);
-    return (_firestore.batch()
-          ..update(household, {
-            'memberIds': FieldValue.arrayRemove([uid]),
-            'adminIds': FieldValue.arrayRemove([uid]),
-            'updatedAt': FieldValue.serverTimestamp(),
-          })
-          ..delete(household.collection('members').doc(uid)))
-        .commit();
+    return _firestore.batch()
+      ..update(household, {
+        'memberIds': FieldValue.arrayRemove([uid]),
+        'adminIds': FieldValue.arrayRemove([uid]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      })
+      ..delete(household.collection('members').doc(uid));
+  }
+
+  Query<Map<String, dynamic>> _invitesOf(String householdId) {
+    return _firestore.collection('invites').where('householdId', isEqualTo: householdId);
   }
 
   /// Joins the household whose invite matches [code], as a member named

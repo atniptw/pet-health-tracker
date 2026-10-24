@@ -228,6 +228,54 @@ void main() {
     expect(household['adminIds'], ['admin']);
   });
 
+  group('removeMember', () {
+    setUp(() async {
+      await firestore.doc('households/h1').set({
+        'name': 'The Den',
+        'memberIds': ['owner', 'admin', 'u1', 'u2'],
+        'adminIds': ['owner', 'admin'],
+        'ownerId': 'owner',
+      });
+      await firestore.doc('households/h1/members/u1').set({'name': 'Tom'});
+      await firestore.doc('households/h1/members/u2').set({'name': 'Sam'});
+      await firestore.doc('invites/invite-h1').set({'householdId': 'h1'});
+      await firestore.doc('invites/invite-h2').set({'householdId': 'h2'});
+    });
+
+    test(
+      "takes the person out of the members, deletes their name and the household's invite",
+      () async {
+        await repository.removeMember(householdId: 'h1', uid: 'u1');
+
+        final household = (await firestore.doc('households/h1').get()).data()!;
+        expect(household['memberIds'], ['owner', 'admin', 'u2']);
+        expect(household['adminIds'], ['owner', 'admin']);
+        expect(household['updatedAt'], isA<Timestamp>());
+        expect((await firestore.doc('households/h1/members/u1').get()).exists, isFalse);
+        expect((await firestore.doc('households/h1/members/u2').get()).exists, isTrue);
+        expect((await firestore.doc('invites/invite-h1').get()).exists, isFalse);
+        expect((await firestore.doc('invites/invite-h2').get()).exists, isTrue);
+      },
+    );
+
+    test('an admin who is removed stops being an admin', () async {
+      await repository.removeMember(householdId: 'h1', uid: 'admin');
+
+      final household = (await firestore.doc('households/h1').get()).data()!;
+      expect(household['memberIds'], ['owner', 'u1', 'u2']);
+      expect(household['adminIds'], ['owner']);
+    });
+
+    test('works when the household has no invite', () async {
+      await firestore.doc('invites/invite-h1').delete();
+
+      await repository.removeMember(householdId: 'h1', uid: 'u1');
+
+      final household = (await firestore.doc('households/h1').get()).data()!;
+      expect(household['memberIds'], ['owner', 'admin', 'u2']);
+    });
+  });
+
   test('transferring ownership makes the member the owner and an admin, keeping the old owner an admin', () async {
     await firestore.doc('households/h1').set({
       'name': 'The Den',

@@ -168,6 +168,54 @@ void main() {
     expect(members.values, ['eve']);
   });
 
+  testWidgets("an admin removes a member, who can't rejoin with the old code", (tester) async {
+    final h = await householdWithPet('Remove', owner: 'olu', member: 'pat');
+    final pat = h.memberUid;
+    await logSymptom(h.householdId, h.petId, 'pats-log', pat);
+    await signInAs('olu');
+
+    await households.removeMember(householdId: h.householdId, uid: pat);
+
+    final household = 'households/${h.householdId}';
+    expect(await exists('$household/members/$pat'), isFalse);
+    expect(await exists('$household/pets/${h.petId}/symptomLogs/pats-log'), isTrue);
+    expect(await exists('invites/${inviteIdFor(h.inviteCode)}'), isFalse);
+    await signInAs('pat');
+    await expectLater(firestore.doc(household).get(), throwsA(deniedPermission()));
+    await expectLater(
+      households.joinHousehold(code: h.inviteCode, uid: pat, name: 'pat'),
+      throwsA(isA<InviteNotFoundException>()),
+    );
+  });
+
+  // If the invites were read from the cache, the commit would wait for the network
+  // forever; the timeout makes that fail.
+  testWidgets('removing someone fails with no connection, changing nothing', (tester) async {
+    final h = await householdWithPet('Offline remove', owner: 'sue', member: 'tia');
+    await signInAs('sue');
+    await firestore.disableNetwork();
+    addTearDown(firestore.enableNetwork);
+
+    await expectLater(
+      households.removeMember(householdId: h.householdId, uid: h.memberUid),
+      throwsA(isA<FirebaseException>().having((e) => e.code, 'code', 'unavailable')),
+    );
+
+    await firestore.enableNetwork();
+    expect(await exists('households/${h.householdId}/members/${h.memberUid}'), isTrue);
+    expect(await exists('invites/${inviteIdFor(h.inviteCode)}'), isTrue);
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  testWidgets('a member cannot remove anyone', (tester) async {
+    final h = await householdWithPet('No remove', owner: 'quinn', member: 'ray');
+
+    await expectLater(
+      households.removeMember(householdId: h.householdId, uid: h.ownerUid),
+      throwsA(deniedPermission()),
+    );
+    expect(await exists('households/${h.householdId}/members/${h.ownerUid}'), isTrue);
+  });
+
   testWidgets('after a transfer, the new owner can delete and the old one cannot', (tester) async {
     final h = await householdWithPet('Transfer', owner: 'gus', member: 'hal');
     await signInAs('gus');
