@@ -106,6 +106,23 @@ class HouseholdRepository {
     });
   }
 
+  /// Makes [uid], a member, an admin. The rules allow this only for the owner.
+  Future<void> makeAdmin({required String householdId, required String uid}) {
+    return _households.doc(householdId).update({
+      'adminIds': FieldValue.arrayUnion([uid]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Takes admin away from [uid], who stays a member. The rules allow this
+  /// only for the owner, and never for the owner themselves.
+  Future<void> removeAdmin({required String householdId, required String uid}) {
+    return _households.doc(householdId).update({
+      'adminIds': FieldValue.arrayRemove([uid]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Deletes the household and everything in it: its pets with their logs
   /// and medications, its invites, and its members' names. The rules allow
   /// this only for the owner.

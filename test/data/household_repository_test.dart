@@ -276,6 +276,36 @@ void main() {
     });
   });
 
+  group('roles', () {
+    setUp(() async {
+      await firestore.doc('households/h1').set({
+        'name': 'The Den',
+        'memberIds': ['owner', 'admin', 'u1'],
+        'adminIds': ['owner', 'admin'],
+        'ownerId': 'owner',
+      });
+    });
+
+    test('making a member an admin adds only them to the admins', () async {
+      await repository.makeAdmin(householdId: 'h1', uid: 'u1');
+
+      final household = (await firestore.doc('households/h1').get()).data()!;
+      expect(household['adminIds'], ['owner', 'admin', 'u1']);
+      expect(household['memberIds'], ['owner', 'admin', 'u1']);
+      expect(household['ownerId'], 'owner');
+      expect(household['updatedAt'], isA<Timestamp>());
+    });
+
+    test('taking admin away keeps them a member', () async {
+      await repository.removeAdmin(householdId: 'h1', uid: 'admin');
+
+      final household = (await firestore.doc('households/h1').get()).data()!;
+      expect(household['adminIds'], ['owner']);
+      expect(household['memberIds'], ['owner', 'admin', 'u1']);
+      expect(household['updatedAt'], isA<Timestamp>());
+    });
+  });
+
   test('transferring ownership makes the member the owner and an admin, keeping the old owner an admin', () async {
     await firestore.doc('households/h1').set({
       'name': 'The Den',

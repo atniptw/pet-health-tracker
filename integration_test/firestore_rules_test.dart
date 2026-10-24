@@ -216,6 +216,40 @@ void main() {
     expect(await exists('households/${h.householdId}/members/${h.ownerUid}'), isTrue);
   });
 
+  testWidgets('the owner makes a member an admin and takes it away again', (tester) async {
+    final h = await householdWithPet('Roles', owner: 'uma', member: 'vic');
+    await signInAs('uma');
+
+    await households.makeAdmin(householdId: h.householdId, uid: h.memberUid);
+    var household = Household.fromFirestore(
+      await firestore.doc('households/${h.householdId}').get(),
+    );
+    expect(household.adminIds, [h.ownerUid, h.memberUid]);
+
+    await households.removeAdmin(householdId: h.householdId, uid: h.memberUid);
+    household = Household.fromFirestore(await firestore.doc('households/${h.householdId}').get());
+    expect(household.adminIds, [h.ownerUid]);
+    expect(household.memberIds, [h.ownerUid, h.memberUid]);
+  });
+
+  testWidgets('an admin who is not the owner cannot change roles', (tester) async {
+    final h = await householdWithPet('No roles', owner: 'wes', member: 'xia');
+    await signInAs('wes');
+    await households.makeAdmin(householdId: h.householdId, uid: h.memberUid);
+    final yan = await signInAs('yan');
+    await households.joinHousehold(code: h.inviteCode, uid: yan, name: 'yan');
+    await signInAs('xia');
+
+    await expectLater(
+      households.makeAdmin(householdId: h.householdId, uid: yan),
+      throwsA(deniedPermission()),
+    );
+    await expectLater(
+      households.removeAdmin(householdId: h.householdId, uid: h.memberUid),
+      throwsA(deniedPermission()),
+    );
+  });
+
   testWidgets('after a transfer, the new owner can delete and the old one cannot', (tester) async {
     final h = await householdWithPet('Transfer', owner: 'gus', member: 'hal');
     await signInAs('gus');

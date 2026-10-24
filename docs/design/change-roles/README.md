@@ -16,6 +16,6 @@ The admin household update gains one more change to `adminIds`: the owner adds o
 ## Build order
 One commit per step, each safe to ship on its own.
 1. Rules: the owner promotes or demotes one person at a time. Allow and deny tests in `firestore-tests/`. (done)
-2. Repository: `makeAdmin` and `removeAdmin` on `HouseholdRepository`, which add or take out the uid in `adminIds`. Integration test against the real rules.
+2. Repository: `makeAdmin` and `removeAdmin` on `HouseholdRepository`, which add or take out the uid in `adminIds`. Integration test against the real rules. (done)
 3. Members screen menu: the remove button becomes "Remove from household" in a ⋮ menu, working as before.
 4. Role actions: the owner's menu gets "Make admin" or "Remove as admin", each after confirming.
