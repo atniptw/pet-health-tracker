@@ -165,8 +165,12 @@ describe('households', () => {
 
   test('only admins can update a household', async () => {
     await seedHousehold();
-    await assertFails(updateDoc(doc(db(MEMBER), HOUSEHOLD), { name: 'Mine now' }));
-    await assertSucceeds(updateDoc(doc(db(ADMIN), HOUSEHOLD), { name: 'Renamed' }));
+    await assertFails(
+      updateDoc(doc(db(MEMBER), HOUSEHOLD), { name: 'Mine now', updatedAt: serverTimestamp() }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(db(ADMIN), HOUSEHOLD), { name: 'Renamed', updatedAt: serverTimestamp() }),
+    );
   });
 
   test('only the owner can delete a household', async () => {
@@ -194,9 +198,13 @@ describe('households', () => {
     });
     for (const uid of [ADMIN, SECOND_ADMIN]) {
       const ref = doc(db(uid), HOUSEHOLD);
-      await assertFails(updateDoc(ref, { adminIds: [SECOND_ADMIN] }));
+      await assertFails(updateDoc(ref, { adminIds: [SECOND_ADMIN], updatedAt: serverTimestamp() }));
       await assertFails(
-        updateDoc(ref, { memberIds: [SECOND_ADMIN, MEMBER], adminIds: [SECOND_ADMIN] }),
+        updateDoc(ref, {
+          memberIds: [SECOND_ADMIN, MEMBER],
+          adminIds: [SECOND_ADMIN],
+          updatedAt: serverTimestamp(),
+        }),
       );
     }
   });
@@ -211,7 +219,9 @@ describe('households', () => {
       },
     });
     for (const uid of [ADMIN, SECOND_ADMIN]) {
-      await assertFails(updateDoc(doc(db(uid), HOUSEHOLD), { ownerId: deleteField() }));
+      await assertFails(
+        updateDoc(doc(db(uid), HOUSEHOLD), { ownerId: deleteField(), updatedAt: serverTimestamp() }),
+      );
     }
   });
 
@@ -257,11 +267,33 @@ describe('households', () => {
     );
   });
 
+  test('a transfer cannot change anyone else\'s role', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER, 'other-uid'],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    const ref = doc(db(ADMIN), HOUSEHOLD);
+    const at = serverTimestamp();
+    await assertFails(
+      updateDoc(ref, { ownerId: MEMBER, adminIds: arrayUnion(MEMBER, 'other-uid'), updatedAt: at }),
+    );
+    await assertFails(updateDoc(ref, { ownerId: MEMBER, adminIds: [ADMIN, MEMBER], updatedAt: at }));
+    await assertFails(
+      updateDoc(ref, { ownerId: MEMBER, adminIds: [ADMIN, ADMIN, MEMBER], updatedAt: at }),
+    );
+  });
+
   test('the new owner must be an admin, and the old owner stays one', async () => {
     await seedHousehold();
     const ref = doc(db(ADMIN), HOUSEHOLD);
-    await assertFails(updateDoc(ref, { ownerId: MEMBER }));
-    await assertFails(updateDoc(ref, { ownerId: MEMBER, adminIds: [MEMBER] }));
+    await assertFails(updateDoc(ref, { ownerId: MEMBER, updatedAt: serverTimestamp() }));
+    await assertFails(
+      updateDoc(ref, { ownerId: MEMBER, adminIds: [MEMBER], updatedAt: serverTimestamp() }),
+    );
   });
 
   test('an admin can rename the household to 1 to 100 characters', async () => {
@@ -277,10 +309,79 @@ describe('households', () => {
   test('an update must keep at least one admin, and every admin a member', async () => {
     await seedHousehold();
     const ref = doc(db(ADMIN), HOUSEHOLD);
-    await assertFails(updateDoc(ref, { adminIds: [] }));
-    await assertFails(updateDoc(ref, { adminIds: [ADMIN, OUTSIDER] }));
-    await assertFails(updateDoc(ref, { memberIds: [MEMBER] }));
-    await assertSucceeds(updateDoc(ref, { adminIds: [ADMIN, MEMBER] }));
+    await assertFails(updateDoc(ref, { adminIds: [], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { adminIds: [ADMIN, OUTSIDER], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { memberIds: [MEMBER], updatedAt: serverTimestamp() }));
+  });
+
+  test('admins cannot add anyone to the household', async () => {
+    await seedHousehold();
+    await assertFails(
+      updateDoc(doc(db(ADMIN), HOUSEHOLD), { memberIds: arrayUnion(OUTSIDER), updatedAt: serverTimestamp() }),
+    );
+  });
+
+  test('admins cannot change roles', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    for (const uid of [ADMIN, SECOND_ADMIN]) {
+      const ref = doc(db(uid), HOUSEHOLD);
+      await assertFails(updateDoc(ref, { adminIds: arrayUnion(MEMBER), updatedAt: serverTimestamp() }));
+    }
+    await assertFails(
+      updateDoc(doc(db(ADMIN), HOUSEHOLD), { adminIds: arrayRemove(SECOND_ADMIN), updatedAt: serverTimestamp() }),
+    );
+  });
+
+  test("an admin's update must stamp updatedAt with the server time", async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), HOUSEHOLD);
+    await assertFails(updateDoc(ref, { name: 'Den' }));
+    await assertFails(updateDoc(ref, { name: 'Den', updatedAt: new Date(0) }));
+    await assertSucceeds(updateDoc(ref, { name: 'Den', updatedAt: serverTimestamp() }));
+  });
+
+  test('admins cannot pad the lists with duplicates to drop someone else', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, 'third-admin-uid', MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN, 'third-admin-uid'],
+        ownerId: ADMIN,
+      },
+    });
+    // Looks like SECOND_ADMIN leaving, but also takes out the third admin.
+    await assertFails(
+      updateDoc(doc(db(SECOND_ADMIN), HOUSEHOLD), {
+        memberIds: [ADMIN, MEMBER, MEMBER],
+        adminIds: [ADMIN, ADMIN],
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    // Looks like the owner removing SECOND_ADMIN, but also demotes the third admin.
+    const firestore = db(ADMIN);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), {
+      memberIds: [ADMIN, 'third-admin-uid', MEMBER],
+      adminIds: [ADMIN, ADMIN],
+      updatedAt: serverTimestamp(),
+    });
+    batch.delete(doc(firestore, `${HOUSEHOLD}/members/${SECOND_ADMIN}`));
+    await assertFails(batch.commit());
+  });
+
+  test('admins can only change the name, owner, members and admins', async () => {
+    await seedHousehold();
+    const ref = doc(db(ADMIN), HOUSEHOLD);
+    await assertFails(updateDoc(ref, { schemaVersion: 2, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { createdAt: new Date(1), updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(ref, { extra: true, updatedAt: serverTimestamp() }));
   });
 });
 
@@ -524,6 +625,26 @@ describe('leaving a household', () => {
     await assertFails(leave(ADMIN));
   });
 
+  test('an admin who leaves cannot change anyone else\'s role', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+    });
+    const firestore = db(SECOND_ADMIN);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), {
+      memberIds: arrayRemove(SECOND_ADMIN),
+      adminIds: [ADMIN, MEMBER],
+      updatedAt: serverTimestamp(),
+    });
+    batch.delete(doc(firestore, `${HOUSEHOLD}/members/${SECOND_ADMIN}`));
+    await assertFails(batch.commit());
+  });
+
   test('an admin who leaves must also stop being an admin', async () => {
     await seed({
       [HOUSEHOLD]: { name: 'Home', memberIds: [ADMIN, SECOND_ADMIN], adminIds: [ADMIN, SECOND_ADMIN], ownerId: ADMIN },
@@ -534,6 +655,140 @@ describe('leaving a household', () => {
         updatedAt: serverTimestamp(),
       }),
     );
+  });
+});
+
+/**
+ * The removal batch: [uid] removes [removed] from h1's memberIds and adminIds
+ * and, unless `memberDoc` or `invite` is false, deletes their member doc and
+ * the household's invite.
+ */
+function remove(uid, removed, { memberDoc = true, invite = true } = {}) {
+  const firestore = db(uid);
+  const batch = writeBatch(firestore);
+  batch.update(doc(firestore, HOUSEHOLD), {
+    memberIds: arrayRemove(removed),
+    adminIds: arrayRemove(removed),
+    updatedAt: serverTimestamp(),
+  });
+  if (memberDoc) batch.delete(doc(firestore, `${HOUSEHOLD}/members/${removed}`));
+  if (invite) batch.delete(doc(firestore, INVITE));
+  return batch.commit();
+}
+
+describe('removing someone', () => {
+  const OTHER = 'other-uid';
+
+  async function seedWithTwoAdmins() {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, MEMBER, OTHER],
+        adminIds: [ADMIN, SECOND_ADMIN],
+        ownerId: ADMIN,
+      },
+      [`${HOUSEHOLD}/members/${SECOND_ADMIN}`]: { name: 'Ann' },
+      [`${HOUSEHOLD}/members/${MEMBER}`]: { name: 'Sam' },
+    });
+    await seedInvite();
+  }
+
+  test('any admin can remove a member who is not an admin', async () => {
+    await seedWithTwoAdmins();
+    await assertSucceeds(remove(SECOND_ADMIN, MEMBER));
+    const household = await getDoc(doc(db(ADMIN), HOUSEHOLD));
+    assert.deepEqual(household.get('memberIds'), [ADMIN, SECOND_ADMIN, OTHER]);
+    assert.deepEqual(household.get('adminIds'), [ADMIN, SECOND_ADMIN]);
+    const member = await getDoc(doc(db(ADMIN), `${HOUSEHOLD}/members/${MEMBER}`));
+    assert.equal(member.exists(), false);
+    await assertFails(getDoc(doc(db(MEMBER), HOUSEHOLD)));
+  });
+
+  test('the owner can remove an admin', async () => {
+    await seedWithTwoAdmins();
+    await assertSucceeds(remove(ADMIN, SECOND_ADMIN));
+    const household = await getDoc(doc(db(ADMIN), HOUSEHOLD));
+    assert.deepEqual(household.get('memberIds'), [ADMIN, MEMBER, OTHER]);
+    assert.deepEqual(household.get('adminIds'), [ADMIN]);
+  });
+
+  test('an admin who is not the owner cannot remove another admin', async () => {
+    await seed({
+      [HOUSEHOLD]: {
+        name: 'Home',
+        memberIds: [ADMIN, SECOND_ADMIN, OTHER],
+        adminIds: [ADMIN, SECOND_ADMIN, OTHER],
+        ownerId: ADMIN,
+      },
+    });
+    await seedInvite();
+    await assertFails(remove(SECOND_ADMIN, OTHER));
+  });
+
+  test('nobody can remove the owner', async () => {
+    await seedWithTwoAdmins();
+    await assertFails(remove(SECOND_ADMIN, ADMIN));
+  });
+
+  test('members cannot remove anyone', async () => {
+    await seedWithTwoAdmins();
+    await assertFails(remove(MEMBER, OTHER, { invite: false }));
+  });
+
+  test('removing must delete their name', async () => {
+    await seedWithTwoAdmins();
+    await assertFails(remove(ADMIN, MEMBER, { memberDoc: false }));
+  });
+
+  test('someone with no name yet can be removed', async () => {
+    await seedWithTwoAdmins();
+    await assertSucceeds(remove(ADMIN, OTHER));
+  });
+
+  test('a removal without the invite still works', async () => {
+    await seedWithTwoAdmins();
+    await assertSucceeds(remove(ADMIN, MEMBER, { invite: false }));
+  });
+
+  test("a removal cannot change anyone else's role", async () => {
+    await seedWithTwoAdmins();
+    /** [uid] removes [removed], writing [adminIds], and deletes their name. */
+    const attempt = (uid, removed, adminIds) => {
+      const firestore = db(uid);
+      const batch = writeBatch(firestore);
+      batch.update(doc(firestore, HOUSEHOLD), {
+        memberIds: arrayRemove(removed),
+        adminIds,
+        updatedAt: serverTimestamp(),
+      });
+      batch.delete(doc(firestore, `${HOUSEHOLD}/members/${removed}`));
+      return batch.commit();
+    };
+    await assertFails(attempt(SECOND_ADMIN, MEMBER, arrayUnion(OTHER)));
+    await assertFails(attempt(ADMIN, MEMBER, [ADMIN]));
+    await assertFails(attempt(ADMIN, SECOND_ADMIN, [ADMIN, OTHER]));
+  });
+
+  test('one person at a time', async () => {
+    await seedWithTwoAdmins();
+    const firestore = db(ADMIN);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), {
+      memberIds: arrayRemove(MEMBER, OTHER),
+      updatedAt: serverTimestamp(),
+    });
+    batch.delete(doc(firestore, `${HOUSEHOLD}/members/${MEMBER}`));
+    await assertFails(batch.commit());
+  });
+
+  test("an admin cannot delete the name of someone they don't remove", async () => {
+    await seedWithTwoAdmins();
+    const firestore = db(ADMIN);
+    const batch = writeBatch(firestore);
+    batch.update(doc(firestore, HOUSEHOLD), { memberIds: arrayRemove(OTHER), updatedAt: serverTimestamp() });
+    batch.delete(doc(firestore, `${HOUSEHOLD}/members/${OTHER}`));
+    batch.delete(doc(firestore, `${HOUSEHOLD}/members/${MEMBER}`));
+    await assertFails(batch.commit());
   });
 });
 

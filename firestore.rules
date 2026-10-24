@@ -128,6 +128,71 @@ service cloud.firestore {
         && !(uid in after);
     }
 
+    // The list in [key] loses [uid] and nothing else. Comparing what was removed, not
+    // just sizes, stops a list padded with duplicates from dropping someone else too.
+    function dropsOnly(key, uid) {
+      let before = resource.data[key];
+      let after = request.resource.data[key];
+      return after.size() == before.size() - 1
+        && before.removeAll(after) == [uid]
+        && after.removeAll(before).size() == 0;
+    }
+
+    // The owner makes someone who isn't an admin the owner, adding them to adminIds.
+    function isGivingOwnership() {
+      let before = resource.data.adminIds;
+      let after = request.resource.data.adminIds;
+      let owner = request.resource.data.ownerId;
+      return request.resource.data.memberIds == resource.data.memberIds
+        && after.size() == before.size() + 1
+        && after.removeAll(before) == [owner]
+        && before.removeAll(after).size() == 0;
+    }
+
+    // An admin who isn't the owner takes their uid out of both lists.
+    function isAdminLeaving() {
+      let uid = request.auth.uid;
+      return uid != resource.data.ownerId
+        && dropsOnly('memberIds', uid)
+        && dropsOnly('adminIds', uid);
+    }
+
+    // An admin takes one other person out of memberIds, and deletes their member doc in
+    // the same batch. Only the owner can remove an admin, and nobody can remove the owner.
+    function isRemoving(householdId) {
+      let removed = resource.data.memberIds.removeAll(request.resource.data.memberIds);
+      return removed.size() == 1 && isRemovingUid(householdId, removed[0]);
+    }
+
+    function isRemovingUid(householdId, uid) {
+      return uid != request.auth.uid
+        && uid != resource.data.ownerId
+        && dropsOnly('memberIds', uid)
+        && (uid in resource.data.adminIds
+          ? isOwner(resource) && dropsOnly('adminIds', uid)
+          : request.resource.data.adminIds == resource.data.adminIds)
+        && !existsAfter(/databases/$(database)/documents/households/$(householdId)/members/$(uid));
+    }
+
+    // An admin renames the household, the owner transfers it, an admin who isn't the
+    // owner leaves, or an admin removes someone. Nothing else changes who is in the
+    // household or who is an admin.
+    function isAdminUpdate(householdId) {
+      let data = request.resource.data;
+      let changed = data.diff(resource.data).affectedKeys();
+      return isAdmin(resource)
+        && changed.hasOnly(['name', 'ownerId', 'memberIds', 'adminIds', 'updatedAt'])
+        && data.updatedAt == request.time
+        && isValidHouseholdName(data)
+        && data.adminIds.size() > 0
+        && data.memberIds.hasAll(data.adminIds)
+        && keepsOrTransfersOwner()
+        && (!changed.hasAny(['memberIds', 'adminIds'])
+          || isGivingOwnership()
+          || isAdminLeaving()
+          || isRemoving(householdId));
+    }
+
     // Fields every member doc write must leave valid.
     function isValidMember(data) {
       return data.keys().hasOnly(['name', 'inviteId', 'createdAt', 'updatedAt', 'schemaVersion'])
@@ -168,16 +233,13 @@ service cloud.firestore {
         && request.resource.data.schemaVersion == 1
         && request.resource.data.keys().hasOnly(
           ['name', 'memberIds', 'adminIds', 'ownerId', 'createdAt', 'updatedAt', 'schemaVersion']);
-      allow update: if (isAdmin(resource)
-          && isValidHouseholdName(request.resource.data)
-          && request.resource.data.adminIds.size() > 0
-          && request.resource.data.memberIds.hasAll(request.resource.data.adminIds)
-          && keepsOrTransfersOwner())
+      allow update: if isAdminUpdate(householdId)
         || isJoining(householdId)
         || isLeaving();
       allow delete: if isOwner(resource);
 
-      // A member's name in this household. Deleted when they leave, or with the household.
+      // A member's name in this household. Deleted when they leave or are removed, or with
+      // the household.
       match /members/{uid} {
         allow read: if isMember(get(householdPath(householdId)));
         allow create: if isSignedIn()
@@ -190,10 +252,10 @@ service cloud.firestore {
           && uid in getAfter(householdPath(householdId)).data.memberIds
           && isValidMember(request.resource.data)
           && request.resource.data.createdAt == resource.data.createdAt;
-        // Only in the batch that takes the member out of memberIds, or the owner's batch
-        // that deletes the household.
+        // Only in the batch that takes the member out of memberIds (their own, or an
+        // admin's removing them), or the owner's batch that deletes the household.
         allow delete: if (isSignedIn()
-            && request.auth.uid == uid
+            && (request.auth.uid == uid || isAdmin(get(householdPath(householdId))))
             && uid in get(householdPath(householdId)).data.memberIds
             && !(uid in getAfter(householdPath(householdId)).data.memberIds))
           || (isOwner(get(householdPath(householdId)))

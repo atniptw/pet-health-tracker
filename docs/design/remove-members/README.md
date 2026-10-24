@@ -12,7 +12,7 @@ Admins can remove people from a household. Everyone can see who's in it, from a 
 - **Waiting for the server:** removing waits for the server and shows progress, like deleting a household. It reads the household's invites from the server first, so it can't miss an active code only the server knows about. With no connection it fails and says to check the connection.
 
 ## Rules
-The admin branch of the household update rule allows any change to `memberIds` and `adminIds` that keeps admins as members and keeps the owner. That would already let an admin remove someone, but also add any uid or make anyone an admin. It is narrowed to what the app writes:
+Before this work, the admin branch of the household update rule allowed any change to `memberIds` and `adminIds` that kept admins as members and kept the owner. That let an admin remove someone, but also add any uid or make anyone an admin. The rule is narrowed to what the app writes:
 - renaming,
 - the owner transferring ownership (`ownerId`, and the new owner added to `adminIds`),
 - an admin who isn't the owner leaving (their uid out of both lists),
@@ -24,7 +24,7 @@ The member doc delete rule also allows an admin to delete a removed person's doc
 
 ## Build order
 One commit per step, each safe to ship on its own.
-1. Rules: narrow admin household updates to the writes above, and let admins remove someone and delete their member doc. Allow and deny tests in `firestore-tests/`.
+1. Rules: narrow admin household updates to the writes above, and let admins remove someone and delete their member doc. Allow and deny tests in `firestore-tests/`. (done)
 2. Repository: `removeMember`, which reads the household's invites from the server and writes one batch that takes the person out of `memberIds` and `adminIds`, deletes their member doc and deletes the invites. Integration test against the real rules.
 3. Members screen: Settings, Members, for everyone. Names sorted like Transfer ownership, with "Owner", "Admin" and "You" labels.
 4. Remove from the Members screen: admins see a remove action on each person they're allowed to remove. A confirm dialog says the active invite code stops working, then progress while it waits for the server, and an error snackbar on failure.
