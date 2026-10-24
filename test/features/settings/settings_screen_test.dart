@@ -16,6 +16,7 @@ import 'package:pet_health_tracker/features/household/invite_providers.dart';
 import 'package:pet_health_tracker/features/household/invite_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/delete_account_screen.dart';
+import 'package:pet_health_tracker/features/settings/members_screen.dart';
 import 'package:pet_health_tracker/features/settings/settings_screen.dart';
 import 'package:pet_health_tracker/features/settings/transfer_ownership_screen.dart';
 
@@ -137,6 +138,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Invite someone'), findsNothing);
+  });
+
+  testWidgets('anyone can open the members list', (tester) async {
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Members'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MembersScreen), findsOneWidget);
   });
 
   testWidgets('the owner can open transfer ownership', (tester) async {
@@ -293,6 +303,11 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Sign out'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
 

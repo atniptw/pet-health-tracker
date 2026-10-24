@@ -27,7 +27,7 @@ Each commit goes through these steps. Hooks and checks enforce steps 3 to 6, and
 
 ## Project state
 
-Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, Apple sign-in (iOS only), creating, joining (invite codes), switching, renaming, leaving, transferring and deleting households, member names, deleting an account, adding and editing pets, the home screen with recent logs and a "Log a symptom" sheet (catalog and `other` symptoms), a per-pet history with editing and deleting, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
+Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only). Google sign-in, Apple sign-in (iOS only), creating, joining (invite codes), switching, renaming, leaving, transferring and deleting households, member names and the members list, deleting an account, adding and editing pets, the home screen with recent logs and a "Log a symptom" sheet (catalog and `other` symptoms), a per-pet history with editing and deleting, and the symptom catalog (bundled and published, labelling logs) are implemented (`lib/core`, `lib/data`, `lib/features`). Crashlytics reports crashes from release builds.
 
 ## CI
 
@@ -35,7 +35,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Design docs
 
-Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/design/dev-workflow/README.md`, with its build order showing which steps are done. Google sign-in, Apple sign-in on iOS, creating, joining, switching, renaming, leaving, transferring and deleting households, adding and editing pets, logging catalog and `other` symptoms from the home sheet, editing and deleting logs, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
+Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/design/dev-workflow/README.md`, with its build order showing which steps are done. Google sign-in, Apple sign-in on iOS, creating, joining, switching, renaming, leaving, transferring and deleting households, the members list, adding and editing pets, logging catalog and `other` symptoms from the home sheet, editing and deleting logs, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 

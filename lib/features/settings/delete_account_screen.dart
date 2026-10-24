@@ -6,8 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../data/household.dart';
 import '../auth/account_deletion.dart';
+import '../household/household_members.dart';
 import '../household/household_providers.dart';
-import 'transfer_ownership_screen.dart';
 
 /// What happens to a household the user owns: handed to [newOwner], or
 /// deleted when it's null.
@@ -178,10 +178,7 @@ class _OwnedHousehold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final names = ref.watch(memberNamesProvider(household.id)).value ?? const {};
-    final members = [
-      for (final memberId in household.memberIds)
-        if (memberId != uid) (uid: memberId, name: names[memberId]),
-    ]..sort(byMemberName);
+    final members = sortedMembers(household, names, except: uid);
     return RadioGroup<_Choice>(
       groupValue: choice,
       onChanged: (choice) => onChanged(choice!),
@@ -199,7 +196,7 @@ class _OwnedHousehold extends ConsumerWidget {
           for (final member in members)
             RadioListTile<_Choice>(
               value: (newOwner: member.uid),
-              title: Text(member.name ?? 'No name yet'),
+              title: Text(member.name ?? noNameYet),
               subtitle: const Text('Becomes the owner'),
             ),
           RadioListTile<_Choice>(

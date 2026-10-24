@@ -26,5 +26,5 @@ The member doc delete rule also allows an admin to delete a removed person's doc
 One commit per step, each safe to ship on its own.
 1. Rules: narrow admin household updates to the writes above, and let admins remove someone and delete their member doc. Allow and deny tests in `firestore-tests/`. (done)
 2. Repository: `removeMember`, which reads the household's invites from the server and writes one batch that takes the person out of `memberIds` and `adminIds`, deletes their member doc and deletes the invites. Integration test against the real rules. (done)
-3. Members screen: Settings, Members, for everyone. Names sorted like Transfer ownership, with "Owner", "Admin" and "You" labels.
+3. Members screen: Settings, Members, for everyone. Names sorted like Transfer ownership, with "Owner", "Admin" and "You" labels. (done)
 4. Remove from the Members screen: admins see a remove action on each person they're allowed to remove. A confirm dialog says the active invite code stops working, then progress while it waits for the server, and an error snackbar on failure.

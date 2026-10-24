@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
+import '../household/household_members.dart';
 import '../household/household_providers.dart';
 
 /// Lets the owner, [uid], pick another member to become the household's
@@ -18,17 +19,14 @@ class TransferOwnershipScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final names = ref.watch(memberNamesProvider(household.id)).value ?? const {};
-    final members = [
-      for (final memberId in household.memberIds)
-        if (memberId != uid) (uid: memberId, name: names[memberId]),
-    ]..sort(byMemberName);
+    final members = sortedMembers(household, names, except: uid);
     return Scaffold(
       appBar: AppBar(title: const Text('Transfer ownership')),
       body: ListView(
         children: [
           for (final member in members)
             ListTile(
-              title: Text(member.name ?? 'No name yet'),
+              title: Text(member.name ?? noNameYet),
               onTap: () => _transfer(context, ref, member.uid, member.name ?? 'this member'),
             ),
         ],
@@ -65,10 +63,4 @@ class TransferOwnershipScreen extends ConsumerWidget {
     );
     Navigator.of(context).pop();
   }
-}
-
-/// Named members by name, then members with no name yet.
-int byMemberName(({String uid, String? name}) a, ({String uid, String? name}) b) {
-  if (a.name == null || b.name == null) return a.name == null ? (b.name == null ? 0 : 1) : -1;
-  return a.name!.toLowerCase().compareTo(b.name!.toLowerCase());
 }

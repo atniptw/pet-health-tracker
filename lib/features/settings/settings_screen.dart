@@ -11,6 +11,7 @@ import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
 import 'delete_account_screen.dart';
+import 'members_screen.dart';
 import 'rename_household_dialog.dart';
 import 'transfer_ownership_screen.dart';
 
@@ -26,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final household = _current(ref);
+    final household = watchHousehold(ref, this.household, uid);
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -93,6 +94,15 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ListTile(
+        leading: const Icon(Icons.group_outlined),
+        title: const Text('Members'),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => MembersScreen(household: household, uid: uid),
+          ),
+        ),
+      ),
     ];
   }
 
@@ -158,11 +168,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     ];
-  }
-
-  Household _current(WidgetRef ref) {
-    final households = ref.watch(myHouseholdsProvider(uid)).value ?? const <Household>[];
-    return households.where((h) => h.id == household.id).firstOrNull ?? household;
   }
 
   Future<void> _rename(BuildContext context, WidgetRef ref, Household household) async {

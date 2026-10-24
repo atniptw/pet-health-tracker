@@ -16,6 +16,14 @@ final myHouseholdsProvider = StreamProvider.autoDispose.family<List<Household>, 
   return ref.watch(householdRepositoryProvider).watchMyHouseholds(uid);
 });
 
+/// [household] as [myHouseholdsProvider] has it for [uid], so changes like a
+/// rename or someone joining show; [household] itself until that loads, or
+/// once [uid] is no longer in it.
+Household watchHousehold(WidgetRef ref, Household household, String uid) {
+  final households = ref.watch(myHouseholdsProvider(uid)).value ?? const <Household>[];
+  return households.where((h) => h.id == household.id).firstOrNull ?? household;
+}
+
 /// The household the user last opened on this device, by ID. Switching
 /// updates it right away and saves it in the background.
 class LastHousehold extends AsyncNotifier<String?> {
