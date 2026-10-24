@@ -321,22 +321,119 @@ describe('households', () => {
     );
   });
 
-  test('admins cannot change roles', async () => {
-    await seed({
-      [HOUSEHOLD]: {
-        name: 'Home',
-        memberIds: [ADMIN, SECOND_ADMIN, MEMBER],
-        adminIds: [ADMIN, SECOND_ADMIN],
-        ownerId: ADMIN,
-      },
-    });
-    for (const uid of [ADMIN, SECOND_ADMIN]) {
-      const ref = doc(db(uid), HOUSEHOLD);
-      await assertFails(updateDoc(ref, { adminIds: arrayUnion(MEMBER), updatedAt: serverTimestamp() }));
+  describe('changing roles', () => {
+    const THIRD = 'third-uid';
+
+    async function seedRoles() {
+      await seed({
+        [HOUSEHOLD]: {
+          name: 'Home',
+          memberIds: [ADMIN, SECOND_ADMIN, MEMBER, THIRD],
+          adminIds: [ADMIN, SECOND_ADMIN],
+          ownerId: ADMIN,
+        },
+      });
     }
-    await assertFails(
-      updateDoc(doc(db(ADMIN), HOUSEHOLD), { adminIds: arrayRemove(SECOND_ADMIN), updatedAt: serverTimestamp() }),
-    );
+
+    /** [uid] writes [adminIds] to h1. */
+    const setAdmins = (uid, adminIds) =>
+      updateDoc(doc(db(uid), HOUSEHOLD), { adminIds, updatedAt: serverTimestamp() });
+
+    test('the owner can make a member an admin', async () => {
+      await seedRoles();
+      await assertSucceeds(setAdmins(ADMIN, arrayUnion(MEMBER)));
+      const household = await getDoc(doc(db(ADMIN), HOUSEHOLD));
+      assert.deepEqual(household.get('adminIds'), [ADMIN, SECOND_ADMIN, MEMBER]);
+      assert.deepEqual(household.get('memberIds'), [ADMIN, SECOND_ADMIN, MEMBER, THIRD]);
+    });
+
+    test('the owner can take admin away from an admin', async () => {
+      await seedRoles();
+      await assertSucceeds(setAdmins(ADMIN, arrayRemove(SECOND_ADMIN)));
+      const household = await getDoc(doc(db(ADMIN), HOUSEHOLD));
+      assert.deepEqual(household.get('adminIds'), [ADMIN]);
+      assert.deepEqual(household.get('memberIds'), [ADMIN, SECOND_ADMIN, MEMBER, THIRD]);
+    });
+
+    test('admins who are not the owner cannot change roles', async () => {
+      await seedRoles();
+      await assertFails(setAdmins(SECOND_ADMIN, arrayUnion(MEMBER)));
+      await assertFails(setAdmins(SECOND_ADMIN, arrayRemove(SECOND_ADMIN)));
+    });
+
+    test('members cannot change roles', async () => {
+      await seedRoles();
+      await assertFails(setAdmins(MEMBER, arrayUnion(MEMBER)));
+    });
+
+    test('the owner stays an admin', async () => {
+      await seedRoles();
+      await assertFails(setAdmins(ADMIN, arrayRemove(ADMIN)));
+    });
+
+    test('only members can be made admins', async () => {
+      await seedRoles();
+      await assertFails(setAdmins(ADMIN, arrayUnion(OUTSIDER)));
+      await assertFails(
+        updateDoc(doc(db(ADMIN), HOUSEHOLD), {
+          memberIds: arrayUnion(OUTSIDER),
+          adminIds: arrayUnion(OUTSIDER),
+          updatedAt: serverTimestamp(),
+        }),
+      );
+    });
+
+    test('one role at a time', async () => {
+      await seedRoles();
+      await assertFails(setAdmins(ADMIN, arrayUnion(MEMBER, THIRD)));
+      await assertFails(setAdmins(ADMIN, [ADMIN, MEMBER]));
+    });
+
+    test('a padded list cannot change more than one role', async () => {
+      await seedRoles();
+      // One longer, but adds MEMBER twice and drops SECOND_ADMIN.
+      await assertFails(setAdmins(ADMIN, [ADMIN, MEMBER, MEMBER]));
+      // One longer, adding MEMBER, but also drops SECOND_ADMIN.
+      await assertFails(setAdmins(ADMIN, [ADMIN, ADMIN, MEMBER]));
+      // One longer, but adds no one, only a second copy of the owner.
+      await assertFails(setAdmins(ADMIN, [ADMIN, SECOND_ADMIN, ADMIN]));
+      // Adds only MEMBER, but is two longer.
+      await assertFails(setAdmins(ADMIN, [ADMIN, ADMIN, SECOND_ADMIN, MEMBER]));
+      // Drops only SECOND_ADMIN, but is no shorter.
+      await assertFails(setAdmins(ADMIN, [ADMIN, ADMIN]));
+      // One shorter, but drops SECOND_ADMIN and THIRD and pads with the owner.
+      await seed({
+        [HOUSEHOLD]: {
+          name: 'Home',
+          memberIds: [ADMIN, SECOND_ADMIN, MEMBER, THIRD],
+          adminIds: [ADMIN, SECOND_ADMIN, THIRD],
+          ownerId: ADMIN,
+        },
+      });
+      await assertFails(setAdmins(ADMIN, [ADMIN, ADMIN]));
+    });
+
+    test('changing a role cannot also transfer ownership', async () => {
+      await seedRoles();
+      await assertFails(
+        updateDoc(doc(db(ADMIN), HOUSEHOLD), {
+          ownerId: SECOND_ADMIN,
+          adminIds: arrayUnion(MEMBER),
+          updatedAt: serverTimestamp(),
+        }),
+      );
+    });
+
+    test('changing a role cannot change who is in the household', async () => {
+      await seedRoles();
+      await assertFails(
+        updateDoc(doc(db(ADMIN), HOUSEHOLD), {
+          memberIds: arrayRemove(THIRD),
+          adminIds: arrayUnion(MEMBER),
+          updatedAt: serverTimestamp(),
+        }),
+      );
+    });
   });
 
   test("an admin's update must stamp updatedAt with the server time", async () => {

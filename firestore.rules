@@ -174,9 +174,24 @@ service cloud.firestore {
         && !existsAfter(/databases/$(database)/documents/households/$(householdId)/members/$(uid));
     }
 
-    // An admin renames the household, the owner transfers it, an admin who isn't the
-    // owner leaves, or an admin removes someone. Nothing else changes who is in the
-    // household or who is an admin.
+    // The owner makes one member an admin, or takes admin away from one admin. Nobody
+    // joins or leaves, and the owner stays the same (and, by keepsOrTransfersOwner, an
+    // admin).
+    function isChangingRole() {
+      let before = resource.data.adminIds;
+      let after = request.resource.data.adminIds;
+      let added = after.removeAll(before);
+      let dropped = before.removeAll(after);
+      return isOwner(resource)
+        && request.resource.data.memberIds == resource.data.memberIds
+        && request.resource.data.get('ownerId', null) == resource.data.ownerId
+        && ((after.size() == before.size() + 1 && added.size() == 1 && dropped.size() == 0)
+          || (after.size() == before.size() - 1 && dropped.size() == 1 && added.size() == 0));
+    }
+
+    // An admin renames the household, the owner transfers it or changes a role, an admin
+    // who isn't the owner leaves, or an admin removes someone. Nothing else changes who
+    // is in the household or who is an admin.
     function isAdminUpdate(householdId) {
       let data = request.resource.data;
       let changed = data.diff(resource.data).affectedKeys();
@@ -189,6 +204,7 @@ service cloud.firestore {
         && keepsOrTransfersOwner()
         && (!changed.hasAny(['memberIds', 'adminIds'])
           || isGivingOwnership()
+          || isChangingRole()
           || isAdminLeaving()
           || isRemoving(householdId));
     }

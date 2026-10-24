@@ -18,7 +18,7 @@ Before this work, the admin branch of the household update rule allowed any chan
 - an admin who isn't the owner leaving (their uid out of both lists),
 - removing one person: their uid out of `memberIds`, and out of `adminIds` too when the owner removes an admin. The person isn't the caller or the owner, and is an admin only when the caller is the owner.
 
-No other change to `adminIds` is allowed, so the narrowed rule has no write that promotes or demotes anyone. Nothing in the app changes roles.
+No other change to `adminIds` was allowed, so the narrowed rule had no write that promotes or demotes anyone. [Changing roles](../change-roles/README.md) adds the owner's.
 
 The member doc delete rule also allows an admin to delete a removed person's doc, in the batch that takes them out of `memberIds`, under the same who-removes-whom check. Admins can already delete the household's invites.
 
