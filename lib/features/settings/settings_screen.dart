@@ -11,6 +11,7 @@ import '../household/invite_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
 import 'delete_account_screen.dart';
+import 'dialogs.dart';
 import 'members_screen.dart';
 import 'rename_household_dialog.dart';
 import 'transfer_ownership_screen.dart';
@@ -184,25 +185,16 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _leave(BuildContext context, WidgetRef ref, Household household) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Leave ${household.name}?'),
-        content: const Text(
+    final confirmed = await askToConfirm(
+      context,
+      title: 'Leave ${household.name}?',
+      message:
           "You'll lose access to its pets and logs. The symptoms you logged stay, "
           'and show "Former member" instead of your name. To come back, '
           "you'll need a new invite code.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Leave')),
-        ],
-      ),
+      action: 'Leave',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     // Back to the root, which opens another household or the create and join
     // choice. Like logging, leaving doesn't wait for the server.
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -212,47 +204,21 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, Household household) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete ${household.name}?'),
-        content: const Text(
+    final confirmed = await askToConfirm(
+      context,
+      title: 'Delete ${household.name}?',
+      message:
           'This deletes its pets and all their symptom logs, for everyone in it. '
           "It can't be undone.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
-        ],
-      ),
+      action: 'Delete',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final deleting = ref.read(householdRepositoryProvider).deleteHousehold(household.id);
     // Unlike other changes, deleting waits for the server, so with no
     // connection the owner is told instead of the delete waiting unseen.
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => PopScope(
-          canPop: false,
-          child: AlertDialog(
-            content: Row(
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(width: 24),
-                Expanded(child: Text('Deleting ${household.name}…')),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    showProgressDialog(context, 'Deleting ${household.name}…');
     try {
       await deleting;
       // Back to the root, which opens another household or the create and

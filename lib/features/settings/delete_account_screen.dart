@@ -8,6 +8,7 @@ import '../../data/household.dart';
 import '../auth/account_deletion.dart';
 import '../household/household_members.dart';
 import '../household/household_providers.dart';
+import 'dialogs.dart';
 
 /// What happens to a household the user owns: handed to [newOwner], or
 /// deleted when it's null.
@@ -101,47 +102,19 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   }
 
   Future<void> _delete(List<Household> owned) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete your account?'),
-        content: const Text("You'll sign in once more to confirm it's you."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete account'),
-          ),
-        ],
-      ),
+    final confirmed = await askToConfirm(
+      context,
+      title: 'Delete your account?',
+      message: "You'll sign in once more to confirm it's you.",
+      action: 'Delete account',
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     final newOwners = {for (final h in owned) h.id: _choiceFor(h)!.newOwner};
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final deletion = ref.read(accountDeletionProvider);
     // Like deleting a household, this waits for the server.
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const PopScope(
-          canPop: false,
-          child: AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 24),
-                Expanded(child: Text('Deleting your account…')),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    showProgressDialog(context, 'Deleting your account…');
     try {
       await deletion.delete(uid: widget.uid, newOwners: newOwners);
       // Back to the root, which shows sign-in now no one is signed in.
