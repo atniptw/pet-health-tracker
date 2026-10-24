@@ -1,6 +1,6 @@
 # Data model
 
-Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (anyone but the owner, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins renaming the household (Settings, Household name), the owner transferring ownership (Settings, Transfer ownership), the owner deleting the household (Settings, Delete household), deleting an account (Settings, Delete account; see architecture.md), admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, deleting a log from its edit screen (its author or an admin, after confirming; like logging, it doesn't wait for the server), listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets and medications are not built. See [architecture.md](architecture.md) for the stack.
+Status: partly implemented. Creating a household with the creator's name, joining one with an invite code, leaving one (anyone but the owner, from Settings), asking existing members for their name once, showing who logged each entry in a pet's history, switching between households, admins renaming the household (Settings, Household name), the owner transferring ownership (Settings, Transfer ownership), the owner deleting the household (Settings, Delete household), deleting an account (Settings, Delete account; see architecture.md), admins making and sharing an invite code (Settings, Invite someone), adding, listing and editing pets, logging catalog and `other` symptoms from the home screen's sheet, editing `other` logs (title, time, notes), undoing a just-logged `other` log, deleting a log from its edit screen (its author or an admin, after confirming; like logging, it doesn't wait for the server), listing a pet's logs and the household's recent logs, the symptom catalog (bundled copy, publish script, and the app reading it to label logs), answering a catalog log's questions and editing its note and time, and the security rules in `firestore.rules` are built; archiving pets, medications, changing roles, the members list and removing members are not built (plan in [design/remove-members](design/remove-members/README.md)). See [architecture.md](architecture.md) for the stack.
 
 ## Scope
 
@@ -15,13 +15,15 @@ A household has members and pets. Every member can see the household's pets and 
 | Action | Member | Admin | Owner |
 |---|---|---|---|
 | See the household, its pets and logs | yes | yes | yes |
+| See who's in the household | yes | yes | yes |
 | Add symptom logs | yes | yes | yes |
 | Edit symptom logs | own entries only | all | all |
 | Delete symptom logs | own entries only | all | all |
 | Add, edit, delete medications | no | yes | yes |
 | Add, edit, archive pets | no | yes | yes |
 | See and share the invite code | no | yes | yes |
-| Remove members, change roles | no | yes | yes |
+| Remove members | no | members who aren't admins | anyone but themselves |
+| Change roles | no | yes | yes |
 | Rename the household | no | yes | yes |
 | Delete the household | no | no | yes |
 | Transfer ownership | no | no | yes |
@@ -61,6 +63,10 @@ An admin can rename the household from Settings (Household name), 1 to 100 chara
 ### Leaving
 
 Anyone but the owner can leave a household from Settings, after confirming; an admin who leaves stops being an admin. The owner sees the option disabled, with "The owner can't leave a household". Like logging, leaving doesn't wait for the server; the app returns to its root, which opens another household or the create and join choice. Leaving deletes their `members/{uid}` doc in the same batch; their logs stay with the household and show "Former member". If they join again they give their name again.
+
+### Removing
+
+Everyone can see who's in the household from Settings (Members), with each person's name and whether they're the owner or an admin. An admin can remove a member who isn't an admin; only the owner can remove an admin; nobody can remove the owner. Removing happens from the Members screen, after confirming. Like deleting a household, it waits for the server and shows progress; with no connection it fails and says to check the connection. One batch takes the person out of `memberIds` and `adminIds`, deletes their `members/{uid}` doc, and deletes the household's active invite, so they can't rejoin with it. Their logs stay and show "Former member". For them, the household disappears, as when it is deleted.
 
 ### Deleting
 
