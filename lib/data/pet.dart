@@ -52,7 +52,9 @@ class Pet {
       breed: data['breed'] as String?,
       birthDate: _parseDate(data['birthDate'] as String?),
       sex: Sex.values.asNameMap()[data['sex']],
-      archived: data['archivedAt'] != null,
+      // The key, not its value: on the device that archives, the pending
+      // server timestamp reads as null until the server confirms it.
+      archived: data.containsKey('archivedAt'),
     );
   }
 

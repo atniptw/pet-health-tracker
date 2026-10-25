@@ -192,6 +192,59 @@ void main() {
     });
   });
 
+  group('archiving', () {
+    Future<String> addBoogie() async {
+      await repository.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+      return (await pets('h1').get()).docs.single.id;
+    }
+
+    test('archivePet stamps archivedAt and updatedAt, moving the pet to the archived', () async {
+      final id = await addBoogie();
+      await repository.addPet(householdId: 'h1', name: 'Pootz', species: Species.cat);
+
+      await repository.archivePet(householdId: 'h1', petId: id);
+
+      final data = (await pets('h1').doc(id).get()).data()!;
+      expect(data['archivedAt'], isA<Timestamp>());
+      expect(data['name'], 'Boogie');
+      expect((await repository.watchPets('h1').first).map((p) => p.name), ['Pootz']);
+      final archived = await repository.watchArchivedPets('h1').first;
+      expect(archived.map((p) => p.name), ['Boogie']);
+      expect(archived.single.archived, isTrue);
+    });
+
+    test('unarchivePet deletes archivedAt, bringing the pet back', () async {
+      final id = await addBoogie();
+      await repository.archivePet(householdId: 'h1', petId: id);
+
+      await repository.unarchivePet(householdId: 'h1', petId: id);
+
+      expect((await pets('h1').doc(id).get()).data()!.containsKey('archivedAt'), isFalse);
+      expect((await repository.watchPets('h1').first).map((p) => p.name), ['Boogie']);
+      expect(await repository.watchArchivedPets('h1').first, isEmpty);
+    });
+
+    test('a pet whose archivedAt reads as null is archived', () async {
+      // As a pending server timestamp reads on the device that archived it.
+      await pets('h1').add({'name': 'Boogie', 'species': 'dog', 'archivedAt': null});
+
+      expect(await repository.watchPets('h1').first, isEmpty);
+      expect((await repository.watchArchivedPets('h1').first).map((p) => p.name), ['Boogie']);
+    });
+
+    test("watchArchivedPets sorts by name, ignoring case, and only the household's", () async {
+      for (final (household, name) in [('h1', 'pootz'), ('h1', 'Boogie'), ('h2', 'Elsewhere')]) {
+        await pets(
+          household,
+        ).add({'name': name, 'species': 'dog', 'archivedAt': Timestamp.now(), 'schemaVersion': 1});
+      }
+
+      final archived = await repository.watchArchivedPets('h1').first;
+
+      expect(archived.map((p) => p.name), ['Boogie', 'pootz']);
+    });
+  });
+
   test('species and sex have labels', () {
     expect(Species.values.map((s) => s.label), ['Dog', 'Cat', 'Other']);
     expect(Sex.values.map((s) => s.label), ['Female', 'Male', 'Unknown']);

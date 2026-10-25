@@ -1142,11 +1142,21 @@ describe('pets', () => {
     );
   });
 
-  test('admins can archive a pet', async () => {
+  // What the app writes when archiving and unarchiving (lib/data/pet_repository.dart).
+  const archive = () => ({ archivedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  const unarchive = () => ({ archivedAt: deleteField(), updatedAt: serverTimestamp() });
+
+  test('admins can archive a pet and unarchive it', async () => {
     await seedHousehold();
-    await assertSucceeds(
-      updateDoc(doc(db(ADMIN), PET), { archivedAt: serverTimestamp(), updatedAt: serverTimestamp() }),
-    );
+    await assertSucceeds(updateDoc(doc(db(ADMIN), PET), archive()));
+    await assertSucceeds(updateDoc(doc(db(ADMIN), PET), unarchive()));
+  });
+
+  test('members cannot archive or unarchive a pet', async () => {
+    await seedHousehold();
+    await assertFails(updateDoc(doc(db(MEMBER), PET), archive()));
+    await assertSucceeds(updateDoc(doc(db(ADMIN), PET), archive()));
+    await assertFails(updateDoc(doc(db(MEMBER), PET), unarchive()));
   });
 });
 

@@ -250,6 +250,28 @@ void main() {
     );
   });
 
+  testWidgets('an admin archives and unarchives a pet, and a member cannot', (tester) async {
+    final h = await householdWithPet('Archive', owner: 'zoe', member: 'abe');
+    final pets = PetRepository(firestore);
+
+    await expectLater(
+      pets.archivePet(householdId: h.householdId, petId: h.petId),
+      throwsA(deniedPermission()),
+    );
+    await signInAs('zoe');
+    await pets.archivePet(householdId: h.householdId, petId: h.petId);
+    expect((await pets.watchArchivedPets(h.householdId).first).single.id, h.petId);
+
+    await signInAs('abe');
+    await expectLater(
+      pets.unarchivePet(householdId: h.householdId, petId: h.petId),
+      throwsA(deniedPermission()),
+    );
+    await signInAs('zoe');
+    await pets.unarchivePet(householdId: h.householdId, petId: h.petId);
+    expect((await pets.watchPets(h.householdId).first).single.id, h.petId);
+  });
+
   testWidgets('after a transfer, the new owner can delete and the old one cannot', (tester) async {
     final h = await householdWithPet('Transfer', owner: 'gus', member: 'hal');
     await signInAs('gus');
