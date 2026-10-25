@@ -8,8 +8,10 @@ import '../../core/firebase_providers.dart';
 import '../../data/household.dart';
 import '../household/household_providers.dart';
 import '../household/invite_screen.dart';
+import '../pets/archived_pets_screen.dart';
 import '../pets/pet_form_screen.dart';
 import '../pets/pet_list.dart';
+import '../pets/pet_providers.dart';
 import 'delete_account_screen.dart';
 import 'dialogs.dart';
 import 'members_screen.dart';
@@ -33,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          ..._petTiles(context, household),
+          ..._petTiles(context, ref, household),
           const Divider(height: 1),
           ..._householdTiles(context, ref, household),
           ..._leavingTiles(context, ref, household),
@@ -43,9 +45,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  /// The household's pets, which only admins can add and edit.
-  List<Widget> _petTiles(BuildContext context, Household household) {
+  /// The household's pets, which only admins can add and edit, and its
+  /// archived pets when it has any.
+  List<Widget> _petTiles(BuildContext context, WidgetRef ref, Household household) {
     final isAdmin = household.adminIds.contains(uid);
+    final hasArchived = ref.watch(archivedPetsProvider(household.id)).value?.isNotEmpty ?? false;
     return [
       ListTile(
         title: Text('Pets', style: Theme.of(context).textTheme.titleSmall),
@@ -72,7 +76,20 @@ class SettingsScreen extends ConsumerWidget {
               )
             : null,
       ),
+      if (hasArchived) _archivedPetsTile(context, household),
     ];
+  }
+
+  Widget _archivedPetsTile(BuildContext context, Household household) {
+    return ListTile(
+      leading: const Icon(Icons.archive_outlined),
+      title: const Text('Archived pets'),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => ArchivedPetsScreen(household: household, uid: uid),
+        ),
+      ),
+    );
   }
 
   List<Widget> _householdTiles(BuildContext context, WidgetRef ref, Household household) {

@@ -24,6 +24,14 @@ Household watchHousehold(WidgetRef ref, Household household, String uid) {
   return households.where((h) => h.id == household.id).firstOrNull ?? household;
 }
 
+/// Whether [uid] is still in the household with [householdId], as
+/// [myHouseholdsProvider] has it, and false until that loads.
+/// [watchHousehold] keeps the last household seen once [uid] is removed, so
+/// screens check this before offering actions.
+bool watchStillIn(WidgetRef ref, String householdId, String uid) {
+  return ref.watch(myHouseholdsProvider(uid)).value?.any((h) => h.id == householdId) ?? false;
+}
+
 /// The household the user last opened on this device, by ID. Switching
 /// updates it right away and saves it in the background.
 class LastHousehold extends AsyncNotifier<String?> {

@@ -23,10 +23,7 @@ class MembersScreen extends ConsumerWidget {
     final household = watchHousehold(ref, this.household, uid);
     final names = ref.watch(memberNamesProvider(household.id)).value ?? const {};
     final members = sortedMembers(household, names);
-    // Someone removed while this is open keeps the last household they saw,
-    // so their menus go once they're out of it.
-    final stillIn =
-        ref.watch(myHouseholdsProvider(uid)).value?.any((h) => h.id == household.id) ?? false;
+    final stillIn = watchStillIn(ref, household.id, uid);
     return Scaffold(
       appBar: AppBar(title: const Text('Members')),
       body: ListView(

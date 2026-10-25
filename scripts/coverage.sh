@@ -7,7 +7,7 @@ set -euo pipefail
 cd "${COVERAGE_ROOT:-$(dirname "$0")/..}"
 
 # Raise this as coverage goes up; never lower it.
-MIN=99.2
+MIN=99.5
 SLACK=0.2
 
 # main.dart only boots Firebase and runApp; firebase_options.dart is generated.

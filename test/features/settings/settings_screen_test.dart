@@ -14,6 +14,7 @@ import 'package:pet_health_tracker/data/pet.dart';
 import 'package:pet_health_tracker/data/pet_repository.dart';
 import 'package:pet_health_tracker/features/household/invite_providers.dart';
 import 'package:pet_health_tracker/features/household/invite_screen.dart';
+import 'package:pet_health_tracker/features/pets/archived_pets_screen.dart';
 import 'package:pet_health_tracker/features/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/features/settings/delete_account_screen.dart';
 import 'package:pet_health_tracker/features/settings/members_screen.dart';
@@ -211,6 +212,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PetFormScreen), findsNothing);
+  });
+
+  testWidgets('with no archived pets, there is no Archived pets tile', (tester) async {
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Boogie'), findsOneWidget);
+    expect(find.text('Archived pets'), findsNothing);
+  });
+
+  testWidgets('anyone can open the archived pets, which leave the pets list', (tester) async {
+    await pets.addPet(householdId: 'h1', name: 'Boogie', species: Species.dog);
+    final boogie = (await pets.watchPets('h1').first).single;
+    await pets.archivePet(householdId: 'h1', petId: boogie.id);
+
+    await pumpSettings(tester, uid: 'member');
+    await tester.pumpAndSettle();
+    expect(find.text('Boogie'), findsNothing);
+    await tester.tap(find.text('Archived pets'));
+    await tester.pumpAndSettle();
+
+    final screen = tester.widget<ArchivedPetsScreen>(find.byType(ArchivedPetsScreen));
+    expect((screen.household.id, screen.uid), ('h1', 'member'));
   });
 
   group('renaming', () {

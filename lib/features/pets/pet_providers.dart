@@ -7,3 +7,11 @@ import '../../data/pet.dart';
 final petsProvider = StreamProvider.autoDispose.family<List<Pet>, String>((ref, householdId) {
   return ref.watch(petRepositoryProvider).watchPets(householdId);
 });
+
+/// The household's archived pets, keyed by household id.
+final archivedPetsProvider = StreamProvider.autoDispose.family<List<Pet>, String>((
+  ref,
+  householdId,
+) {
+  return ref.watch(petRepositoryProvider).watchArchivedPets(householdId);
+});
