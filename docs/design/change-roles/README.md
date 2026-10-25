@@ -1,7 +1,7 @@
 # Changing roles
 
 ## Overview
-The owner can make a member an admin, and take admin away from an admin. It happens from the Members screen in Settings, whose rows get a menu of what the viewer can do to each person. The roles are in [data-model.md](../../data-model.md) (Households and roles).
+The owner can make a member an admin, and take admin away from an admin. It happens from the Members screen in Settings, whose rows get a menu of what the viewer can do to each person. The roles are in [data-model.md](../../data-model.md) (Households and roles, Changing roles).
 
 ## Decisions
 - **Who:** only the owner makes someone an admin or takes admin away. Admins who aren't the owner can't change anyone's role.
@@ -18,4 +18,4 @@ One commit per step, each safe to ship on its own.
 1. Rules: the owner promotes or demotes one person at a time. Allow and deny tests in `firestore-tests/`. (done)
 2. Repository: `makeAdmin` and `removeAdmin` on `HouseholdRepository`, which add or take out the uid in `adminIds`. Integration test against the real rules. (done)
 3. Members screen menu: the remove button becomes "Remove from household" in a ⋮ menu, working as before. (done)
-4. Role actions: the owner's menu gets "Make admin" or "Remove as admin", each after confirming.
+4. Role actions: the owner's menu gets "Make admin" or "Remove as admin", each after confirming. (done)

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +11,7 @@ import 'dialogs.dart';
 
 /// Everyone in the household, by name, with who is the owner or an admin
 /// and which one is [uid]. Admins can remove members who aren't admins, and
-/// the owner anyone else.
+/// the owner anyone else; only the owner changes roles.
 class MembersScreen extends ConsumerWidget {
   const MembersScreen({required this.household, required this.uid, super.key});
 
@@ -36,17 +38,7 @@ class MembersScreen extends ConsumerWidget {
               key: ValueKey(member.uid),
               title: Text(member.name ?? noNameYet),
               subtitle: _labels(household, member.uid),
-              trailing: stillIn && _canRemove(household, member.uid)
-                  ? PopupMenuButton<_Action>(
-                      tooltip: 'Options for ${member.name ?? noNameYet}',
-                      onSelected: (action) => switch (action) {
-                        _Action.remove => _remove(context, ref, household, member),
-                      },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(value: _Action.remove, child: Text('Remove from household')),
-                      ],
-                    )
-                  : null,
+              trailing: stillIn ? _menu(context, ref, household, member) : null,
             ),
         ],
       ),
@@ -64,11 +56,62 @@ class MembersScreen extends ConsumerWidget {
     return labels.isEmpty ? null : Text(labels.join(' · '));
   }
 
+  /// [member]'s menu of what [uid] can do to them, or null if there's nothing.
+  Widget? _menu(BuildContext context, WidgetRef ref, Household household, HouseholdMember member) {
+    final actions = [
+      if (household.ownerId == uid && member.uid != uid)
+        household.adminIds.contains(member.uid) ? _Action.removeAdmin : _Action.makeAdmin,
+      if (_canRemove(household, member.uid)) _Action.remove,
+    ];
+    if (actions.isEmpty) return null;
+    return PopupMenuButton<_Action>(
+      tooltip: 'Options for ${member.name ?? noNameYet}',
+      onSelected: (action) => switch (action) {
+        _Action.makeAdmin => _changeRole(context, ref, household, member, makeAdmin: true),
+        _Action.removeAdmin => _changeRole(context, ref, household, member, makeAdmin: false),
+        _Action.remove => _remove(context, ref, household, member),
+      },
+      itemBuilder: (context) => [
+        for (final action in actions) PopupMenuItem(value: action, child: Text(action.label)),
+      ],
+    );
+  }
+
   /// Whether [uid] may remove [memberId], matching the security rules.
   bool _canRemove(Household household, String memberId) {
     if (memberId == uid || memberId == household.ownerId) return false;
     if (household.adminIds.contains(memberId)) return household.ownerId == uid;
     return household.adminIds.contains(uid);
+  }
+
+  /// Makes [member] an admin, or takes admin away, after confirming. Only the
+  /// owner sees these actions, matching the security rules.
+  Future<void> _changeRole(
+    BuildContext context,
+    WidgetRef ref,
+    Household household,
+    HouseholdMember member, {
+    required bool makeAdmin,
+  }) async {
+    final name = member.name ?? 'this member';
+    final confirmed = await askToConfirm(
+      context,
+      title: makeAdmin ? 'Make $name an admin?' : 'Remove $name as admin?',
+      message: makeAdmin
+          ? "They'll be able to add and edit pets, edit and delete everyone's logs, "
+                "invite people, rename the household and remove members who aren't admins."
+          : "They'll stay in the household as a member.",
+      action: makeAdmin ? 'Make admin' : 'Remove as admin',
+    );
+    if (!confirmed || !context.mounted) return;
+    final households = ref.read(householdRepositoryProvider);
+    // Like transferring ownership, changing a role doesn't wait for the server.
+    // The new role shows right away from the local write.
+    unawaited(
+      makeAdmin
+          ? households.makeAdmin(householdId: household.id, uid: member.uid)
+          : households.removeAdmin(householdId: household.id, uid: member.uid),
+    );
   }
 
   Future<void> _remove(
@@ -109,4 +152,12 @@ class MembersScreen extends ConsumerWidget {
 }
 
 /// What the viewer can do to someone from their row's menu.
-enum _Action { remove }
+enum _Action {
+  makeAdmin('Make admin'),
+  removeAdmin('Remove as admin'),
+  remove('Remove from household');
+
+  const _Action(this.label);
+
+  final String label;
+}

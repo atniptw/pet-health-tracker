@@ -36,6 +36,18 @@ void main() {
         uid: any(named: 'uid'),
       ),
     ).thenAnswer((_) async {});
+    when(
+      () => households.makeAdmin(
+        householdId: any(named: 'householdId'),
+        uid: any(named: 'uid'),
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => households.removeAdmin(
+        householdId: any(named: 'householdId'),
+        uid: any(named: 'uid'),
+      ),
+    ).thenAnswer((_) async {});
     when(() => households.watchMemberNames('h1')).thenAnswer(
       (_) => Stream.value({'owner': 'Tom', 'sam': 'Sam', 'ann': 'Ann', 'gone': 'Former'}),
     );
@@ -64,6 +76,21 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remove from household'));
     await tester.pumpAndSettle();
+  }
+
+  /// The items in [name]'s menu, which is left closed.
+  Future<List<String>> menuOf(WidgetTester tester, String name) async {
+    await tester.tap(find.byTooltip('Options for $name'));
+    await tester.pumpAndSettle();
+    final items = tester
+        .widgetList<PopupMenuItem<Object?>>(
+          find.byWidgetPredicate((widget) => widget is PopupMenuItem),
+        )
+        .map((item) => (item.child! as Text).data!)
+        .toList();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    return items;
   }
 
   Future<void> confirmRemoving(WidgetTester tester, String name) async {
@@ -259,6 +286,75 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(withOptions(tester), isEmpty);
+    });
+  });
+
+  group('roles', () {
+    testWidgets("the owner's menu offers making a member an admin", (tester) async {
+      await pumpMembers(tester, uid: 'owner');
+
+      expect(await menuOf(tester, 'Sam'), ['Make admin', 'Remove from household']);
+      expect(await menuOf(tester, noNameYet), ['Make admin', 'Remove from household']);
+    });
+
+    testWidgets("the owner's menu offers taking admin away from an admin", (tester) async {
+      await pumpMembers(tester, uid: 'owner');
+
+      expect(await menuOf(tester, 'Ann'), ['Remove as admin', 'Remove from household']);
+    });
+
+    testWidgets('admins who are not the owner cannot change roles', (tester) async {
+      await pumpMembers(tester, uid: 'ann');
+
+      expect(await menuOf(tester, 'Sam'), ['Remove from household']);
+    });
+
+    testWidgets('makes them an admin after confirming', (tester) async {
+      await pumpMembers(tester, uid: 'owner');
+
+      await tester.tap(find.byTooltip('Options for Sam'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Make admin'));
+      await tester.pumpAndSettle();
+      expect(find.text('Make Sam an admin?'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Make admin'));
+      await tester.pumpAndSettle();
+
+      verify(() => households.makeAdmin(householdId: 'h1', uid: 'sam')).called(1);
+      expect(find.text('Make Sam an admin?'), findsNothing);
+    });
+
+    testWidgets('takes admin away after confirming, keeping them a member', (tester) async {
+      await pumpMembers(tester, uid: 'owner');
+
+      await tester.tap(find.byTooltip('Options for Ann'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove as admin'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove Ann as admin?'), findsOneWidget);
+      expect(find.textContaining('stay in the household'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Remove as admin'));
+      await tester.pumpAndSettle();
+
+      verify(() => households.removeAdmin(householdId: 'h1', uid: 'ann')).called(1);
+    });
+
+    testWidgets('cancelling changes no role', (tester) async {
+      await pumpMembers(tester, uid: 'owner');
+
+      await tester.tap(find.byTooltip('Options for Sam'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Make admin'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        () => households.makeAdmin(
+          householdId: any(named: 'householdId'),
+          uid: any(named: 'uid'),
+        ),
+      );
     });
   });
 }
