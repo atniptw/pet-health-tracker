@@ -90,93 +90,113 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final errorColor = Theme.of(context).colorScheme.error;
-    final birthDate = _birthDate;
     final editing = widget.pet != null;
-
+    final errorColor = Theme.of(context).colorScheme.error;
     return Scaffold(
       appBar: AppBar(title: Text(editing ? 'Edit ${widget.pet!.name}' : 'Add a pet')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
-            controller: _nameController,
-            autofocus: !editing,
-            maxLength: 100,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: 'Name',
-              errorText: _showMissing && _nameController.text.trim().isEmpty
-                  ? 'Enter a name'
-                  : null,
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 8),
-          Text('Species', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          SegmentedButton<Species>(
-            segments: [
-              for (final species in Species.values)
-                ButtonSegment(value: species, label: Text(species.label)),
-            ],
-            selected: {?_species},
-            emptySelectionAllowed: true,
-            onSelectionChanged: (selection) =>
-                setState(() => _species = selection.isEmpty ? null : selection.single),
-          ),
-          if (_showMissing && _species == null) ...[
-            const SizedBox(height: 8),
-            Text('Choose a species', style: TextStyle(color: errorColor)),
-          ],
+          ..._requiredFields(context, editing: editing, errorColor: errorColor),
           const SizedBox(height: 16),
-          TextField(
-            controller: _breedController,
-            maxLength: 100,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Breed (optional)'),
-          ),
-          const SizedBox(height: 8),
-          Text('Sex (optional)', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          SegmentedButton<Sex>(
-            segments: [
-              for (final sex in Sex.values) ButtonSegment(value: sex, label: Text(sex.label)),
-            ],
-            selected: {?_sex},
-            emptySelectionAllowed: true,
-            onSelectionChanged: (selection) =>
-                setState(() => _sex = selection.isEmpty ? null : selection.single),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Birth date (optional)'),
-            subtitle: Text(
-              birthDate == null
-                  ? 'Not set'
-                  : MaterialLocalizations.of(context).formatFullDate(birthDate),
-            ),
-            onTap: _pickBirthDate,
-            trailing: birthDate == null
-                ? const Icon(Icons.calendar_today)
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: 'Clear birth date',
-                    onPressed: () => setState(() => _birthDate = null),
-                  ),
-          ),
+          ..._optionalFields(context),
           const SizedBox(height: 16),
-          if (_saving)
-            const Center(child: CircularProgressIndicator())
-          else
-            FilledButton(onPressed: _save, child: Text(editing ? 'Save' : 'Add pet')),
-          if (_error != null) ...[
-            const SizedBox(height: 16),
-            Text(_error!, style: TextStyle(color: errorColor)),
-          ],
+          ..._actions(editing: editing, errorColor: errorColor),
         ],
       ),
     );
+  }
+
+  /// The name and species, which say so when missing.
+  List<Widget> _requiredFields(
+    BuildContext context, {
+    required bool editing,
+    required Color errorColor,
+  }) {
+    return [
+      TextField(
+        controller: _nameController,
+        autofocus: !editing,
+        maxLength: 100,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          labelText: 'Name',
+          errorText: _showMissing && _nameController.text.trim().isEmpty ? 'Enter a name' : null,
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+      const SizedBox(height: 8),
+      Text('Species', style: Theme.of(context).textTheme.labelLarge),
+      const SizedBox(height: 8),
+      SegmentedButton<Species>(
+        segments: [
+          for (final species in Species.values)
+            ButtonSegment(value: species, label: Text(species.label)),
+        ],
+        selected: {?_species},
+        emptySelectionAllowed: true,
+        onSelectionChanged: (selection) =>
+            setState(() => _species = selection.isEmpty ? null : selection.single),
+      ),
+      if (_showMissing && _species == null) ...[
+        const SizedBox(height: 8),
+        Text('Choose a species', style: TextStyle(color: errorColor)),
+      ],
+    ];
+  }
+
+  /// The breed, sex and birth date.
+  List<Widget> _optionalFields(BuildContext context) {
+    final birthDate = _birthDate;
+    return [
+      TextField(
+        controller: _breedController,
+        maxLength: 100,
+        textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(labelText: 'Breed (optional)'),
+      ),
+      const SizedBox(height: 8),
+      Text('Sex (optional)', style: Theme.of(context).textTheme.labelLarge),
+      const SizedBox(height: 8),
+      SegmentedButton<Sex>(
+        segments: [for (final sex in Sex.values) ButtonSegment(value: sex, label: Text(sex.label))],
+        selected: {?_sex},
+        emptySelectionAllowed: true,
+        onSelectionChanged: (selection) =>
+            setState(() => _sex = selection.isEmpty ? null : selection.single),
+      ),
+      const SizedBox(height: 8),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Birth date (optional)'),
+        subtitle: Text(
+          birthDate == null
+              ? 'Not set'
+              : MaterialLocalizations.of(context).formatFullDate(birthDate),
+        ),
+        onTap: _pickBirthDate,
+        trailing: birthDate == null
+            ? const Icon(Icons.calendar_today)
+            : IconButton(
+                icon: const Icon(Icons.clear),
+                tooltip: 'Clear birth date',
+                onPressed: () => setState(() => _birthDate = null),
+              ),
+      ),
+    ];
+  }
+
+  /// The save button, or progress while saving, and the error if it failed.
+  List<Widget> _actions({required bool editing, required Color errorColor}) {
+    return [
+      if (_saving)
+        const Center(child: CircularProgressIndicator())
+      else
+        FilledButton(onPressed: _save, child: Text(editing ? 'Save' : 'Add pet')),
+      if (_error != null) ...[
+        const SizedBox(height: 16),
+        Text(_error!, style: TextStyle(color: errorColor)),
+      ],
+    ];
   }
 }

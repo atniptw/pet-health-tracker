@@ -13,6 +13,6 @@ My own choices: archiving and unarchiving don't wait for the server, like editin
 ## Build order
 One commit per step, each safe to ship on its own.
 1. Repository: `archivePet`, `unarchivePet` and `watchArchivedPets` on `PetRepository`. Rules tests that admins can unarchive and members can't archive or unarchive. Integration test against the real rules. (done)
-2. Refactor: split `PetFormScreen.build`, which is at its size baseline and can't grow.
+2. Refactor: split `PetFormScreen.build`, which is at its size baseline and can't grow. (done)
 3. Archived pets: the "Archived pets" list in Settings, with each pet's history and admins' "Unarchive". It comes before archiving so an archived pet can always be brought back.
 4. Archiving: the edit screen's "Archive pet" button, after confirming.
