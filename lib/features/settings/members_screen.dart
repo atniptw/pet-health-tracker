@@ -22,7 +22,7 @@ class MembersScreen extends ConsumerWidget {
     final names = ref.watch(memberNamesProvider(household.id)).value ?? const {};
     final members = sortedMembers(household, names);
     // Someone removed while this is open keeps the last household they saw,
-    // so their remove actions go once they're out of it.
+    // so their menus go once they're out of it.
     final stillIn =
         ref.watch(myHouseholdsProvider(uid)).value?.any((h) => h.id == household.id) ?? false;
     return Scaffold(
@@ -30,14 +30,21 @@ class MembersScreen extends ConsumerWidget {
       body: ListView(
         children: [
           for (final member in members)
+            // Keyed by person, so a menu left open on someone who leaves goes
+            // with their row instead of passing to whoever moves into its place.
             ListTile(
+              key: ValueKey(member.uid),
               title: Text(member.name ?? noNameYet),
               subtitle: _labels(household, member.uid),
               trailing: stillIn && _canRemove(household, member.uid)
-                  ? IconButton(
-                      icon: const Icon(Icons.person_remove_outlined),
-                      tooltip: 'Remove ${member.name ?? noNameYet}',
-                      onPressed: () => _remove(context, ref, household, member),
+                  ? PopupMenuButton<_Action>(
+                      tooltip: 'Options for ${member.name ?? noNameYet}',
+                      onSelected: (action) => switch (action) {
+                        _Action.remove => _remove(context, ref, household, member),
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(value: _Action.remove, child: Text('Remove from household')),
+                      ],
                     )
                   : null,
             ),
@@ -100,3 +107,6 @@ class MembersScreen extends ConsumerWidget {
     }
   }
 }
+
+/// What the viewer can do to someone from their row's menu.
+enum _Action { remove }

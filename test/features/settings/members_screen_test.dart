@@ -50,17 +50,24 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// The names of the people with a remove action.
-  List<String> removable(WidgetTester tester) {
+  /// The names of the people whose row has a menu of actions.
+  List<String> withOptions(WidgetTester tester) {
     return tester
-        .widgetList<IconButton>(find.byType(IconButton))
-        .map((button) => button.tooltip!.replaceFirst('Remove ', ''))
+        .widgetList(find.byWidgetPredicate((widget) => widget is PopupMenuButton))
+        .map((button) => (button as PopupMenuButton).tooltip!.replaceFirst('Options for ', ''))
         .toList();
   }
 
-  Future<void> confirmRemoving(WidgetTester tester, String name) async {
-    await tester.tap(find.byTooltip('Remove $name'));
+  /// Opens [name]'s menu and taps "Remove from household".
+  Future<void> openRemove(WidgetTester tester, String name) async {
+    await tester.tap(find.byTooltip('Options for $name'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from household'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> confirmRemoving(WidgetTester tester, String name) async {
+    await openRemove(tester, name);
     await tester.tap(find.widgetWithText(TextButton, 'Remove'));
   }
 
@@ -116,7 +123,7 @@ void main() {
     testWidgets('an admin can remove members who are not admins', (tester) async {
       await pumpMembers(tester, uid: 'ann');
 
-      expect(removable(tester), ['Sam', noNameYet]);
+      expect(withOptions(tester), ['Sam', noNameYet]);
     });
 
     testWidgets('an admin cannot remove another admin', (tester) async {
@@ -133,26 +140,34 @@ void main() {
       ]);
       await tester.pumpAndSettle();
 
-      expect(removable(tester), [noNameYet]);
+      expect(withOptions(tester), [noNameYet]);
     });
 
     testWidgets('the owner can remove anyone but themselves', (tester) async {
       await pumpMembers(tester, uid: 'owner');
 
-      expect(removable(tester), ['Ann', 'Sam', noNameYet]);
+      expect(withOptions(tester), ['Ann', 'Sam', noNameYet]);
+    });
+
+    testWidgets("an admin's menu offers removing them from the household", (tester) async {
+      await pumpMembers(tester, uid: 'ann');
+
+      await tester.tap(find.byTooltip('Options for Sam'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remove from household'), findsOneWidget);
     });
 
     testWidgets('members who are not admins cannot remove anyone', (tester) async {
       await pumpMembers(tester, uid: 'sam');
 
-      expect(removable(tester), isEmpty);
+      expect(withOptions(tester), isEmpty);
     });
 
     testWidgets('asks first, saying the invite code stops working', (tester) async {
       await pumpMembers(tester, uid: 'owner');
 
-      await tester.tap(find.byTooltip('Remove Sam'));
-      await tester.pumpAndSettle();
+      await openRemove(tester, 'Sam');
 
       expect(find.text('Remove Sam?'), findsOneWidget);
       expect(find.textContaining('"Former member"'), findsOneWidget);
@@ -187,8 +202,7 @@ void main() {
     testWidgets('cancelling removes no one', (tester) async {
       await pumpMembers(tester, uid: 'owner');
 
-      await tester.tap(find.byTooltip('Remove Sam'));
-      await tester.pumpAndSettle();
+      await openRemove(tester, 'Sam');
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
@@ -215,13 +229,36 @@ void main() {
       );
     });
 
+    testWidgets("a menu left open on someone who leaves doesn't act on the next person", (
+      tester,
+    ) async {
+      await pumpMembers(tester, uid: 'owner');
+      await tester.tap(find.byTooltip('Options for Ann'));
+      await tester.pumpAndSettle();
+
+      myHouseholds.add([
+        const Household(
+          id: 'h1',
+          name: 'The Den',
+          memberIds: ['owner', 'sam', 'nameless'],
+          adminIds: ['owner'],
+          ownerId: 'owner',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove from household'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remove Sam?'), findsNothing);
+    });
+
     testWidgets('no one can be removed once you are out of the household', (tester) async {
       await pumpMembers(tester, uid: 'owner');
 
       myHouseholds.add(const []);
       await tester.pumpAndSettle();
 
-      expect(removable(tester), isEmpty);
+      expect(withOptions(tester), isEmpty);
     });
   });
 }
