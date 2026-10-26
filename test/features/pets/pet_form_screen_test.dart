@@ -228,6 +228,12 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Add pet'), findsOneWidget);
   });
 
+  testWidgets('adding a pet has no archive button', (tester) async {
+    await pumpScreen(tester);
+
+    expect(find.text('Archive pet'), findsNothing);
+  });
+
   group('editing', () {
     final pootz = Pet(
       id: 'p1',
@@ -298,6 +304,86 @@ void main() {
           sex: null,
         ),
       ).called(1);
+    });
+
+    group('archiving', () {
+      setUp(() {
+        when(
+          () => repository.archivePet(
+            householdId: any(named: 'householdId'),
+            petId: any(named: 'petId'),
+          ),
+        ).thenAnswer((_) async {});
+      });
+
+      Future<void> tapArchive(WidgetTester tester) async {
+        await tester.ensureVisible(find.text('Archive pet'));
+        await tester.tap(find.text('Archive pet'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('archives the pet after confirming, then closes', (tester) async {
+        await pumpScreen(tester, pet: pootz);
+        await tapArchive(tester);
+
+        expect(find.text('Archive Pootz?'), findsOneWidget);
+        expect(find.textContaining('under Archived pets in Settings'), findsOneWidget);
+        await tester.tap(find.widgetWithText(TextButton, 'Archive'));
+        await tester.pumpAndSettle();
+
+        verify(() => repository.archivePet(householdId: 'h1', petId: 'p1')).called(1);
+        expect(find.byType(PetFormScreen), findsNothing);
+      });
+
+      testWidgets("doesn't wait for the server", (tester) async {
+        when(
+          () => repository.archivePet(
+            householdId: any(named: 'householdId'),
+            petId: any(named: 'petId'),
+          ),
+        ).thenAnswer((_) => Completer<void>().future);
+
+        await pumpScreen(tester, pet: pootz);
+        await tapArchive(tester);
+        await tester.tap(find.widgetWithText(TextButton, 'Archive'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(PetFormScreen), findsNothing);
+      });
+
+      testWidgets("can't archive while saving", (tester) async {
+        final saving = Completer<void>();
+        stubUpdate(() => saving.future);
+
+        await pumpScreen(tester, pet: pootz);
+        await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+        await tester.pump();
+        await tester.ensureVisible(find.text('Archive pet'));
+
+        expect(
+          tester
+              .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Archive pet'))
+              .onPressed,
+          isNull,
+        );
+        saving.complete();
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('cancelling keeps the pet and the form', (tester) async {
+        await pumpScreen(tester, pet: pootz);
+        await tapArchive(tester);
+        await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+        await tester.pumpAndSettle();
+
+        verifyNever(
+          () => repository.archivePet(
+            householdId: any(named: 'householdId'),
+            petId: any(named: 'petId'),
+          ),
+        );
+        expect(find.byType(PetFormScreen), findsOneWidget);
+      });
     });
 
     testWidgets('shows the error and stays open when saving fails', (tester) async {

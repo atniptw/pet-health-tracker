@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/firebase_providers.dart';
 import '../../data/pet.dart';
+import '../settings/dialogs.dart';
 
 /// Adds a pet, or edits [pet] when one is given.
 class PetFormScreen extends ConsumerStatefulWidget {
@@ -186,7 +189,8 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
     ];
   }
 
-  /// The save button, or progress while saving, and the error if it failed.
+  /// The save button, or progress while saving, and the error if it failed;
+  /// when editing, the archive button too.
   List<Widget> _actions({required bool editing, required Color errorColor}) {
     return [
       if (_saving)
@@ -197,6 +201,34 @@ class _PetFormScreenState extends ConsumerState<PetFormScreen> {
         const SizedBox(height: 16),
         Text(_error!, style: TextStyle(color: errorColor)),
       ],
+      if (editing) ...[
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.archive_outlined),
+          label: const Text('Archive pet'),
+          onPressed: _saving ? null : _archive,
+        ),
+      ],
     ];
+  }
+
+  /// Archives the pet after confirming, and closes the form.
+  Future<void> _archive() async {
+    final pet = widget.pet!;
+    final confirmed = await askToConfirm(
+      context,
+      title: 'Archive ${pet.name}?',
+      message:
+          "${pet.name} won't show on the home screen or when logging. Their history "
+          'stays under Archived pets in Settings, where admins can unarchive them.',
+      action: 'Archive',
+    );
+    if (!confirmed || !mounted) return;
+    // Like renaming the household, archiving doesn't wait for the server.
+    // The pet moves to the archived pets right away from the local write.
+    unawaited(
+      ref.read(petRepositoryProvider).archivePet(householdId: widget.householdId, petId: pet.id),
+    );
+    Navigator.of(context).pop();
   }
 }
