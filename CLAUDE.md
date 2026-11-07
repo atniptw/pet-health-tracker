@@ -6,24 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A mobile app (iOS + Android) for pet owners to track their pets' health symptoms. The first priority is **fast symptom logging**: capturing what happened and when, with as little friction as possible. The audience is pet owners in general, not just a single household.
 
-## Working rules
+## Rules and workflow
 
-- Don't invent scope or a roadmap. Never label something "out of scope for v1", "planned for later", "v2", or similar unless the user has said so. When the user makes a choice, record only that choice. Don't add features, phases, or future work they didn't ask for, in docs, code comments, or replies.
-- Every push to `main` ships to testers. Keep each commit one small, complete change that is safe to release on its own.
-- Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`. Write the failing test first when practical.
-- Run `./scripts/check.sh` before committing, and never push with failing checks. Don't bypass the pre-push hook (`--no-verify`).
-- The coverage minimum in `scripts/coverage.sh` only goes up. The check fails when coverage is more than 0.2% above it, so raise it then; never lower it to get a change through.
+The project is a [Spec Kit](https://github.com/github/spec-kit) project. Its rules and workflow are in the constitution, `.specify/memory/constitution.md`: only what was asked, every commit ships, tests with every behavior change, checks are never bypassed, and one reviewed commit per task on a feature branch, rebase-merged to `main` through a pull request. The `/speckit-*` skills write each feature's `spec.md`, `plan.md` and `tasks.md` under `specs/`.
 
-## Workflow
-
-Each commit goes through these steps. Hooks and checks enforce steps 3 to 6, and that a change to `lib/` comes with test changes; planning and writing the test first are up to you. `docs/design/dev-workflow/README.md` has the details.
-
-1. **Plan.** Work that takes several commits gets a design README in `docs/design/` with the user's decisions and a build order, one commit per step.
-2. **Test and change.** Write the failing test, then the change, then run `./scripts/check.sh`.
-3. **Stage** exactly what the commit will hold.
-4. **Review** with the `targeted-review` skill. `./scripts/required-reviewers.sh` names the reviewer agents (`.claude/agents/`) the staged change needs, and they run in parallel. Fix what they find, stage the fixes, and continue the reviewers whose paths changed. Don't stage while reviewers run.
-5. **Commit** with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every required reviewer has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing.
-6. **Push** to `main`. The pre-push hook runs `check.sh`. CI runs it again, checks the pushed commits with `scripts/tests-changed.sh`, and runs the integration tests before anything deploys.
+Each commit is staged exactly, reviewed with the `targeted-review` skill, and made with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every reviewer `./scripts/required-reviewers.sh` names has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing. Don't stage while reviewers run. The pre-push hook runs `check.sh` on every push, and CI runs it again with `scripts/tests-changed.sh` and the integration tests on every push to `main` before anything deploys. `docs/design/dev-workflow/README.md` has the details.
 
 ## Project state
 

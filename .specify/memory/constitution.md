@@ -1,50 +1,46 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version: template → 1.0.0 (first ratified version)
+- Principles: I. Fast symptom logging, II. Only what was asked, III. Every commit ships,
+  IV. Tests with every behavior change, V. Checks are never bypassed
+- Sections: Workflow, Review gates, Governance
+- Sources: the working rules and workflow in CLAUDE.md and the decisions in the
+  dev-workflow design (reviewer agents and commit gates)
+-->
+
+# Pet Health Tracker Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Fast symptom logging
+The app is for pet owners in general, on iOS and Android, to track their pets' health symptoms. Fast symptom logging comes first: capturing what happened and when, with as little friction as possible.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Only what was asked
+Specs, plans, tasks, code, comments and replies hold only what the user asked for and the choices the user made. Nothing is labelled "out of scope for v1", "planned for later", "v2" or similar unless the user said so, and no features, phases or future work get added that the user didn't ask for. The phases in a plan and in `tasks.md` are the build order of the feature being specified, not deferred scope.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Every commit ships
+Every push to `main` ships to testers who may still run older builds. Each commit is one small, complete change that is safe to release on its own: rules stay compatible with app versions testers have, and data changes handle documents that lack new fields.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Tests with every behavior change
+Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`, and allow and deny tests for every new rule path. The failing test comes first when practical. Only a `refactor:` commit changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Checks are never bypassed
+`./scripts/check.sh` passes before every commit and every push. Nothing skips the git hooks (`--no-verify`) or the commit gate. The coverage minimum in `scripts/coverage.sh` only goes up: it is raised when coverage is more than 0.2% above it, and never lowered to get a change through. The size limits in `tool/size_check.dart` hold, and entries in `tool/size_baseline.txt` are only lowered or removed.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Workflow
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+1. **Specify.** `/speckit-specify` creates the feature branch (`NNN-short-name`, from the git extension) and `specs/NNN-short-name/spec.md`, with the user's decisions recorded as they make them.
+2. **Plan and tasks.** `/speckit-plan` writes `plan.md` and `/speckit-tasks` writes `tasks.md`. Each task in `tasks.md` is one commit and is safe to ship on its own.
+3. **Implement one task per commit.** For each task: write the failing test, make the change, run `./scripts/check.sh`, stage exactly that task, review it with the `targeted-review` skill, then `git commit -q -m "<type>: <subject>"` and tick the task in `tasks.md` in the same commit. `/speckit-implement` works through the tasks the same way. The git extension's auto-commit stays off.
+4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task or once at the end.
+5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md`, `docs/architecture.md` and `docs/data-model.md` are updated in the same commit.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Review gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+The reviewer agents in `.claude/agents/` each own one concern. `./scripts/required-reviewers.sh` names the ones a staged change needs, from each agent's `Paths:` line, and all of them block: a `FAIL` stops the commit until it is fixed. The commit gate (`.claude/hooks/review-gate.sh`) denies `git commit` until every required reviewer has passed the current staged diff. Nothing is staged while reviewers run. CI runs `check.sh`, `scripts/tests-changed.sh` and the integration tests again on every push to `main` before anything deploys.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in every `plan.md` checks the plan against these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
