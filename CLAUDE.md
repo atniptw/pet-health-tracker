@@ -10,7 +10,7 @@ A mobile app (iOS + Android) for pet owners to track their pets' health symptoms
 
 The project is a [Spec Kit](https://github.com/github/spec-kit) project. Its rules and workflow are in the constitution, `.specify/memory/constitution.md`: only what was asked, every commit ships, tests with every behavior change, checks are never bypassed, and one reviewed commit per task on a feature branch, rebase-merged to `main` through a pull request. The `/speckit-*` skills write each feature's `spec.md`, `plan.md` and `tasks.md` under `specs/`.
 
-Each commit is staged exactly, reviewed with the `targeted-review` skill, and made with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every reviewer `./scripts/required-reviewers.sh` names has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing. Don't stage while reviewers run. The pre-push hook runs `check.sh` on every push, and CI runs it again with `scripts/tests-changed.sh` and the integration tests on every push to `main` before anything deploys. `docs/design/dev-workflow/README.md` has the details.
+Each commit is staged exactly, reviewed with the `targeted-review` skill, and made with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every reviewer `./scripts/required-reviewers.sh` names has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing. Don't stage while reviewers run. The pre-push hook runs `check.sh` on every push, and CI runs it again with `scripts/tests-changed.sh` and the integration tests on every push to `main` before anything deploys. `specs/002-dev-workflow/plan.md` has the details.
 
 ## Project state
 
@@ -20,9 +20,9 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 `.github/workflows/release.yml` runs `scripts/check.sh` and the integration tests on an Android emulator on every push to `main`, then deploys Firestore rules and uploads to the Play internal testing track (fastlane, `android/fastlane/`). Deploy jobs are gated by repo variables (`FIRESTORE_RULES_DEPLOY_ENABLED`, `ANDROID_DEPLOY_ENABLED`, `IOS_DEPLOY_ENABLED`). Android deploys are on and roll out straight to internal testers; iOS deploys are on and upload to TestFlight (`ios/fastlane/`). Setup steps and secrets are in `docs/ci.md`.
 
-## Design docs
+## Specs and design docs
 
-Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/design/dev-workflow/README.md`, with its build order showing which steps are done. Google sign-in, Apple sign-in on iOS, creating, joining, switching, renaming, leaving, transferring and deleting households, the members list, removing members and changing roles, adding, editing and archiving pets, logging catalog and `other` symptoms from the home sheet, editing and deleting logs, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
+Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Each feature's spec, plan and tasks are in `specs/NNN-name/`, with its tasks showing which are done. Reviewer agents (`.claude/agents/`) and the commit gates are described in `specs/002-dev-workflow/plan.md`. Google sign-in, Apple sign-in on iOS, creating, joining, switching, renaming, leaving, transferring and deleting households, the members list, removing members and changing roles, adding, editing and archiving pets, logging catalog and `other` symptoms from the home sheet, editing and deleting logs, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 
