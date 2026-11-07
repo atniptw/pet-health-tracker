@@ -74,7 +74,7 @@ flags 'a phrase the allowlist does not name' lib/a.dart '// Previously a map.'
 # lib/firebase_options.dart is generated, so its comments are left alone.
 passes 'the generated file' lib/firebase_options.dart '// Regenerate for now.'
 
-# Spec Kit's vendored files are replaced on upgrade, so they are left alone.
+# Files in .specify/ come from Spec Kit, so they are left alone.
 passes 'a vendored Spec Kit script' .specify/scripts/bash/a.sh '# Kept for now.'
 flags 'a .specify name outside the root' scripts/.specify/a.sh '# Kept for now.'
 flags 'a name that only starts with .specify' .specifyx/a.sh '# Kept for now.'
