@@ -1,11 +1,14 @@
 <!--
 Sync Impact Report
-- Version: template → 1.0.0 (first ratified version)
-- Principles: I. Fast symptom logging, II. Only what was asked, III. Every commit ships,
-  IV. Tests with every behavior change, V. Checks are never bypassed
-- Sections: Workflow, Review gates, Governance
-- Sources: the working rules and workflow in CLAUDE.md and the decisions in the
-  dev-workflow design (reviewer agents and commit gates)
+- Version: 1.0.0 → 2.0.0 (MAJOR: principle III redefined)
+- Modified principles: III. Every commit ships. Compatibility with older app builds is now
+  required only for production releases, not for test builds.
+- Added sections: none
+- Removed sections: none
+- Dependent files to update: CLAUDE.md (summary of the rules), .claude/agents/release-safety.md
+  (checks compatibility with older test builds), specs/002-dev-workflow/plan.md
+  (describes release-safety)
+- Deferred placeholders: none
 -->
 
 # Pet Health Tracker Constitution
@@ -19,7 +22,9 @@ The app is for pet owners in general, on iOS and Android, to track their pets' h
 Specs, plans, tasks, code, comments and replies hold only what the user asked for and the choices the user made. Nothing is labelled "out of scope for v1", "planned for later", "v2" or similar unless the user said so, and no features, phases or future work get added that the user didn't ask for. The phases in a plan and in `tasks.md` are the build order of the feature being specified, not deferred scope.
 
 ### III. Every commit ships
-Every push to `main` ships to testers who may still run older builds. Each commit is one small, complete change that is safe to release on its own: rules stay compatible with app versions testers have, and data changes handle documents that lack new fields.
+Every push to `main` ships to testers on Google Play internal testing and TestFlight. Each commit is one small, complete change that builds, passes its checks and makes sense on its own, with no half-wired feature visible to testers.
+
+Only production releases have to stay compatible with older app versions. A production release is a build released to the public on the App Store or on Google Play's production track. Testers are told that features may break and that the app or its data may need resetting, so a change does not have to keep older test builds or existing test data working. Once a production release exists, rules and data changes stay compatible with every production version users may still run, and data changes handle documents that lack new fields. Test and production builds share the same rules and data, so from then on this applies to every push to `main`.
 
 ### IV. Tests with every behavior change
 Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`, and allow and deny tests for every new rule path. The failing test comes first when practical. Only a `refactor:` commit changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`.
@@ -43,4 +48,4 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
+**Version**: 2.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
