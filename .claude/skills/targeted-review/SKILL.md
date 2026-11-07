@@ -17,7 +17,7 @@ Run `./scripts/required-reviewers.sh`. For a range, run `./scripts/required-revi
 
 ### 3. Launch them in parallel
 Send one message with one `Agent` call per reviewer, with `subagent_type` set to the reviewer's name. Each prompt says:
-- **What the change is for**, in a sentence or two: what the user asked for and which decisions or design README it implements. `scope-guard` compares the change to this, and the others use it to understand intent.
+- **What the change is for**, in a sentence or two: what the user asked for and which decisions or spec it implements. `scope-guard` compares the change to this, and the others use it to understand intent.
 - **Where to look**, if not the staged diff: the commit range or files.
 - **What to look at hardest**, if you know: the part most likely to be wrong, phrased so the reviewer has to trace the code ("walk through what happens when a member leaves while the sheet is open").
 

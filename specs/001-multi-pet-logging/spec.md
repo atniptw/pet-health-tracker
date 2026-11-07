@@ -1,4 +1,6 @@
-# Handoff: Multi-pet symptom logging (options 2a and 2b)
+# Feature Specification: Multi-pet symptom logging
+
+**Status**: Shipped | **Created**: 2026-10-06
 
 ## Overview
 A redesigned home screen and a "Log a symptom" bottom sheet for `atniptw/pet-health-tracker` (Flutter, iOS + Android). The goal is the fewest taps from opening the app to a saved log. There is one primary button, "Log a symptom". It opens a sheet where the user picks a pet and a symptom. **Picking a symptom saves the log straight away**, timed now. The catalog questions are optional follow-up.
@@ -9,14 +11,10 @@ There are two layouts for households with 3 or more pets:
 
 Recommendation: build one adaptive layout. Use 2a for 4 pets or fewer and 2b for more than 4.
 
-## About the design files
-`Pet Health Tracker.dc.html` is a **design reference made in HTML**, not production code. Recreate it in the existing Flutter app (`lib/features/...`), using Riverpod and the repo's patterns. Open the file in a browser and go to section **2** (ids `#2a`, `#2b`). Section **1b** shows the original 2-pet version, including the seizure details screen. Section **0** is the current app, for reference.
-
 ## Fidelity
-**High fidelity** for layout, spacing, type and colour. The screens are static mockups, so the interactions below are specified in this README, not shown in the file.
+**High fidelity** for layout, spacing, type and colour. The screens are static mockups, so the interactions below are specified in this spec, not shown in the file.
 
 ## Screens
-
 ### Home (2a: ≤4 pets)
 - App bar 60px tall: household name (`Household.name`) in 22/600, left padding 20. Settings icon button on the right, 44×44, icon 24px, `mute` colour. It opens the existing `SettingsScreen`.
 - Pet grid: 2 columns, gap 10, horizontal padding 16, top padding 4. Each card is `surf` with a 1px `line` border, radius 20 and padding 12. It contains a row (gap 10) of:
@@ -77,51 +75,8 @@ See **1b**, screen 3 (Seizure). This screen opens after the log is already saved
    - "Done" or close → pop.
 7. Errors: if the save fails, show the existing snackbar: "Couldn't save the log: $e".
 
-## State
-- `selectedPetId`: defaults to the last-logged pet, then the first pet.
-- `recentLogsProvider`: the latest N logs across all of the household's pets. This needs a query per pet that is then merged, or a collection-group query on `symptomLogs` ordered by `occurredAt`. Check that `firestore.rules` and the indexes cover the option you pick.
-- `recentOtherTitles(petId)`: distinct titles from the pet's latest `other` logs.
-- Requires the symptom catalog (`catalog/symptoms` plus a bundled copy) from docs/data-model.md. The catalog is not built yet.
-
-## Design tokens
-Build these as a custom `ThemeExtension` or `ColorScheme`. They replace the current `ColorScheme.fromSeed(Colors.teal)`.
-
-| Token | Light | Dark |
-|---|---|---|
-| bg | #F9F6F2 | #120F0C |
-| surf | #FEFDFB | #1E1A16 |
-| ink | #241E1A | #F0EEEA |
-| mute | #69625D | #A9A49E |
-| line | #E1DDD8 | #322D29 |
-| acc (primary) | #007B70 | #5CC6B9 |
-| on acc | #FFFFFF | #011613 |
-| accSoft | #CFF0EB | #0C3531 |
-| accText | #00554D | #93E3D8 |
-
-Pet avatar pairs (fill / initial), assigned by the pet's order in the list and cycling:
-1. teal #CFF0EB / #00554D
-2. terracotta #FEE5DC / #833F27
-3. violet #EBE3FC / #544272
-4. amber #F8EACE / #6B4716
-
-Symptom dots: Seizure #9274C3 · Vomit #CC9C42 · Diarrhea #C26B4C · Other #948274.
-
-The source oklch values are in the HTML. Dark-mode values for the avatar and dot colours aren't specified yet; see 1d for the dark direction.
-
-- **Type:**
-  - UI: Figtree (Google Fonts) at 400/500/600/700.
-  - Times: IBM Plex Mono 400/500, 12px.
-  - Scale: 22 (app bar), 17 (button), 16 (sheet rows), 15 (names, list titles), 13 (meta, labels), 12 (small).
-- **Radii:** 30 (primary button), 28 (sheet top), 24 (pills), 20 (cards), 17 (chips), 14 (inputs).
-- **Spacing:** 4/6/8/10/12/14/16/20/22.
-- **Icons:** Material Symbols Rounded, weight 400, fill 0. Icons used: `add`, `settings`, `chevron_right`, `check`, `edit`, `close`.
-
-## Files
-- `Pet Health Tracker.dc.html`: all screens. Sections 2a and 2b are the target; 1b, 1d and 0 are context.
-- In the repo, the screens these touch: `lib/features/household/home_screen.dart`, `lib/features/pets/pet_list.dart`, `lib/features/symptoms/log_symptom_screen.dart`, `lib/data/symptom_log.dart`, `lib/core/app.dart` (theme).
-
 ## Decisions
-Answers to questions the handoff left open. Where these differ from the sections above, these win.
+Answers to questions the handoff left open. Where these differ from the rest of this spec or the plan, these win.
 
 1. **"All pets" link:** opens a list of every pet. Tapping a pet opens its history, and admins can add a pet from it.
 2. **Dark-mode colours:** the avatar and symptom-dot colours are derived from the dark palette. Avatars get a dark, muted fill with a light initial, as `accSoft`/`accText` do. Dots are lightened so they show on the dark background.
@@ -132,3 +87,4 @@ Answers to questions the handoff left open. Where these differ from the sections
 7. **Recent list:** 5 rows. Times from today show as `14:05`, yesterday as `Yesterday`, older ones as `Mon 3 Oct`.
 8. **Changing the time:** the details screen has an "Occurred {time}" row at the top. Tapping it opens the same date and time picker as the `other` form, and saving writes only `occurredAt`.
 9. **Last-logged pet:** the pet of the user's own most recent log, read from Firestore, not local prefs, so it is the same on every device.
+10. **No stopwatch:** number questions get a number field labelled with the question's `unit`, not a stopwatch.

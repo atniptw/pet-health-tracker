@@ -1,7 +1,6 @@
-# Development workflow: reviewers and gates
+# Implementation Plan: Development workflow: reviewers and gates
 
-## Overview
-Every push to `main` ships to testers, so each commit has to pass checks that can't be skipped. Anything a script can measure goes in `scripts/check.sh`, so it applies to people, Claude and CI alike. Questions that need judgment go to narrow reviewer agents. Claude Code hooks decide which reviewers a commit needs, and block the commit until each of them passes.
+**Spec**: [spec.md](spec.md)
 
 ## Reviewer agents
 Each agent is defined in `.claude/agents/<name>.md`. It reviews the staged diff against a fixed checklist, and lists what it must not report because another agent owns it. All of them preload the `review-protocol` skill (`.claude/skills/review-protocol/`), which sets the report format: findings as `file:line`, what goes wrong, why and the fix, and a last line of `VERDICT: PASS` or `VERDICT: FAIL`. They are read-only: Read, Grep, Glob, and Bash limited to read-only git commands by `.claude/hooks/reviewer-bash.sh`.
@@ -12,12 +11,12 @@ Each agent's `Paths:` line lists the git pathspecs that make it required. That l
 |---|---|---|
 | `clean-code` | Large methods, files and `build()` methods; complex methods (nesting, branching); single responsibility; duplication with existing code in `lib/`; naming | `lib/`, `tool/` |
 | `comment-hygiene` | Doc comments stay lean. Flags temporal comments ("now", "previously", "after the redesign", "new"), story-telling, comments that restate the code, and roadmap wording ("later", "v2", "for now") | Dart, rules, shell, JavaScript and workflow files, `.githooks/`, `scripts/comment-allowlist.txt` |
-| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and design READMEs match the code and `firestore.rules`. The constitution and `CLAUDE.md` agree with the hooks and checks. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/`, `firestore.rules`, `docs/`, `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, `.githooks/`, `tool/`, `.specify/memory/constitution.md` |
+| `docs-sync` | `CLAUDE.md` project state, `docs/architecture.md`, `docs/data-model.md` and the specs in `specs/` match the code and `firestore.rules`. The constitution and `CLAUDE.md` agree with the hooks and checks. Nothing described as planned has already shipped, and nothing described as shipped is missing | `lib/`, `firestore.rules`, `docs/`, `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, `.githooks/`, `tool/`, `.specify/memory/constitution.md`, `specs/` |
 | `security` | Rules: privilege escalation, field validation, membership checks. Personal or health data reaching logs or Crashlytics. Secrets. Auth edge cases | `firestore.rules`, `lib/data/`, `lib/core/`, `lib/features/auth/`, `android/`, `ios/`, `.github/`, `scripts/`, `firestore-tests/` scripts, `.claude/hooks/`, `.claude/settings.json` |
 | `test-quality` | Every behavior change has a test that would fail without it. Tests check behavior, not implementation. Every new rule path has allow and deny tests. No assertions got weaker | `lib/`, `firestore.rules`, `test/`, `firestore-tests/`, `integration_test/`, `scripts/`, `.claude/hooks/`, `.githooks/`, `tool/` |
 | `release-safety` | Rules changes don't break app versions testers still have. Schema changes handle existing documents that lack new fields. The commit is safe to ship on its own | `firestore.rules`, `lib/data/`, `lib/core/`, `pubspec.yaml`, `android/`, `ios/`, `.github/`, `assets/catalog/` |
 | `flutter-lifecycle` | `setState` after dispose, double-submit, stream and provider lifecycle, stale data after switching account or household | `lib/features/`, `lib/core/` |
-| `scope-guard` | Features, settings, options or wording that nobody asked for (constitution principle II) | `lib/`, `docs/`, `CLAUDE.md`, `.specify/memory/constitution.md` |
+| `scope-guard` | Features, settings, options or wording that nobody asked for (constitution principle II) | `lib/`, `docs/`, `CLAUDE.md`, `.specify/memory/constitution.md`, `specs/` |
 
 The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exactly those agents in parallel, and merges their output into one punch list. After fixes, every required reviewer whose paths the fixes touched has to pass again. The skill continues the reviewer's existing agent with `SendMessage` rather than starting a new one.
 
@@ -42,22 +41,3 @@ The `targeted-review` skill runs `scripts/required-reviewers.sh`, launches exact
 
 ## Spec Kit
 [Spec Kit](https://github.com/github/spec-kit) is installed with the Claude integration and the git extension (`specify init --here --integration claude --script sh`, then `specify extension add git`). The project's rules and workflow are in its constitution, `.specify/memory/constitution.md`. Its files are in `.specify/` and its skills are `.claude/skills/speckit-*/`. An upgrade replaces the files listed in `.specify/integrations/*.manifest.json` (the scripts and templates in `.specify/` and the core `speckit-*` skills) and the git extension's files, so local changes to those don't survive. `.specify/memory/constitution.md` and `.specify/extensions/git/git-config.yml` are this project's own. The extension's auto-commit stays off in `.specify/extensions/git/git-config.yml`: `auto-commit.sh` runs `git add .` and `git commit` inside a script, where the review gate can't see the commit.
-
-## Build order
-One commit per step, each safe to ship on its own.
-1. Hook: block `--no-verify` (done)
-2. Coverage ratchet (done)
-3. Agent definitions (done)
-4. Rewrite `targeted-review` to use the named agents (done)
-5. Mechanical checks: size limits with a baseline, banned comment phrases, tests present (done)
-6. Review gate and stamp hooks (done)
-7. Push reminder hook (dropped: see hook 4)
-8. Workflow section in `CLAUDE.md` (done)
-
-## Decisions
-- Review runs on every commit, not every push.
-- All reviewers block: a `FAIL` verdict stops the commit until it's fixed.
-- Limits: 300 lines per file, 40 per function. Current offenders go in a baseline and get refactored in separate commits.
-- All eight reviewers above are in, including `test-quality`, `release-safety`, `flutter-lifecycle` and `scope-guard`.
-- The guard hooks in `.claude/hooks/` stop shortcuts, not attackers. `security` reports bypasses a session might plausibly type, not crafted obfuscation, because CI is the real gate.
-- No push reminder hook: `docs-sync` and the coverage ratchet already enforce what it would check.
