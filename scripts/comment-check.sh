@@ -3,14 +3,15 @@
 # file uses wording that only makes sense at the time it was written: "for
 # now", version or phase numbers, and the like (the list is $phrases below).
 # scripts/comment-allowlist.txt allows a phrase in one file, one
-# "<path> <phrase>" per line, for a use that stays true.
+# "<path> <phrase>" per line, for a use that stays true. Spec Kit's files in
+# .specify/ are vendored and replaced on upgrade, so they are skipped.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 phrases='for now|for the time being|previously|any ?more|eventually|in the future|later on|todo later|v[0-9]+|phase [0-9]+'
 allowlist=scripts/comment-allowlist.txt
 
-git ls-files -z -- '*.dart' '*.sh' '*.rules' '*.js' '*.yml' '.githooks/*' '.claude/hooks/*' |
+git ls-files -z -- '*.dart' '*.sh' '*.rules' '*.js' '*.yml' '.githooks/*' '.claude/hooks/*' ':(exclude).specify/**' |
   PHRASES=$phrases ALLOWLIST=$allowlist perl -0 -ne '
     BEGIN {
       local $/ = "\n";

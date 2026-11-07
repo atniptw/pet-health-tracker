@@ -26,4 +26,4 @@ Paths: `:(glob)**/*.dart` `:(glob)**/*.rules` `:(glob)**/*.sh` `:(glob)**/*.js` 
 - **Allowlist:** `scripts/comment-check.sh` bans a short list of phrases mechanically. An entry added to `scripts/comment-allowlist.txt` is a finding unless the phrase is timeless where it is used.
 
 ## Not yours
-Code structure, tests, security, docs outside source files.
+Code structure, tests, security, docs outside source files. Spec Kit's vendored files in `.specify/`, which upgrades replace.
