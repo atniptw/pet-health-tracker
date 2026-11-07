@@ -41,6 +41,6 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 ## Governance
 
-This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in every `plan.md` checks the plan against these principles.
+This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
 **Version**: 1.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
