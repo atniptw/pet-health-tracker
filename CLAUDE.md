@@ -60,6 +60,7 @@ dart tool/size_check.dart                # size limits for lib/ (300 lines a fil
 ./scripts/test-review-gate.sh            # tests for the review stamp and commit gate hooks in .claude/hooks
 ./scripts/publish-catalog.sh             # publish assets/catalog/symptoms.json to Firestore (needs gcloud application-default login)
 ./scripts/backfill-owners.sh [--apply]   # give households made before owners an ownerId (lists only, without --apply)
+specify check                            # Spec Kit CLI, installed with uv tool install specify-cli --from git+https://github.com/github/spec-kit.git; its skills are /speckit-*
 flutter test integration_test            # smoke test and repository tests against the real rules, on a running device; needs the Firebase emulators up
 ```
 
