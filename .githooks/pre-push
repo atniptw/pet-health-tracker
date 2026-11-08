@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 # Every push to main deploys, so nothing gets pushed without passing the checks.
 # Enable once per clone: git config core.hooksPath .githooks
-exec "$(git rev-parse --show-toplevel)/scripts/check.sh"
+top=$(git rev-parse --show-toplevel) || exit 1
+# Git exports these to hooks. From a worktree GIT_DIR is an absolute path, and
+# flutter, which reads its own version with git, would read this repository.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_PREFIX
+exec "$top/scripts/check.sh"
