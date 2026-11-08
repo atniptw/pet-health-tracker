@@ -1,13 +1,12 @@
 <!--
 Sync Impact Report
-- Version: 1.0.0 → 2.0.0 (MAJOR: principle III redefined)
-- Modified principles: III. Every commit ships. Compatibility with older app builds is now
-  required only for production releases, not for test builds.
-- Added sections: none
+- Version: 2.0.0 → 2.1.0 (MINOR: workflow step added)
+- Modified principles: none
+- Added sections: Workflow step 6, Review the harness. After each feature merges, the
+  harness-review skill builds the clear-cut harness improvements and proposes the rest.
 - Removed sections: none
-- Dependent files to update: CLAUDE.md (summary of the rules), .claude/agents/release-safety.md
-  (checks compatibility with older test builds), specs/002-dev-workflow/plan.md
-  (describes release-safety)
+- Dependent files to update: CLAUDE.md (summary of the rules), specs/002-dev-workflow/plan.md
+  (describes the skills)
 - Deferred placeholders: none
 -->
 
@@ -39,6 +38,7 @@ Every behavior change comes with tests: unit and widget tests in `test/`, securi
 3. **Implement one task per commit.** For each task: write the failing test, make the change, run `./scripts/check.sh`, stage exactly that task, review it with the `targeted-review` skill, then `git commit -q -m "<type>: <subject>"` and tick the task in `tasks.md` in the same commit. `/speckit-implement` works through the tasks the same way. The git extension's auto-commit stays off.
 4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task or once at the end.
 5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md`, `docs/architecture.md` and `docs/data-model.md` are updated in the same commit.
+6. **Review the harness.** After a feature merges, the `harness-review` skill looks back over it for friction in the Claude Code harness: agents, skills, scripts, hooks, settings, plugins, MCP servers and CI. It builds the clear-cut improvements, each one small commit that doesn't relax a check, a gate or a permission, add a blocking reviewer or hook, a plugin, an MCP server or a dependency, or amend the constitution. It proposes the rest to the user, who decides which to build. Each improvement is committed and merged as in steps 3 and 4: `./scripts/check.sh`, the `targeted-review` skill, one commit each, and a pull request.
 
 ## Review gates
 
@@ -48,4 +48,4 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
+**Version**: 2.1.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-08
