@@ -32,6 +32,7 @@ echo '==> coverage'
 
 echo '==> hooks, reviewer mapping and review gate'
 ./scripts/test-hooks.sh
+./scripts/test-pre-push.sh
 ./scripts/test-required-reviewers.sh
 ./scripts/test-review-gate.sh
 
