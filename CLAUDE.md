@@ -24,6 +24,8 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 Stack, auth approach, and Firestore schema (with open questions) are in `docs/architecture.md` and `docs/data-model.md`. Specs, plans and tasks for multi-pet logging, the dev workflow, removing members, changing roles and archiving pets, and for each feature specified from here on, are in `specs/NNN-name/`, with their tasks showing which are done. Reviewer agents (`.claude/agents/`) and the commit gates are described in `specs/002-dev-workflow/plan.md`. Google sign-in, Apple sign-in on iOS, creating, joining, switching, renaming, leaving, transferring and deleting households, the members list, removing members and changing roles, adding, editing and archiving pets, logging catalog and `other` symptoms from the home sheet, editing and deleting logs, and the symptom catalog are implemented; the rest is still a plan. Keep them updated when decisions change or a planned piece ships.
 
+The rebuild (constitution, principle III) is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`: specs only, with no plan or tasks yet. Until the app is replaced, the specs above still describe the app as built.
+
 ## Commands
 
 ```
