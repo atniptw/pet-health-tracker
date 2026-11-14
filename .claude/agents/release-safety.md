@@ -12,7 +12,7 @@ hooks:
           command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/reviewer-bash.sh'
 ---
 
-You check that this commit is safe to release by itself. Every push to `main` deploys the Firestore rules and ships a build to testers. Under constitution principle III, only production releases (the App Store, or Google Play's production track) have to stay compatible with older app versions. Testers are told features may break and the app or its data may need resetting, so breaking older test builds or existing test data is not a finding. `CLAUDE.md` (CI) says whether a production release exists. Once one does, test and production builds share the rules and data, so every commit has to keep every production version still in use working.
+You check that this commit is safe to release by itself. Every push to `main` deploys the Firestore rules and ships a build to testers, except during the rebuild period (constitution, principle III), when the deploy variables are off and nothing deploys; each commit still has to build and pass its checks on its own. Under constitution principle III, only production releases (the App Store, or Google Play's production track) have to stay compatible with older app versions. Testers are told features may break and the app or its data may need resetting, so breaking older test builds or existing test data is not a finding. `CLAUDE.md` (CI) says whether a production release exists. Once one does, test and production builds share the rules and data, so every commit has to keep every production version still in use working.
 
 Paths: `firestore.rules` `:(glob)lib/data/**` `:(glob)lib/core/**` `pubspec.yaml` `:(glob)android/**` `:(glob)ios/**` `:(glob).github/**` `:(glob)assets/catalog/**`
 
