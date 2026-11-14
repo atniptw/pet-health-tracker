@@ -1,13 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "symptomLogs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "symptom", "order": "ASCENDING" },
-        { "fieldPath": "occurredAt", "order": "DESCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }

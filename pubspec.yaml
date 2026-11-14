@@ -1,5 +1,5 @@
 name: pet_health_tracker
-description: "A mobile app for pet owners to track their pets' health symptoms."
+description: "A mobile app for pet owners to record their pets' medical events."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -35,16 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   firebase_core: ^4.15.0
-  cloud_firestore: ^6.10.0
-  firebase_auth: ^6.7.0
-  google_sign_in: ^7.2.0
-  flutter_riverpod: ^3.4.3
   firebase_crashlytics: ^5.4.0
-  package_info_plus: ^10.2.2
-  shared_preferences: ^2.5.6
-  crypto: ^3.0.7
-  flutter_secure_storage: ^11.2.0
-  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:
@@ -56,8 +47,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  fake_cloud_firestore: ^4.3.0
-  mocktail: ^1.0.5
   integration_test:
     sdk: flutter
   analyzer: ^14.6.0
@@ -73,18 +62,3 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  assets:
-    - assets/catalog/symptoms.json
-    - assets/fonts/Figtree-OFL.txt
-    - assets/fonts/IBMPlexMono-OFL.txt
-    - assets/invite/eff_short_wordlist_1.txt
-    - assets/invite/eff_short_wordlist_1-LICENSE.txt
-
-  # Figtree is a variable font: FontWeight sets its weight axis.
-  fonts:
-    - family: Figtree
-      fonts:
-        - asset: assets/fonts/Figtree.ttf
-    - family: IBM Plex Mono
-      fonts:
-        - asset: assets/fonts/IBMPlexMono-Regular.ttf
