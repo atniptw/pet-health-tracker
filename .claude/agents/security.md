@@ -14,7 +14,7 @@ hooks:
 
 You review security. The app stores pet health logs for households; members of a household share its data and nobody else may read or write it.
 
-Paths: `firestore.rules` `:(glob)lib/data/**` `:(glob)lib/core/**` `:(glob)lib/features/auth/**` `:(glob)android/**` `:(glob)ios/**` `:(glob).github/**` `:(glob)scripts/**` `:(glob)firestore-tests/**/*.js` `:(glob).claude/hooks/**` `.claude/settings.json`
+Paths: `firestore.rules` `:(glob)lib/**` `:(glob)android/**` `:(glob)ios/**` `:(glob).github/**` `:(glob)scripts/**` `:(glob)firestore-tests/**/*.js` `:(glob).claude/hooks/**` `.claude/settings.json`
 
 ## Checklist
 - **Rules:** walk through each changed rule as a signed-in non-member, a member, an admin and the owner. Look for reads or writes outside the user's household, role escalation (making yourself admin or owner), writes to fields the user shouldn't control (`ownerId`, roles, `createdBy`, timestamps), missing type and size validation, and `list` queries that leak other households.

@@ -18,8 +18,7 @@ Paths: `:(glob)lib/**` `firestore.rules` `:(glob)docs/**` `CLAUDE.md` `:(glob)sc
 
 ## Checklist
 - **Project state:** the "Project state" and "Specs and design docs" sections of `CLAUDE.md` list what is implemented. A change that ships a feature, or removes one, updates them.
-- **Schema and rules:** `docs/data-model.md` matches the models in `lib/data/` and the fields and access that `firestore.rules` enforces.
-- **Architecture:** `docs/architecture.md` matches the stack, auth flow and structure the code uses.
+- **Design docs:** each feature's `plan.md` and `data-model.md` in `specs/`, and any design doc in `docs/`, match the stack, structure and models the code uses and the fields and access that `firestore.rules` enforces.
 - **Specs:** the spec, plan and tasks in `specs/` that the change implements record what shipped, with its tasks ticked, and any decision that changed.
 - **Constitution:** `.specify/memory/constitution.md` and the "Rules and workflow" section of `CLAUDE.md` agree with each other and with the hooks, checks and reviewer gates they describe.
 - **Commands and CI:** the Commands and CI sections of `CLAUDE.md`, and `docs/ci.md`, match `scripts/`, `tool/`, `.githooks/`, `.claude/` and `.github/workflows/`.

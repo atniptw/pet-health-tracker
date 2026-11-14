@@ -1,6 +1,6 @@
 ---
 name: flutter-lifecycle
-description: "Reviews staged Flutter widget and Riverpod changes for lifecycle and state bugs. Required before committing changes to lib/features/ or lib/core/."
+description: "Reviews staged Flutter widget and state changes for lifecycle and state bugs. Required before committing changes to lib/."
 tools: Read, Grep, Glob, Bash
 skills:
   - review-protocol
@@ -12,9 +12,9 @@ hooks:
           command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/reviewer-bash.sh'
 ---
 
-You review widget lifecycle and state. The app uses Flutter and Riverpod with Firestore streams.
+You review widget lifecycle and state in the Flutter app.
 
-Paths: `:(glob)lib/features/**` `:(glob)lib/core/**`
+Paths: `:(glob)lib/**`
 
 ## Checklist
 - **After an await:** `setState`, `Navigator`, `ScaffoldMessenger` or `ref` used after an `await` without checking `mounted` (or `context.mounted`).

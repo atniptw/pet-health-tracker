@@ -1,5 +1,5 @@
 # pet-health-tracker
 
-A mobile app (iOS + Android, built with Flutter) for pet owners to track their pets' health symptoms.
+A mobile app (iOS + Android, built with Flutter) for pet owners to record their pets' medical events, so they can tell a vet what happened, when and how often.
 
-The first priority is fast symptom logging: what happened, when, and how severe, with minimal friction.
+The app is being rebuilt from the specs in `specs/`.

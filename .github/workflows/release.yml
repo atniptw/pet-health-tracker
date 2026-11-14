@@ -102,8 +102,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Created the emulator snapshot."
-      # Debug builds talk to the Firebase emulators (lib/main.dart), so the app
-      # boots without touching production.
+      # The tests run inside the Firebase auth and Firestore emulators. The
+      # placeholder app uses neither and test builds send no crash reports, so
+      # the tests don't touch production.
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
