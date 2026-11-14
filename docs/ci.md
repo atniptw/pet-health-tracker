@@ -17,7 +17,7 @@ smoke-android ─┼──> deploy-android         → Play internal testing tra
 
 Every deploy job waits for both **test** and **smoke-android**. The `.githooks/pre-push` hook runs `scripts/check.sh` before every push (enable it once per clone with `git config core.hooksPath .githooks`), so a broken commit normally never reaches CI.
 
-Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Firestore rules (`FIRESTORE_RULES_DEPLOY_ENABLED=true`), Android (`ANDROID_DEPLOY_ENABLED=true`) and iOS (`IOS_DEPLOY_ENABLED=true`) are on.
+Each deploy job runs only when a repository variable switches it on (Settings → Secrets and variables → Actions → Variables). While off, it shows as skipped, not failed. Firestore rules (`FIRESTORE_RULES_DEPLOY_ENABLED`), Android (`ANDROID_DEPLOY_ENABLED`) and iOS (`IOS_DEPLOY_ENABLED`) are all set to `false` for the rebuild period (constitution, principle III), so pushes to `main` run the checks and integration tests but deploy nothing. Setting them to `true` turns the deploys back on.
 
 Build numbers come from `github.run_number`, so every build uploaded to a store has a higher build number than the one before. The version name still comes from `pubspec.yaml`. Don't re-run an old workflow run to deploy: a re-run keeps its run number, so Play and App Store Connect reject the build number as already used. Push a new commit instead.
 

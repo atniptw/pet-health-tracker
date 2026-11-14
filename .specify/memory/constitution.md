@@ -1,13 +1,15 @@
 <!--
 Sync Impact Report
-- Version: 1.0.0 → 2.0.0 (MAJOR: principle III redefined)
-- Modified principles: III. Every commit ships. Compatibility with older app builds is now
-  required only for production releases, not for test builds.
+- Version: 2.0.0 → 3.0.0 (MAJOR: principle I redefined)
+- Modified principles: I. Fast symptom logging → I. Fast medical event logging, from the
+  product description the user gave for the rebuild. III. Every commit ships gains a rebuild
+  period, during which pushes to main deploy nothing and the app is built from the specs alone.
 - Added sections: none
 - Removed sections: none
-- Dependent files to update: CLAUDE.md (summary of the rules), .claude/agents/release-safety.md
-  (checks compatibility with older test builds), specs/002-dev-workflow/plan.md
-  (describes release-safety)
+- Modified sections: Workflow step 5 names the docs in docs/ in general, since the rebuild's
+  plans decide which design docs exist.
+- Dependent files to update: CLAUDE.md (goal, summary of the rules, CI), docs/ci.md (deploy
+  variables), .claude/agents/release-safety.md (says every push deploys)
 - Deferred placeholders: none
 -->
 
@@ -15,8 +17,8 @@ Sync Impact Report
 
 ## Core Principles
 
-### I. Fast symptom logging
-The app is for pet owners in general, on iOS and Android, to track their pets' health symptoms. Fast symptom logging comes first: capturing what happened and when, with as little friction as possible.
+### I. Fast medical event logging
+The app is for pet owners in general, on iOS and Android, to record their pets' medical events so they can tell a vet what happened, when and how often. It is a medical record, not a diary or a social feed. Fast logging comes first: capturing what happened and when, with as little friction as possible, for every caregiver who looks after the pets.
 
 ### II. Only what was asked
 Specs, plans, tasks, code, comments and replies hold only what the user asked for and the choices the user made. Nothing is labelled "out of scope for v1", "planned for later", "v2" or similar unless the user said so, and no features, phases or future work get added that the user didn't ask for. The phases in a plan and in `tasks.md` are the build order of the feature being specified, not deferred scope.
@@ -25,6 +27,8 @@ Specs, plans, tasks, code, comments and replies hold only what the user asked fo
 Every push to `main` ships to testers on Google Play internal testing and TestFlight. Each commit is one small, complete change that builds, passes its checks and makes sense on its own, with no half-wired feature visible to testers.
 
 Only production releases have to stay compatible with older app versions. A production release is a build released to the public on the App Store or on Google Play's production track. Testers are told that features may break and that the app or its data may need resetting, so a change does not have to keep older test builds or existing test data working. Once a production release exists, rules and data changes stay compatible with every production version users may still run, and data changes handle documents that lack new fields. Test and production builds share the same rules and data, so from then on this applies to every push to `main`.
+
+**Rebuild period.** The app is being rebuilt from the specs in `specs/`, starting from an empty app; the state before is tagged `pre-rebuild`. While the deploy variables are off, pushes to `main` deploy nothing to testers or to the Firestore rules, and each commit still builds, passes its checks and makes sense on its own. The rebuild is built from the specs alone: the app's code, design docs and feature specs from before it (the `pre-rebuild` tag and earlier history) are not read for how to build it, and a gap in a spec is settled with the user through `/speckit-clarify`. The rebuild period ends when the user turns deploys back on.
 
 ### IV. Tests with every behavior change
 Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`, and allow and deny tests for every new rule path. The failing test comes first when practical. Only a `refactor:` commit changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`.
@@ -38,7 +42,7 @@ Every behavior change comes with tests: unit and widget tests in `test/`, securi
 2. **Plan and tasks.** `/speckit-plan` writes `plan.md` and `/speckit-tasks` writes `tasks.md`. Each task in `tasks.md` is one commit and is safe to ship on its own.
 3. **Implement one task per commit.** For each task: write the failing test, make the change, run `./scripts/check.sh`, stage exactly that task, review it with the `targeted-review` skill, then `git commit -q -m "<type>: <subject>"` and tick the task in `tasks.md` in the same commit. `/speckit-implement` works through the tasks the same way. The git extension's auto-commit stays off.
 4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task or once at the end.
-5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md`, `docs/architecture.md` and `docs/data-model.md` are updated in the same commit.
+5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md` and the docs in `docs/` they affect are updated in the same commit.
 
 ## Review gates
 
@@ -48,4 +52,4 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-07
+**Version**: 3.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-14
