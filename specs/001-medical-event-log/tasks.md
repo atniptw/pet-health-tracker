@@ -223,4 +223,4 @@ Task: "Create lib/domain/durations.dart" (T027)
 7. Phase 7 (US4): edit and delete.
 8. Phase 8: `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
 
-The feature merges to `main` at the end of each phase, which fits the constitution's "after each task" (Workflow 4) since each phase ends with a task, so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.
+The feature merges to `main` at the end of each phase (constitution, Workflow 4), so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.
