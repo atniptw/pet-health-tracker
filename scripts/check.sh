@@ -48,6 +48,7 @@ echo '==> hooks, reviewer mapping and review gate'
 ./scripts/test-hooks.sh
 ./scripts/test-required-reviewers.sh
 ./scripts/test-review-gate.sh
+./scripts/test-githooks.sh
 
 echo '==> autopilot'
 ./scripts/test-autopilot.sh
