@@ -37,7 +37,7 @@ The spec leaves the exact list to the plan. It is the list from the spec's Assum
 |----|------|------------------|
 | `vomiting` | Vomiting | What came up: Food, Yellow liquid or bile, Foam, Hairball, Blood, Something else |
 | `diarrhea` | Diarrhea | Consistency: Soft, Watery · Blood seen: Yes, No |
-| `seizure` | Seizure | How long it lasted (duration) |
+| `seizure` | Seizure | Kind: Focal, Grand mal · How long it lasted (duration) |
 | `coughing` | Coughing | How long it lasted (duration) |
 | `sneezing` | Sneezing | none |
 | `limping` | Limping | Which leg: Front left, Front right, Back left, Back right |
@@ -48,6 +48,12 @@ The spec leaves the exact list to the plan. It is the list from the spec's Assum
 | `wound` | Wound | none |
 
 - **Question kinds**: two are enough for this list: *choice* (pick one option) and *duration* (minutes and seconds). Anything else goes in the free-text note (FR-006).
+- **Questions are data, and their kind drives the UI**: the user wants adding questions to stay easy. Each type's questions are a list of values in `lib/domain/built_in_event_types.dart`. Each kind is a subclass of a sealed `DetailQuestion` that owns its own rules: which answers it accepts and how an answer is written out in the history. The UI turns each kind into its input widget with one exhaustive `switch`. So:
+  - a question of an existing kind is one entry in the list, with no change to screens, storage or validation;
+  - a new kind is one `DetailQuestion` subclass and one input widget, and the compiler points to every `switch` that has to handle it.
+- **Answers are stored generically**: an event's `details` is a JSON object from question id to answer, so a new question needs no schema change.
+- **Ids are stable**: question and option ids never change and are never reused, while labels can. A stored answer keeps its meaning whatever the label says.
+- **In code, not in the database**: definitions ship with the app, so the compiler and tests check every one. Storing them in the database would let them change without a new build, but every change still needs a release for the screens that show them, and nothing could check the definitions before they reach a phone.
 - **Custom types** (entered in the caregiver's own words) have no detail questions, only the note.
 - **Rationale**: Short questions, each one tap, keep logging fast (principle I) while capturing what the spec's example asks for (how long a seizure lasted).
 
