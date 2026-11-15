@@ -1,12 +1,12 @@
 <!--
 Sync Impact Report
-- Version: 3.0.0 → 3.0.1 (PATCH: Workflow step 4 wording)
-- Modified principles: none
-- Added sections: none
+- Version: 3.0.1 → 3.1.0 (MINOR: added section)
+- Modified principles: III (a spec gap can also be settled in an autonomous run)
+- Added sections: Autonomous runs, as the user decided on 2026-11-15
 - Removed sections: none
-- Modified sections: Workflow step 4 also lets a feature merge after each phase of its
-  tasks.md, as the user decided on 2026-11-14.
-- Dependent files to update: specs/001-medical-event-log/tasks.md (merge note)
+- Modified sections: none
+- Dependent files to update: CLAUDE.md (stop rules), docs/dev-workflow/autonomous-runs.md,
+  specs/001-medical-event-log/build-log.md (Decisions column)
 - Deferred placeholders: none
 -->
 
@@ -25,7 +25,7 @@ Every push to `main` ships to testers on Google Play internal testing and TestFl
 
 Only production releases have to stay compatible with older app versions. A production release is a build released to the public on the App Store or on Google Play's production track. Testers are told that features may break and that the app or its data may need resetting, so a change does not have to keep older test builds or existing test data working. Once a production release exists, rules and data changes stay compatible with every production version users may still run, and data changes handle documents that lack new fields. Test and production builds share the same rules and data, so from then on this applies to every push to `main`.
 
-**Rebuild period.** The app is being rebuilt from the specs in `specs/`, starting from an empty app; the state before is tagged `pre-rebuild`. While the deploy variables are off, pushes to `main` deploy nothing to testers or to the Firestore rules, and each commit still builds, passes its checks and makes sense on its own. The rebuild is built from the specs alone: the app's code, design docs and feature specs from before it (the `pre-rebuild` tag and earlier history) are not read for how to build it, and a gap in a spec is settled with the user through `/speckit-clarify`. The rebuild period ends when the user turns deploys back on.
+**Rebuild period.** The app is being rebuilt from the specs in `specs/`, starting from an empty app; the state before is tagged `pre-rebuild`. While the deploy variables are off, pushes to `main` deploy nothing to testers or to the Firestore rules, and each commit still builds, passes its checks and makes sense on its own. The rebuild is built from the specs alone: the app's code, design docs and feature specs from before it (the `pre-rebuild` tag and earlier history) are not read for how to build it, and a gap in a spec is settled with the user through `/speckit-clarify`, or in an autonomous run as *Autonomous runs* says. The rebuild period ends when the user turns deploys back on.
 
 ### IV. Tests with every behavior change
 Every behavior change comes with tests: unit and widget tests in `test/`, security rules tests in `firestore-tests/`, and allow and deny tests for every new rule path. The failing test comes first when practical. Only a `refactor:` commit changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`.
@@ -45,8 +45,12 @@ Every behavior change comes with tests: unit and widget tests in `test/`, securi
 
 The reviewer agents in `.claude/agents/` each own one concern. `./scripts/required-reviewers.sh` names the ones a staged change needs, from each agent's `Paths:` line, and all of them block: a `FAIL` stops the commit until it is fixed. The commit gate (`.claude/hooks/review-gate.sh`) denies `git commit` until every required reviewer has passed the current staged diff. Nothing is staged while reviewers run. CI runs `check.sh`, `scripts/tests-changed.sh` and the integration tests again on every push to `main` before anything deploys.
 
+## Autonomous runs
+
+The user can start an autonomous run, in which Claude plans and builds the specs without asking, as `docs/dev-workflow/autonomous-runs.md` describes. In a run, Claude settles a gap or conflict in a spec, plan or contracts itself, choosing the option the spec's wording points to, then the one the plan or contracts already imply, and failing both the one that adds the least. Each such choice is recorded in the feature's `decisions.md` for the user to review after the run, and a gap in the spec is also recorded in the spec as assumed. The choice stands until the user reviews it, and a choice the user changes becomes a task like any other change. Everything else in this constitution still holds in a run: checks and reviewers are never bypassed, and a change Claude cannot make within these rules is recorded as a blocker, which ends the run.
+
 ## Governance
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 3.0.1 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-15
+**Version**: 3.1.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-15

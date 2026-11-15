@@ -31,6 +31,8 @@ Stop rules:
 5. A reviewer `FAIL` that still stands after one round of fixes, or that conflicts with the spec: ask the user.
 6. Start a fresh session for each phase in `tasks.md`; the ticked tasks carry the state.
 
+In an autonomous run (a session whose prompt starts with `Autonomous run`), `docs/dev-workflow/autonomous-runs.md` replaces stop rules 1, 3 and 5: Claude settles spec gaps itself, records every such choice and every blocker in the feature's `decisions.md` for the user to review after the run, and ends the run on a blocker.
+
 ## Project state
 
 Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only), in its rebuild period (constitution, principle III). The app is a single screen saying it is being rebuilt (`lib/app.dart`), and the Firestore rules deny every read and write. The app before the rebuild is tagged `pre-rebuild`. Crashlytics reports crashes from release builds.
@@ -41,7 +43,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Specs and design docs
 
-The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks; 002 and 003 are specs only. None of it is implemented yet. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`. Keep them updated when decisions change or a planned piece ships.
+The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks; 002 and 003 are specs only. None of it is implemented yet. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and autonomous runs, with each feature's `decisions.md`, in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 

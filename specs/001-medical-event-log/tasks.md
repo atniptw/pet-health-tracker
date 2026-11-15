@@ -13,7 +13,7 @@ description: "Tasks for the medical event log"
 
 ## How to do a task
 
-Each task is one commit (constitution, Workflow 3). Phase 1 builds the loop below; from T005 on, every task follows it. T003 and T004 already add their `build-log.md` rows (step 4), and Phase 1 merges after T004 (step 5). `CLAUDE.md` (*Implementing a task*, T004) holds the same loop and its stop rules.
+Each task is one commit (constitution, Workflow 3). Phase 1 builds the loop below; from T005 on, every task follows it. T003 and T004 already add their `build-log.md` rows (step 4), and Phase 1 merges after T004 (step 5). `CLAUDE.md` (*Implementing a task*, T004) holds the same loop and its stop rules, and `docs/dev-workflow/autonomous-runs.md` the stop rules for an autonomous run.
 
 1. **Read** the task, and the spec sentences behind each id on its **Covers** line.
 2. **Test first**: write the tests, putting each covered id in a test's name, for example `testWidgets('001-US1-S3: several pets, none logged for → no pet picked', …)`. Use the wording in `contracts/screens.md` and the helpers in `test/support/`. Run `./scripts/test.sh <test files>` and see each new test fail for the reason the spec gives.
