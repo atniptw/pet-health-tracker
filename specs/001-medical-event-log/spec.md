@@ -101,15 +101,15 @@ A caregiver who logged the wrong pet, event, time or details fixes the entry, or
 
 ### Edge Cases
 
-- An event's time is set in the future: the app does not accept it.
-- Two events of the same type are logged for the same pet a few seconds apart: both are kept. The caregiver can delete one if it's a duplicate.
-- An event is logged with the phone offline: it is saved and shown at once.
-- A caregiver removes one of their own event types and later types it again: it is offered in the list again, and its new events count together with the old ones.
-- The same thing happens to two pets: the caregiver logs one event for each pet, separately.
-- The phone's time zone changes: events keep the moment they happened and are shown in the current local time.
-- A caregiver types an event in their own words that matches an existing type except for capitalization: it is treated as the existing type.
-- The caregiver archives their only active pet: the app behaves as if there are no pets and asks them to add one, and archived pets stay viewable.
-- One active pet is left after archiving the others: the app no longer asks which pet an event is for.
+- **EC-01**: An event's time is set in the future: the app does not accept it.
+- **EC-02**: Two events of the same type are logged for the same pet a few seconds apart: both are kept. The caregiver can delete one if it's a duplicate.
+- **EC-03**: An event is logged with the phone offline: it is saved and shown at once.
+- **EC-04**: A caregiver removes one of their own event types and later types it again: it is offered in the list again, and its new events count together with the old ones.
+- **EC-05**: The same thing happens to two pets: the caregiver logs one event for each pet, separately.
+- **EC-06**: The phone's time zone changes: events keep the moment they happened and are shown in the current local time.
+- **EC-07**: A caregiver types an event in their own words that matches an existing type except for capitalization: it is treated as the existing type.
+- **EC-08**: The caregiver archives their only active pet: the app behaves as if there are no pets and asks them to add one, and archived pets stay viewable.
+- **EC-09**: One active pet is left after archiving the others: the app no longer asks which pet an event is for.
 
 ## Requirements *(mandatory)*
 
