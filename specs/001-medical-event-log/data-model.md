@@ -35,12 +35,19 @@ Two kinds behind one `EventType` value:
 
 ### DetailQuestion
 
+A sealed class; each subclass is one kind of question and owns its answer rules (research §5).
+
 | Field | Type | Rules |
 |-------|------|-------|
-| `id` | String | Unique within its type, e.g. `duration`, `what` |
-| `label` | String | Shown to the caregiver |
-| `kind` | `choice` or `duration` | |
-| `options` | List<(id, label)> | `choice` only |
+| `id` | String | Unique within its type, e.g. `duration`, `kind`; never changed or reused |
+| `label` | String | Shown to the caregiver; can change |
+
+| Kind | Extra fields | Answer stored as |
+|------|--------------|------------------|
+| `ChoiceQuestion` | `options`: List<(id, label)>, option ids never changed or reused | the option id (String) |
+| `DurationQuestion` | none | whole seconds (int, ≥ 1) |
+
+Each kind has `bool accepts(Object answer)` and `String describe(Object answer)` (how the history writes it out, e.g. "Grand mal", "2 min 30 s").
 
 ## Event
 
