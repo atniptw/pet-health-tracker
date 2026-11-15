@@ -51,7 +51,7 @@ The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-hou
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, autopilot tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, git hook tests, autopilot tests, rules tests
 ./scripts/test.sh                        # run all tests in test/, in the America/Chicago time zone, printing only failures; use it instead of flutter test for test/
 ./scripts/test.sh test/app_test.dart     # run a single test file
 ./scripts/test.sh --plain-name "<test name>"  # run a single test by name
@@ -69,6 +69,7 @@ dart tool/size_check.dart                # size limits for lib/ (300 lines a fil
 ./scripts/required-reviewers.sh [<from> <to>]  # reviewer agents a diff needs (default: the staged change); --hashes for the commit gate
 ./scripts/test-required-reviewers.sh     # tests for scripts/required-reviewers.sh
 ./scripts/test-review-gate.sh            # tests for the review stamp and commit gate hooks in .claude/hooks
+./scripts/test-githooks.sh               # tests for the git hooks in .githooks
 ./scripts/autopilot.sh [--next]          # autonomous run: one fresh session per plan or phase step until every spec is built (docs/dev-workflow/autonomous-runs.md); --next prints the next step
 ./scripts/test-autopilot.sh              # tests for scripts/autopilot.sh
 specify check                            # Spec Kit CLI, installed with uv tool install specify-cli --from git+https://github.com/github/spec-kit.git; its skills are /speckit-*
