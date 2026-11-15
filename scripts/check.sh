@@ -13,7 +13,8 @@ echo '==> analyze'
 flutter analyze --fatal-infos
 
 echo '==> test'
-flutter test --coverage
+./scripts/test-test-sh.sh
+./scripts/test.sh --coverage
 
 echo '==> size limits'
 dart tool/size_check.dart
