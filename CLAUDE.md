@@ -30,11 +30,13 @@ The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-hou
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, rules tests
 ./scripts/test.sh                        # run all tests in test/, in the America/Chicago time zone, printing only failures; use it instead of flutter test for test/
 ./scripts/test.sh test/app_test.dart     # run a single test file
 ./scripts/test.sh --plain-name "<test name>"  # run a single test by name
 ./scripts/test-test-sh.sh                # tests for scripts/test.sh
+./scripts/spec-coverage.sh [--strict] <spec dir>…  # spec ids (NNN-US<n>-S<m>, NNN-FR-NNN, NNN-EC-NN, NNN-SC-NNN) that no test name or untested.md line covers; fails on unknown ids, and with --strict on missing ones
+./scripts/test-spec-coverage.sh          # tests for scripts/spec-coverage.sh
 npm --prefix firestore-tests test        # security rules tests (starts the Firestore emulator on 8180)
 dart tool/size_check.dart                # size limits for lib/ (300 lines a file, 40 a function) against tool/size_baseline.txt
 ./scripts/comment-check.sh               # comments with wording like "for now" or "v2" (allowed uses in scripts/comment-allowlist.txt)

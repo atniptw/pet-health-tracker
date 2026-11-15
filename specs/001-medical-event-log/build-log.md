@@ -12,3 +12,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 |---|---|---|---|---|---|
 | T001 | not recorded | not recorded | not recorded | — | not recorded |
 | T002 | not recorded | not recorded | not recorded | — | not recorded |
+| T003 | 2 | comment-hygiene 2, docs-sync 2, test-quality 1 | — | — | — |
