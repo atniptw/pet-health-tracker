@@ -22,7 +22,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Specs and design docs
 
-The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`: specs only, with no plan or tasks yet, and none of it is implemented. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`. Keep them updated when decisions change or a planned piece ships.
+The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks; 002 and 003 are specs only. None of it is implemented yet. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 
