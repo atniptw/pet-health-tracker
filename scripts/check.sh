@@ -16,6 +16,19 @@ echo '==> test'
 ./scripts/test-test-sh.sh
 ./scripts/test.sh --coverage
 
+echo '==> spec coverage'
+./scripts/test-spec-coverage.sh
+# A spec is checked once it has tasks, and must be fully covered once every
+# task is ticked.
+for tasks in specs/*/tasks.md; do
+  [ -e "$tasks" ] || continue
+  if grep -qE '^- \[ \] ' "$tasks"; then
+    ./scripts/spec-coverage.sh "$(dirname "$tasks")"
+  else
+    ./scripts/spec-coverage.sh --strict "$(dirname "$tasks")"
+  fi
+done
+
 echo '==> size limits'
 dart tool/size_check.dart
 
