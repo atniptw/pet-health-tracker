@@ -8,7 +8,7 @@ Entities from the spec's Key Entities, as Dart types in `lib/domain/` and as tab
 |-------|------|-------|
 | `id` | String (UUID v4) | Made on the phone; never changes |
 | `name` | String | Required; trimmed; 1–40 characters |
-| `species` | `Species` | One of `dog`, `cat`, `rabbit`, `bird`, `guinea_pig`, `hamster`, `reptile`, `fish`, `horse`, `other` |
+| `species` | `Species` | One of `dog`, `cat`, `other` |
 | `archived` | bool | `false` when added |
 | `createdAt` | DateTime (UTC) | Set when added |
 

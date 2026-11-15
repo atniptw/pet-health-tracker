@@ -59,8 +59,8 @@ The spec leaves the exact list to the plan. It is the list from the spec's Assum
 
 ## 6. Species
 
-- **Decision**: Dog, Cat, Rabbit, Bird, Guinea pig, Hamster, Reptile, Fish, Horse, Other. Stored as a fixed id; "Other" has no free text.
-- **Rationale**: The spec asks for common species with an "other" option, and nothing in it depends on the species beyond showing it.
+- **Decision**: Dog, Cat, Other. Stored as a fixed id; "Other" has no free text.
+- **Rationale**: The user's decision (2026-11-14). The built-in event types (§5) are the events vets commonly see in dogs and cats. Naming other species would need research into which medical events are noteworthy for each, so any other animal is "Other". The spec asks for common species with an "other" option, and nothing in it depends on the species beyond showing it.
 
 ## 7. Matching typed event types
 
