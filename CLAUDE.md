@@ -12,6 +12,25 @@ The project is a [Spec Kit](https://github.com/github/spec-kit) project. Its rul
 
 Each commit is staged exactly, reviewed with the `targeted-review` skill, and made with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every reviewer `./scripts/required-reviewers.sh` names has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing. Don't stage while reviewers run. The pre-push hook runs `check.sh` on every push, and CI runs it again with `scripts/tests-changed.sh` and the integration tests on every push to `main` before anything deploys. `docs/dev-workflow/plan.md` has the details.
 
+## Implementing a task
+
+Each task in a feature's `tasks.md` is one commit. For a task in `specs/<feature>/`:
+
+1. **Read** the task, and the spec sentences behind each id on its **Covers** line.
+2. **Test first**: write the tests, putting each covered id in a test's name, for example `testWidgets('001-US1-S3: several pets, none logged for → no pet picked', …)`. Use the wording in the feature's `contracts/screens.md` and the helpers in `test/support/`. Run `./scripts/test.sh <test files>` and see each new test fail for the reason the spec gives.
+3. **Build** until `./scripts/test.sh <test files>` passes, then run `./scripts/check.sh`.
+4. **Done** when `./scripts/spec-coverage.sh specs/<feature>` lists each id on the task's Covers line as covered, `check.sh` passes, and the `targeted-review` skill passes on the staged task. Tick the task in `tasks.md` and add its row to the feature's `build-log.md` before staging, since the commit gate accepts only the diff that was reviewed. Then commit with `git commit -q -m "<type>: <subject>"`.
+5. **Merge** after the last task of each phase: push the branch and open a pull request with `gh`, and rebase-merge it to `main`, where CI runs `check.sh` and the integration tests.
+
+Stop rules:
+
+1. The same check failing after three different fixes: stop and tell the user what was tried, rather than trying a fourth.
+2. Never change a test's expectation, skip a test or loosen a check to get a task through. If a test looks wrong, quote the spec sentence that shows it, or ask.
+3. A spec gap or a conflict between spec, plan and contracts: stop and ask (`/speckit-clarify`), rather than guessing.
+4. Change only the files the task needs. Something else that's broken becomes a new task in `tasks.md`, not part of this one.
+5. A reviewer `FAIL` that still stands after one round of fixes, or that conflicts with the spec: ask the user.
+6. Start a fresh session for each phase in `tasks.md`; the ticked tasks carry the state.
+
 ## Project state
 
 Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only), in its rebuild period (constitution, principle III). The app is a single screen saying it is being rebuilt (`lib/app.dart`), and the Firestore rules deny every read and write. The app before the rebuild is tagged `pre-rebuild`. Crashlytics reports crashes from release builds.
