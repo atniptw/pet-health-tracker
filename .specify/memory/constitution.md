@@ -1,15 +1,12 @@
 <!--
 Sync Impact Report
-- Version: 2.0.0 → 3.0.0 (MAJOR: principle I redefined)
-- Modified principles: I. Fast symptom logging → I. Fast medical event logging, from the
-  product description the user gave for the rebuild. III. Every commit ships gains a rebuild
-  period, during which pushes to main deploy nothing and the app is built from the specs alone.
+- Version: 3.0.0 → 3.0.1 (PATCH: Workflow step 4 wording)
+- Modified principles: none
 - Added sections: none
 - Removed sections: none
-- Modified sections: Workflow step 5 names the docs in docs/ in general, since the rebuild's
-  plans decide which design docs exist.
-- Dependent files to update: CLAUDE.md (goal, summary of the rules, CI), docs/ci.md (deploy
-  variables), .claude/agents/release-safety.md (says every push deploys)
+- Modified sections: Workflow step 4 also lets a feature merge after each phase of its
+  tasks.md, as the user decided on 2026-11-14.
+- Dependent files to update: specs/001-medical-event-log/tasks.md (merge note)
 - Deferred placeholders: none
 -->
 
@@ -41,7 +38,7 @@ Every behavior change comes with tests: unit and widget tests in `test/`, securi
 1. **Specify.** `/speckit-specify` creates the feature branch (`NNN-short-name`, from the git extension) and `specs/NNN-short-name/spec.md`, with the user's decisions recorded as they make them.
 2. **Plan and tasks.** `/speckit-plan` writes `plan.md` and `/speckit-tasks` writes `tasks.md`. Each task in `tasks.md` is one commit and is safe to ship on its own.
 3. **Implement one task per commit.** For each task: write the failing test, make the change, run `./scripts/check.sh`, stage exactly that task, review it with the `targeted-review` skill, then `git commit -q -m "<type>: <subject>"` and tick the task in `tasks.md` in the same commit. `/speckit-implement` works through the tasks the same way. The git extension's auto-commit stays off.
-4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task or once at the end.
+4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task, after each phase of its `tasks.md`, or once at the end.
 5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md` and the docs in `docs/` they affect are updated in the same commit.
 
 ## Review gates
@@ -52,4 +49,4 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 3.0.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-14
+**Version**: 3.0.1 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-15
