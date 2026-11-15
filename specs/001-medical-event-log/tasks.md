@@ -13,12 +13,13 @@ description: "Tasks for the medical event log"
 
 ## How to do a task
 
-Each task is one commit (constitution, Workflow 3). Phase 1 builds the loop below; from T005 on, every task follows it. `CLAUDE.md` (*Implementing a task*, T004) holds the same loop and its stop rules.
+Each task is one commit (constitution, Workflow 3). Phase 1 builds the loop below; from T005 on, every task follows it. T003 and T004 already add their `build-log.md` rows (step 4), and Phase 1 merges after T004 (step 5). `CLAUDE.md` (*Implementing a task*, T004) holds the same loop and its stop rules.
 
 1. **Read** the task, and the spec sentences behind each id on its **Covers** line.
 2. **Test first**: write the tests, putting each covered id in a test's name, for example `testWidgets('001-US1-S3: several pets, none logged for → no pet picked', …)`. Use the wording in `contracts/screens.md` and the helpers in `test/support/`. Run `./scripts/test.sh <test files>` and see each new test fail for the reason the spec gives.
 3. **Build** until `./scripts/test.sh <test files>` passes, then run `./scripts/check.sh`.
-4. **Done** when `./scripts/spec-coverage.sh specs/001-medical-event-log` lists each id on the task's Covers line as covered, `check.sh` passes, and the `targeted-review` skill passes on the staged task. Then commit with `git commit -q -m "<type>: <subject>"`, ticking the task here in the same commit.
+4. **Done** when `./scripts/spec-coverage.sh specs/001-medical-event-log` lists each id on the task's Covers line as covered, `check.sh` passes, and the `targeted-review` skill passes on the staged task. Then commit with `git commit -q -m "<type>: <subject>"`, ticking the task here and adding its row to `build-log.md` in the same commit.
+5. **Merge** after the last task of each phase: push the branch and open a pull request with `gh`, and rebase-merge it to `main`, where CI runs `check.sh` and the integration tests.
 
 The placeholder screen stays until T024 wires in the first complete flow. Screens built before then are tested but not reachable. During the rebuild period, don't read the `pre-rebuild` tag or earlier history for how to build anything (constitution III).
 
@@ -222,4 +223,4 @@ Task: "Create lib/domain/durations.dart" (T027)
 7. Phase 7 (US4): edit and delete.
 8. Phase 8: `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
 
-The feature can merge to `main` after any task, or once at the end (constitution, Workflow 4). Deploys stay off for the rebuild period, so merging ships nothing to testers.
+The feature merges to `main` at the end of each phase, which fits the constitution's "after each task" (Workflow 4) since each phase ends with a task, so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.
