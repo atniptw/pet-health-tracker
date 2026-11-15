@@ -7,6 +7,41 @@ A session is in an autonomous run when its prompt starts with `Autonomous run`. 
 - **Plan `<spec dir>`**: the feature has a spec but no `tasks.md`.
 - **Phase `<n>` of `<spec dir>`**: build every unticked task in that phase of the feature's `tasks.md`.
 
+## Starting a run
+
+`scripts/autopilot.sh` runs the steps one after another, each in a fresh headless session (`claude -p`), until every spec in `specs/` is built. Before each step it switches its checkout to `origin/main` and picks the first spec, in number order, that has no `tasks.md` (a plan step) or has an unticked task (a phase step, for the first phase with one). It needs a clean tree, so give it a worktree of its own:
+
+```
+git worktree add --detach ../pet-health-tracker-autopilot origin/main
+cd ../pet-health-tracker-autopilot
+flutter pub get
+./scripts/autopilot.sh
+```
+
+`./scripts/autopilot.sh --next` prints the step it would start, and starts nothing. Each session runs with `--permission-mode auto --permission-prompts none`, so anything that would ask for permission is denied rather than waiting for the user. It also gets `SPECIFY_FEATURE_DIRECTORY` set to its spec, so the `/speckit-*` skills work on that feature. Each session's output goes to `$(git rev-parse --git-common-dir)/autopilot/<time>-<step>.log`.
+
+A session that ends on a usage limit is resumed (`claude -p --resume`, same session) once the limit resets: a minute after the reset time when the message gives one, otherwise after half an hour, again and again until the step goes on. The wait is printed, and the run needs nothing from the user while it waits.
+
+The run stops, and prints how many `decisions.md` entries are open in each feature, when:
+
+- every task in every spec is ticked
+- a `decisions.md` on `main` has an open `Blocker` entry
+- a step leaves `origin/main` where it was, which means the session ended without merging anything; its log says why
+- the tree has changes when a step would start
+- a session that stopped on a usage limit left `.claude/` or `.githooks/` different from `origin/main`, since a resumed session would load those hooks and settings unreviewed
+
+After resolving what stopped it, run it again: it carries on from the next step.
+
+## Keeping a session's context small
+
+A session builds a whole phase, so it hands the noisy work to subagents and keeps only their summaries:
+
+- **Each task** is built by a `general-purpose` subagent, given the task id, the spec dir and *Implementing a task* steps 1 to 3 with the stop rules below. It writes the tests and code, runs `./scripts/test.sh` and `./scripts/check.sh`, and hands back the files it changed, the covered ids, the check result and any `decisions.md` entries it made, in a few lines. It does not stage or commit.
+- **The session** stages the task, runs `targeted-review` (the reviewers are subagents too), sends findings back to the task's subagent with `SendMessage` to fix, and commits once every reviewer passes, since the commit gate and review stamps belong to it.
+- **Broad searches and long logs**, such as a failing CI run, go to an `Explore` or `general-purpose` subagent that hands back only what was found.
+
+A subagent that stopped on a usage limit hasn't failed: once usage resets, continue it with `SendMessage`.
+
 ## A plan step
 
 1. Create the branch `<feature>-plan` from `origin/main`, for example `002-shared-households-plan`.

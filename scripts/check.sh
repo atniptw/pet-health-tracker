@@ -49,6 +49,9 @@ echo '==> hooks, reviewer mapping and review gate'
 ./scripts/test-required-reviewers.sh
 ./scripts/test-review-gate.sh
 
+echo '==> autopilot'
+./scripts/test-autopilot.sh
+
 echo '==> firestore rules'
 [ -d firestore-tests/node_modules ] || npm --prefix firestore-tests ci --no-fund --no-audit
 npm --prefix firestore-tests test
