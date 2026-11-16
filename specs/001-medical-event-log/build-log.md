@@ -18,3 +18,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T005 | 4 | clean-code 2, docs-sync 2, scope-guard 1, security 1, test-quality 1 | — | — | — | D-001 |
 | T006 | 3 | clean-code 2, docs-sync 2 | — | — | — | D-001 (widened) |
 | T007 | 2 | docs-sync 1 | — | 3 | — | D-002 |
+| T008 | 2 | scope-guard 3 | — | — | — | D-001 (widened) |
