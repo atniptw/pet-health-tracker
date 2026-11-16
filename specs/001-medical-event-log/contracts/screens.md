@@ -32,11 +32,11 @@ App start
 
 Opened from a type button, or from "Something else" (which first shows a text field "What happened?"; a typed name that matches an existing type, ignoring capitalization and spacing, uses that type).
 
-- Header: the type name and the pet. With several pets and none picked, the pet choices appear here and "Save" stays disabled until one is chosen (story 1 scenario 3).
+- Header: the type name and the pet. With several pets and none picked, the pet choices appear here and "Save" stays disabled until one is chosen (story 1 scenario 3). Once shown, the choices stay for the sheet's life, so a pet chosen there can be changed before saving (D-010).
 - "When": "Now" by default; tapping opens date and time pickers that stop at now (FR-003). A time picked after now is not taken: the field keeps what it showed, with "That time is in the future" under it (D-007).
 - The type's detail questions, each optional: choice questions as a row of choice chips (tap again to clear), duration as "Minutes" and "Seconds" number fields under the question, up to 3 and 2 digits, added up as typed, so 1 and 75 is 135 seconds; both empty or zero leaves it unanswered (FR-006, D-008).
-- "Note (optional)" text field.
-- "Save" is enabled as soon as a pet is picked (FR-005). Saving a time after now shows "That time is in the future" and stays open.
+- "Note (optional)" text field, up to 1000 characters; typing stops there.
+- "Save" is enabled as soon as a pet is picked (FR-005) and disabled while saving. Saving a time after now shows "That time is in the future" under "When" and stays open; picking another time clears it (D-011). Once saved, the sheet closes with the saved event.
 
 ## Pet history
 
