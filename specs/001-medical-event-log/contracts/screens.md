@@ -17,6 +17,7 @@ App start
 
 - Shown whenever there are no active pets (story 3 scenario 1; edge case: last active pet archived).
 - "Add your first pet": name field, species choices, "Save". Save is enabled once a name is entered.
+- After a save, the screen keeps the entered name and species with "Save" disabled until the start screen choice replaces it (D-006).
 - If archived pets exist, a "See archived pets" link opens Archived pets.
 
 ## Log (home screen)

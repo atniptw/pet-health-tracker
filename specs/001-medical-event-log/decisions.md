@@ -43,6 +43,15 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Question**: contracts/screens.md and tasks.md say the pet form's "Save" is enabled once a name is entered, but not which species is picked before the caregiver chooses one. With none picked, a name alone couldn't enable Save.
 - **Options**: (a) the first species, Dog, picked; (b) none picked, and Save waits for a species too; (c) Other picked.
 - **Chose**: (a): "enabled once a name is entered" points to a species already picked, and Dog is first in research §6's list. A cat owner taps "Cat" before Save.
-- **Changed**: contracts/screens.md, Pet form; `lib/ui/pets/pet_form_screen.dart`; the species choices test in `test/ui/pets/pet_form_screen_test.dart`
-- **To undo**: start `_species` as null in `_PetFormScreenState`, require it for Save, and change that test and the contracts line.
+- **Changed**: contracts/screens.md, Pet form; `PetForm` in `lib/ui/pets/pet_form.dart` (shared by `lib/ui/pets/pet_form_screen.dart` and `lib/ui/pets/first_pet_screen.dart`); the species choices test in `test/ui/pets/pet_form_screen_test.dart`
+- **To undo**: start `_species` as null in `_PetFormState`, require it for Save, and change that test and the contracts line.
+- **Status**: open
+
+## D-006 · Contract gap · T016: after saving the first pet, the screen keeps its fields with Save disabled
+
+- **Question**: contracts/screens.md shows First pet going to Log once saved, and tasks.md says the screen doesn't navigate itself because the start screen choice (T024) follows `watchActive`. Neither says what the screen shows between the save and that replacement: cleared fields with Save enabled would let a second tap add a second pet.
+- **Options**: (a) keep the entered name and species, with Save disabled; (b) clear the fields, with Save disabled until a name is typed again; (c) keep the fields with Save enabled again.
+- **Chose**: (a): the pet is saved, so nothing on the screen invites saving it again, and the screen shows what was saved until the start screen choice replaces it. The pet form shares this, which it never shows since it closes once saved.
+- **Changed**: contracts/screens.md, First pet; `PetForm` in `lib/ui/pets/pet_form.dart`, shared by `lib/ui/pets/first_pet_screen.dart` and `lib/ui/pets/pet_form_screen.dart`; the save test in `test/ui/pets/first_pet_screen_test.dart`
+- **To undo**: reset `_saving` (and clear `_name` for (b)) after a successful save in `_PetFormState._save`, and change that test and the contracts line.
 - **Status**: open

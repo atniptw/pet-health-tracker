@@ -7,6 +7,7 @@ import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/ui/app_scope.dart';
 import 'package:pet_health_tracker/ui/pets/pet_form_screen.dart';
 
+import '../../support/failing_pets.dart';
 import '../../support/robot.dart';
 import '../../support/screen_checks.dart';
 import '../../support/test_app.dart';
@@ -30,17 +31,6 @@ Future<void> openForm(WidgetTester tester, TestApp app, {Pet? pet}) async {
   );
   await tester.tap(find.text('Open'));
   await tester.pumpAndSettle();
-}
-
-/// A [PetRepository] whose `add` fails with an error naming the pet, as
-/// sqflite's `DatabaseException` lists a statement's arguments.
-class FailingPets implements PetRepository {
-  @override
-  Future<Pet> add({required String name, required Species species}) =>
-      Future.error(Exception('INSERT INTO pets failed, args [$name]'));
-
-  @override
-  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
 Finder get saveButton => find.widgetWithText(FilledButton, 'Save');
