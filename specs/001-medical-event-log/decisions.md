@@ -64,3 +64,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Log sheet; quickstart.md, step 6; research.md §4, Validation; `DateTimeField` in `lib/ui/common/date_time_field.dart`; the future time tests in `test/ui/common/date_time_field_test.dart`
 - **To undo**: drop `_pickedInFuture` and the `errorText` in `_DateTimeFieldState`, and change those tests, the contracts line, quickstart.md step 6 and research.md §4.
 - **Status**: open
+
+## D-008 · Contract gap · T018: the duration fields are "Minutes" and "Seconds", up to 3 and 2 digits, added up as typed
+
+- **Question**: contracts/screens.md asks for "minutes and seconds fields" and tasks.md for whole seconds ≥ 1, but neither names the fields, says how many digits they take, or what seconds over 59 mean.
+- **Options**: (a) "Minutes" (up to 3 digits) and "Seconds" (up to 2 digits), digits only, with seconds over 59 added as they are (0 and 90 is 90 seconds); (b) the same, with seconds over 59 refused; (c) one field of seconds.
+- **Chose**: (a): the contract's own words as the labels, and nothing typed is refused or rewritten, which is the least to explain to a caregiver timing a seizure. 999 minutes is well past any seizure or coughing fit, and the limits keep the total a small whole number.
+- **Changed**: contracts/screens.md, Log sheet; `DurationField` in `lib/ui/common/duration_field.dart`; the tests in `test/ui/common/duration_field_test.dart`
+- **To undo**: change the labels, the `LengthLimitingTextInputFormatter`s or add a seconds limit in `_DurationFieldState`, and those tests and the contracts line.
+- **Status**: open
