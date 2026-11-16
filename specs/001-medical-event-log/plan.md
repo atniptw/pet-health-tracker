@@ -82,6 +82,7 @@ lib/
 │   ├── repositories.dart         # interfaces, TypeChoice, Clock, IdGenerator
 │   └── local/
 │       ├── database.dart         # open, schema, foreign keys
+│       ├── change_signal.dart    # streams that read again after each write
 │       ├── local_pet_repository.dart
 │       ├── local_event_type_repository.dart
 │       └── local_event_repository.dart

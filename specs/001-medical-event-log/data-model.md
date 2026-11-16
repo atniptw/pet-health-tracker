@@ -14,7 +14,7 @@ Entities from the spec's Key Entities, as Dart types in `lib/domain/` and as tab
 
 - Renaming or changing species keeps the `id`, so its events stay with it (story 3 scenario 2).
 - States: **active** ⇄ **archived** (archive and restore, FR-015). Pets are never deleted in this feature.
-- Active pets are listed by name; archived pets likewise, on their own list.
+- Active pets are listed by name; archived pets likewise, on their own list. By name means ignoring case (`toLowerCase()`), then by `id` for pets with the same name (D-003).
 
 ## Event type
 
