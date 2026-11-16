@@ -10,3 +10,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: plan.md, Primary Dependencies; pubspec.yaml
 - **To undo**: count `name.length` in `checkedNameLength` (`lib/domain/names.dart`), which `validPetName` and `validTypeName` share, change the emoji tests in `test/domain/pet_test.dart` and `test/domain/event_type_test.dart`, and drop `characters` from pubspec.yaml and plan.md.
 - **Status**: open
+
+## D-002 · Spec gap · T007: ids of the built-in detail questions and options
+
+- **Question**: research.md §5 lists each built-in type's questions and options by label, and says their ids never change, but doesn't give the ids. They are stored in every event's `details`, so they are fixed from the first release.
+- **Options**: (a) short snake_case ids from the labels, reusing data-model.md's examples `kind` and `duration`; (b) the labels themselves; (c) numbered ids (`q1`, `o1`).
+- **Chose**: (a). Questions: `what_came_up`, `consistency`, `blood_seen`, `kind`, `duration` (both "How long it lasted"), `leg`, `meals_missed`, `what`. Options are the label in snake_case, except Yellow liquid or bile → `bile`, and Meals missed 1, 2, 3 or more → `one`, `two`, `three_or_more`. Labels can change without touching stored events.
+- **Changed**: `lib/domain/built_in_event_types.dart`, `test/domain/built_in_event_types_test.dart`
+- **To undo**: change the ids in both files before any event is stored with them.
+- **Status**: open
