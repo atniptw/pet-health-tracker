@@ -52,6 +52,7 @@ Opened from a type button, or from "Something else" (which first shows a text fi
 ## Pet form
 
 - Add or edit: name, species, "Save". Editing keeps the pet's events (story 3 scenario 2).
+- Adding starts with "Dog" picked, so "Save" needs only a name (D-005).
 
 ## Pets
 

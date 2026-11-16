@@ -37,3 +37,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: data-model.md, Event; `watchForPet` in `lib/data/local/local_event_repository.dart`; the two same-moment tests in `test/data/local/local_event_repository_test.dart`
 - **To undo**: change the `orderBy` in `watchForPet`, those tests and the data-model.md sentence.
 - **Status**: open
+
+## D-005 · Spec gap · T015: adding a pet starts with Dog picked
+
+- **Question**: contracts/screens.md and tasks.md say the pet form's "Save" is enabled once a name is entered, but not which species is picked before the caregiver chooses one. With none picked, a name alone couldn't enable Save.
+- **Options**: (a) the first species, Dog, picked; (b) none picked, and Save waits for a species too; (c) Other picked.
+- **Chose**: (a): "enabled once a name is entered" points to a species already picked, and Dog is first in research §6's list. A cat owner taps "Cat" before Save.
+- **Changed**: contracts/screens.md, Pet form; `lib/ui/pets/pet_form_screen.dart`; the species choices test in `test/ui/pets/pet_form_screen_test.dart`
+- **To undo**: start `_species` as null in `_PetFormScreenState`, require it for Save, and change that test and the contracts line.
+- **Status**: open
