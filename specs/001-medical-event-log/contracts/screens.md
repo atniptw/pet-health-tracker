@@ -26,7 +26,7 @@ App start
 - **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else".
 - "History" opens Pet history for the picked pet; it is disabled when none is picked.
 - Menu: "Pets", "My event types".
-- After a save, a "Saved: <type> for <pet>" message.
+- After a save, a "Saved: <type> for <pet>" message, which replaces any earlier one at once (D-013), and the saved event's pet becomes the picked one.
 
 ## Log sheet
 

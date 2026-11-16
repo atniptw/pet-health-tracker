@@ -109,3 +109,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Log sheet; `EventFields` in `lib/ui/common/event_fields.dart`; the test "the note takes up to 1000 characters" in `test/ui/log/log_sheet_test.dart`
 - **To undo**: replace the `LengthLimitingTextInputFormatter` in `EventFields.build` with `maxLength: 1000`, and change that test and the contracts line.
 - **Status**: open
+
+## D-013 · Choice · T022: a new "Saved" message replaces the one before it at once
+
+- **Question**: contracts/screens.md shows "Saved: <type> for <pet>" after each save, but not what happens when a second event is saved while the first message still shows, as when the same thing is logged for two pets (EC-05).
+- **Options**: (a) the new message replaces the earlier one at once; (b) it waits in line until the earlier one has gone, a few seconds later.
+- **Chose**: (a): the message on screen is always about the event just saved, so the caregiver logging for a second pet sees that pet's name straight away.
+- **Changed**: contracts/screens.md, Log (home screen); `_LogScreenState._log` in `lib/ui/log/log_screen.dart`; the test "a new "Saved" message replaces the one before it (D-013)" in `test/ui/log/log_screen_test.dart`
+- **To undo**: drop `removeCurrentSnackBar()` in `_LogScreenState._log`, and change that test, the "Saved: Vomiting for Mia" check in the 001-EC-05 test and the contracts line.
+- **Status**: open
