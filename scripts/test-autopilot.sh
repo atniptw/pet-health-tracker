@@ -71,6 +71,10 @@ cat >"$dir/bin/sleep" <<'FAKE'
 echo "$1" >>"$FAKE_SLEEPS"
 FAKE
 chmod +x "$dir/bin/sleep"
+# A uuidgen that always fails, so a driver that needs uuidgen fails here even
+# where it is installed.
+printf '#!/usr/bin/env bash\nexit 127\n' >"$dir/bin/uuidgen"
+chmod +x "$dir/bin/uuidgen"
 
 tasks_2_3='## Phase 1: Setup
 
@@ -176,7 +180,7 @@ $(step_prompt specs/002-b 'Plan specs/002-b')
 $(step_prompt specs/002-b 'Phase 1 of specs/002-b')"
 [ "$sessions" = "$want" ] || fail "run to the end: one session per step from main, got '$sessions'"
 [ -z "$sleeps" ] || fail "run to the end: expected no waits, got '$sleeps'"
-uuid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+uuid='[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
 [ "$(grep -oE "$uuid" "$dir/sessions" | sort -u | wc -l | tr -d ' ')" = 4 ] ||
   fail 'run to the end: expected a session id of its own for each step'
 

@@ -104,6 +104,15 @@ gates_unchanged() {
     [ -z "$(git status --porcelain -- .claude .githooks)" ]
 }
 
+# Prints a random version 4 UUID from /dev/urandom, which Linux and macOS both
+# have, unlike uuidgen.
+session_id() {
+  local hex
+  hex=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+  printf '%s-%s-4%s-%x%s-%s\n' "${hex:0:8}" "${hex:8:4}" "${hex:13:3}" \
+    $((0x${hex:16:1} & 3 | 8)) "${hex:17:3}" "${hex:20:12}"
+}
+
 while :; do
   if [ -n "$(git status --porcelain)" ]; then
     echo 'autopilot: the working tree has changes; commit or remove them first' >&2
@@ -134,7 +143,7 @@ while :; do
   log="$log_dir/$(date +%Y%m%d-%H%M%S)-$(echo "$step" | tr ' /' '--').log"
   before=$(git rev-parse origin/main)
   echo "autopilot: $step (log: $log)"
-  session=$(uuidgen | tr '[:upper:]' '[:lower:]')
+  session=$(session_id)
   attempt -p "$prompt" --session-id "$session"
   while hit_usage_limit; do
     if ! gates_unchanged; then
