@@ -63,9 +63,14 @@ const _maxNoteLength = 1000;
 
 /// [details] unchanged; throws [ArgumentError] unless every key is one of
 /// [type]'s question ids and its question accepts the answer.
-Map<String, Object> validDetails(EventType type, Map<String, Object> details) {
+Map<String, Object> validDetails(EventType type, Map<String, Object> details) =>
+    validDetailsFor(type.questions, details);
+
+/// [details] unchanged; throws [ArgumentError] unless every key is the id of
+/// one of [questions] and that question accepts the answer.
+Map<String, Object> validDetailsFor(List<DetailQuestion> questions, Map<String, Object> details) {
   for (final MapEntry(:key, :value) in details.entries) {
-    final question = _question(type, key);
+    final question = _question(questions, key);
     if (question == null) {
       throw ArgumentError('A key is not one of the type\'s questions', 'details');
     }
@@ -90,11 +95,11 @@ String? validNote(String? note) {
 /// The [details] whose question ids [newType] also has.
 Map<String, Object> detailsKeptFor(EventType newType, Map<String, Object> details) => {
   for (final MapEntry(:key, :value) in details.entries)
-    if (_question(newType, key) != null) key: value,
+    if (_question(newType.questions, key) != null) key: value,
 };
 
-DetailQuestion? _question(EventType type, String id) {
-  for (final question in type.questions) {
+DetailQuestion? _question(List<DetailQuestion> questions, String id) {
+  for (final question in questions) {
     if (question.id == id) return question;
   }
   return null;

@@ -66,6 +66,7 @@ Each kind has `bool accepts(Object answer)` and `String describe(Object answer)`
 - Changing an event's type keeps only the details whose question ids the new type also has.
 - Deleting an event removes the row (FR-011); there is no undo.
 - Duplicates seconds apart are both kept (edge case).
+- A pet's events are listed newest first by `occurredAt`; events at the same moment are listed most recently logged first (`createdAt`), then by `id` (D-004).
 
 ## Settings
 

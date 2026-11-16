@@ -176,6 +176,27 @@ void main() {
     });
   });
 
+  group('questionsFor', () {
+    test('an existing type gives its questions', () async {
+      expect(await repo.questionsFor(ExistingType('seizure')), builtInEventTypes[2].questions);
+    });
+
+    test('a custom type gives none', () async {
+      await save(NewTypeName('Ear shaking'));
+
+      expect(await repo.questionsFor(ExistingType('type-1')), isEmpty);
+    });
+
+    test('a typed name gives the questions of the type it matches', () async {
+      expect(await repo.questionsFor(NewTypeName('  SEIZURE ')), builtInEventTypes[2].questions);
+    });
+
+    test('a typed name matching no type gives none and saves nothing', () async {
+      expect(await repo.questionsFor(NewTypeName('Ear shaking')), isEmpty);
+      expect(await db.query('event_types'), isEmpty);
+    });
+  });
+
   group('remove', () {
     test(
       '001-FR-004: removing a custom type takes it off the lists and leaves its events alone',

@@ -73,6 +73,17 @@ class LocalEventTypeRepository implements EventTypeRepository {
     }
   }
 
+  /// The detail questions of the type [choice] names; none for a typed name
+  /// matching no type, since a new custom type has none.
+  Future<List<DetailQuestion>> questionsFor(TypeChoice choice) async {
+    switch (choice) {
+      case ExistingType(:final typeId):
+        return (await byId(typeId)).questions;
+      case NewTypeName(:final name):
+        return match(name)?.questions ?? const [];
+    }
+  }
+
   /// Reloads the custom types and makes every open stream emit again.
   Future<void> notifyChanged() async {
     await _load();
