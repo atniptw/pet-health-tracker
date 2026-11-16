@@ -20,11 +20,11 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **To undo**: change the ids in both files before any event is stored with them.
 - **Status**: open
 
-## D-003 · Spec gap · T011: pets listed by name ignoring case, same names by id
+## D-003 · Spec gap · T011, T012: pets and custom event types listed by name ignoring case, same names by id
 
-- **Question**: data-model.md and contracts/repositories.md list active and archived pets "by name", but don't say whether case counts or how pets with the same name are ordered. A plain string or SQLite sort puts "Ziggy" before "apple", and Dart's sort isn't stable, so two pets called "Max" could swap places between emits.
+- **Question**: data-model.md and contracts/repositories.md list active and archived pets, and the custom event types, "by name", but don't say whether case counts or how pets with the same name are ordered. A plain string or SQLite sort puts "Ziggy" before "apple", and Dart's sort isn't stable, so two pets called "Max" could swap places between emits.
 - **Options**: (a) by `toLowerCase()` of the name, then by `id`; (b) SQLite `COLLATE NOCASE`, which folds only ASCII letters; (c) case-sensitive code-unit order; (d) locale-aware collation, which needs a new dependency.
 - **Chose**: (a). Research §7 already compares type names with `toLowerCase()`, so names are compared the same way throughout, and the `id` tie-break keeps the same order on every emit. Accented letters sort after "z", as in (b) and (c).
-- **Changed**: data-model.md, Pet; `lib/data/local/local_pet_repository.dart`, `test/data/local/local_pet_repository_test.dart`
-- **To undo**: change `_compareByName` in `lib/data/local/local_pet_repository.dart`, the two list-order tests and the data-model.md sentence.
+- **Changed**: data-model.md, Pet and EventType; `byName` in `lib/domain/names.dart`, used by `lib/data/local/local_pet_repository.dart` and `lib/data/local/local_event_type_repository.dart`; `test/data/local/local_pet_repository_test.dart`, `test/data/local/local_event_type_repository_test.dart`
+- **To undo**: change `byName` in `lib/domain/names.dart`, which both repositories share, the pet list-order tests, the custom type list-order test in `test/data/local/local_event_type_repository_test.dart`, and the two data-model.md sentences. Custom type names are unique by their lower-cased match key, so the `id` tie-break never applies to them.
 - **Status**: open

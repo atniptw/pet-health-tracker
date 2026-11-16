@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../../domain/names.dart';
 import '../../domain/pet.dart';
 import '../repositories.dart';
 import 'change_signal.dart';
@@ -67,10 +68,7 @@ class LocalPetRepository implements PetRepository {
     return rows.map(_fromRow).toList()..sort(_compareByName);
   }
 
-  static int _compareByName(Pet a, Pet b) {
-    final byName = a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    return byName != 0 ? byName : a.id.compareTo(b.id);
-  }
+  static final _compareByName = byName<Pet>(name: (pet) => pet.name, id: (pet) => pet.id);
 
   static Pet _fromRow(Map<String, Object?> row) => Pet(
     id: row['id']! as String,
