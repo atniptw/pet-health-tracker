@@ -30,7 +30,7 @@ Two kinds behind one `EventType` value:
 
 - Built-in types live in code (`lib/domain/built_in_event_types.dart`) and can't be removed. Custom types are rows in the database.
 - Names are unique by their match key (research §7): trimmed, spaces collapsed, lower-cased. A typed name matching a removed custom type sets `removed` back to `false`.
-- The logging list shows the built-in types in their fixed order, then the custom types that aren't removed, by name.
+- The logging list shows the built-in types in their fixed order, then the custom types that aren't removed, by name, ignoring case as for pets (D-003).
 - States of a custom type: **offered** → **removed** (FR-004) → **offered** again when typed.
 
 ### DetailQuestion

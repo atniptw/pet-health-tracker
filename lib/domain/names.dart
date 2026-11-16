@@ -11,3 +11,12 @@ String checkedNameLength(String name) {
   }
   return name;
 }
+
+/// Orders items by name ignoring case (`toLowerCase()`), then by id, so items
+/// with the same name keep their places.
+Comparator<T> byName<T>({required String Function(T) name, required String Function(T) id}) {
+  return (a, b) {
+    final byName = name(a).toLowerCase().compareTo(name(b).toLowerCase());
+    return byName != 0 ? byName : id(a).compareTo(id(b));
+  };
+}
