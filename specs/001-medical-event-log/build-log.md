@@ -20,3 +20,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T007 | 2 | docs-sync 1 | — | 3 | — | D-002 |
 | T008 | 2 | scope-guard 3 | — | — | — | D-001 (widened) |
 | T009 | 2 | — | — | — | — | — |
+| T010 | 1 | — | — | — | — | — |
