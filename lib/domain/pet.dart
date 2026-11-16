@@ -1,4 +1,4 @@
-import 'package:characters/characters.dart';
+import 'names.dart';
 
 /// The species a caregiver can choose for a pet (research §6).
 enum Species {
@@ -64,15 +64,5 @@ class Pet {
   int get hashCode => Object.hash(id, name, species, archived, createdAt);
 }
 
-/// The longest pet name, in user-perceived characters.
-const _maxPetNameLength = 40;
-
 /// [name] trimmed; throws [ArgumentError] unless it is 1–40 characters.
-String validPetName(String name) {
-  final trimmed = name.trim();
-  final length = trimmed.characters.length;
-  if (length < 1 || length > _maxPetNameLength) {
-    throw ArgumentError('Must be 1–$_maxPetNameLength characters', 'name');
-  }
-  return trimmed;
-}
+String validPetName(String name) => checkedNameLength(name.trim());
