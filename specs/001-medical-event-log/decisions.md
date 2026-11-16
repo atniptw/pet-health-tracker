@@ -28,3 +28,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: data-model.md, Pet and EventType; `byName` in `lib/domain/names.dart`, used by `lib/data/local/local_pet_repository.dart` and `lib/data/local/local_event_type_repository.dart`; `test/data/local/local_pet_repository_test.dart`, `test/data/local/local_event_type_repository_test.dart`
 - **To undo**: change `byName` in `lib/domain/names.dart`, which both repositories share, the pet list-order tests, the custom type list-order test in `test/data/local/local_event_type_repository_test.dart`, and the two data-model.md sentences. Custom type names are unique by their lower-cased match key, so the `id` tie-break never applies to them.
 - **Status**: open
+
+## D-004 · Spec gap · T013: events at the same moment listed most recently logged first, then by id
+
+- **Question**: data-model.md and contracts/repositories.md list a pet's events "newest first", by `occurred_at`, but don't say how events at the same moment are ordered. Two events back-dated to the same minute are equal there, and SQLite returns equal rows in no set order, so they could swap places between emits of the history.
+- **Options**: (a) by `created_at` descending, then `id` descending; (b) by `id` only; (c) leave the order of equal moments to SQLite.
+- **Chose**: (a): the one logged later shows above, as it would for events a moment apart, and the `id` tie-break keeps the same order on every emit.
+- **Changed**: data-model.md, Event; `watchForPet` in `lib/data/local/local_event_repository.dart`; the two same-moment tests in `test/data/local/local_event_repository_test.dart`
+- **To undo**: change the `orderBy` in `watchForPet`, those tests and the data-model.md sentence.
+- **Status**: open

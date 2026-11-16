@@ -116,6 +116,25 @@ void main() {
     });
   });
 
+  group('validDetailsFor', () {
+    test('answers to the given questions are accepted', () {
+      const details = {'kind': 'focal', 'duration': 30};
+      expect(validDetailsFor(seizure.questions, details), details);
+    });
+
+    test('with no questions, any detail is refused and none is accepted', () {
+      expect(validDetailsFor(const [], const {}), isEmpty);
+      expect(() => validDetailsFor(const [], const {'duration': 30}), throwsArgumentError);
+    });
+
+    test('an answer its question does not accept is refused', () {
+      expect(
+        () => validDetailsFor(seizure.questions, const {'kind': 'tremor'}),
+        throwsArgumentError,
+      );
+    });
+  });
+
   group('validNote', () {
     test('001-FR-006: the note is optional; empty or spaces become null', () {
       expect(validNote(null), isNull);
