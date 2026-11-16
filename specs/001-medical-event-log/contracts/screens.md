@@ -33,7 +33,7 @@ App start
 Opened from a type button, or from "Something else" (which first shows a text field "What happened?"; a typed name that matches an existing type, ignoring capitalization and spacing, uses that type).
 
 - Header: the type name and the pet. With several pets and none picked, the pet choices appear here and "Save" stays disabled until one is chosen (story 1 scenario 3).
-- "When": "Now" by default; tapping opens date and time pickers that stop at now (FR-003).
+- "When": "Now" by default; tapping opens date and time pickers that stop at now (FR-003). A time picked after now is not taken: the field keeps what it showed, with "That time is in the future" under it (D-007).
 - The type's detail questions, each optional: choice questions as a row of choice chips (tap again to clear), duration as minutes and seconds fields (FR-006).
 - "Note (optional)" text field.
 - "Save" is enabled as soon as a pet is picked (FR-005). Saving a time after now shows "That time is in the future" and stays open.

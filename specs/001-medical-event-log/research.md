@@ -27,7 +27,7 @@ Decisions for `plan.md`. The stack is fixed (Flutter + Firebase, the existing pr
 
 - **Decision**: Each event stores the moment it happened as UTC milliseconds since the epoch. It is shown in the phone's current local time with `intl`'s `DateFormat` (0.20.x).
 - **Rationale**: Covers the time-zone edge case: the moment stays fixed and the display follows the phone.
-- **Validation**: The date and time pickers stop at now, and saving re-checks against the clock at the moment of saving, so a future time is refused (edge case). A time a minute ahead because the picker was opened earlier is refused with the same message.
+- **Validation**: The date picker stops at today, and a later time picked today is refused with "That time is in the future" (D-007). Saving re-checks against the clock at the moment of saving, so a future time is refused (edge case). A time a minute ahead because the picker was opened earlier is refused with the same message.
 
 ## 5. Built-in event types and their detail questions
 

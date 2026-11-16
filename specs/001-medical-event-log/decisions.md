@@ -55,3 +55,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, First pet; `PetForm` in `lib/ui/pets/pet_form.dart`, shared by `lib/ui/pets/first_pet_screen.dart` and `lib/ui/pets/pet_form_screen.dart`; the save test in `test/ui/pets/first_pet_screen_test.dart`
 - **To undo**: reset `_saving` (and clear `_name` for (b)) after a successful save in `_PetFormState._save`, and change that test and the contracts line.
 - **Status**: open
+
+## D-007 · Contract gap · T017: a picked time after now keeps the field as it was and shows "That time is in the future"
+
+- **Question**: contracts/screens.md says the "When" pickers "stop at now", and tasks.md that a time after the clock's now is not accepted. The date picker can stop at today, but Flutter's time picker has no latest time, so a later hour today can still be picked. Neither says what the field shows then. FR-003 also allows "any earlier date", but the date picker needs an earliest one.
+- **Options**: (a) keep the previous value and show "That time is in the future", the log sheet's wording, under the field until the next pick; (b) keep the previous value silently; (c) set the time to now.
+- **Chose**: (a): the caregiver sees why the pick didn't take, in the words the sheet already uses, and the field never holds a future time. The date picker starts at 1 January 1900, earlier than any pet's events.
+- **Changed**: contracts/screens.md, Log sheet; quickstart.md, step 6; research.md §4, Validation; `DateTimeField` in `lib/ui/common/date_time_field.dart`; the future time tests in `test/ui/common/date_time_field_test.dart`
+- **To undo**: drop `_pickedInFuture` and the `errorText` in `_DateTimeFieldState`, and change those tests, the contracts line, quickstart.md step 6 and research.md §4.
+- **Status**: open
