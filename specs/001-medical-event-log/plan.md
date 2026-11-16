@@ -14,7 +14,7 @@ Everything is stored in a local SQLite database on the phone (`sqflite`), so it 
 
 **Language/Version**: Dart 3.13 (SDK `^3.13.4`), Flutter 3.47.5 stable
 
-**Primary Dependencies**: Flutter (Material 3), `sqflite` 2.4.x, `uuid` 4.x, `intl` 0.20.x, `path` 1.9.x; existing `firebase_core` and `firebase_crashlytics` unchanged. Dev: `sqflite_common_ffi` 2.4.x
+**Primary Dependencies**: Flutter (Material 3), `sqflite` 2.4.x, `uuid` 4.x, `intl` 0.20.x, `path` 1.9.x, `characters` 1.4.x (names counted in user-perceived characters); existing `firebase_core` and `firebase_crashlytics` unchanged. Dev: `sqflite_common_ffi` 2.4.x
 
 **Storage**: SQLite on the phone (`data-model.md`). Firestore is not used; `firestore.rules` stays deny-all.
 
