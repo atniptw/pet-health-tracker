@@ -8,7 +8,8 @@ void main() {
     options: [(id: 'focal', label: 'Focal'), (id: 'grand_mal', label: 'Grand mal')],
   );
 
-  DurationQuestion lasted() => const DurationQuestion(id: 'duration', label: 'How long it lasted');
+  DurationQuestion lasted({String id = 'duration', String label = 'How long it lasted'}) =>
+      DurationQuestion(id: id, label: label);
 
   EventType seizure() =>
       EventType(id: 'seizure', name: 'Seizure', builtIn: true, questions: [kind(), lasted()]);
