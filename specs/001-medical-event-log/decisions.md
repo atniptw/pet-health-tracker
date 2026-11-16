@@ -73,3 +73,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Log sheet; `DurationField` in `lib/ui/common/duration_field.dart`; the tests in `test/ui/common/duration_field_test.dart`
 - **To undo**: change the labels, the `LengthLimitingTextInputFormatter`s or add a seconds limit in `_DurationFieldState`, and those tests and the contracts line.
 - **Status**: open
+
+## D-009 · Choice · T020: tapping the picked pet again keeps it picked
+
+- **Question**: The pet choices are choice chips, and the detail question chips clear when the picked one is tapped again. FR-007 says the picked pet is "clearly shown and changeable", but not whether tapping it again clears it.
+- **Options**: (a) tapping the picked pet keeps it picked; (b) it clears the pick, as the detail question chips do.
+- **Chose**: (a): a cleared pet would only disable "Save" on the log sheet, and FR-007 asks for a pet that can be changed, not removed.
+- **Changed**: contracts/screens.md, Log screen; `PetChoices` in `lib/ui/log/pet_choices.dart`; the test "tapping the picked pet again keeps it picked" in `test/ui/log/pet_choices_test.dart`
+- **To undo**: make `onPicked` a `ValueChanged<String?>` and pass null when the picked chip is tapped again, and change that test and the contracts line.
+- **Status**: open

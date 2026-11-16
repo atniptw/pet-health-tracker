@@ -22,7 +22,7 @@ App start
 
 ## Log (home screen)
 
-- **Pet**: one active pet → its name shown as a heading, no picker. Several → a row of pet choices with the picked pet highlighted, or "Who is this for?" when none is picked (FR-007, research §9).
+- **Pet**: one active pet → its name shown as a heading, no picker. Several → a row of pet choices with the picked pet highlighted, or "Who is this for?" when none is picked; tapping the picked pet keeps it picked (FR-007, research §9, D-009).
 - **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else".
 - "History" opens Pet history for the picked pet; it is disabled when none is picked.
 - Menu: "Pets", "My event types".
