@@ -3,15 +3,20 @@ import 'package:intl/intl.dart';
 
 import '../../data/repositories.dart';
 
+/// The message for a time after now, on picking or on saving.
+const futureTimeError = 'That time is in the future';
+
 /// "When" an event happened: "Now" while [value] is null, otherwise [value]
 /// in local time. Tapping opens the date picker, up to today, then the time
-/// picker; a moment after [clock]'s now is not accepted.
+/// picker; a moment after [clock]'s now is not accepted. [errorText], such
+/// as one found on saving, shows under the field.
 class DateTimeField extends StatefulWidget {
   const DateTimeField({
     super.key,
     required this.clock,
     required this.value,
     required this.onChanged,
+    this.errorText,
   });
 
   final Clock clock;
@@ -20,6 +25,8 @@ class DateTimeField extends StatefulWidget {
   final DateTime? value;
 
   final ValueChanged<DateTime> onChanged;
+
+  final String? errorText;
 
   @override
   State<DateTimeField> createState() => _DateTimeFieldState();
@@ -55,7 +62,7 @@ class _DateTimeFieldState extends State<DateTimeField> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: 'When',
-          errorText: _pickedInFuture ? 'That time is in the future' : null,
+          errorText: _pickedInFuture ? futureTimeError : widget.errorText,
         ),
         child: Text(value == null ? 'Now' : _format.format(value.toLocal())),
       ),

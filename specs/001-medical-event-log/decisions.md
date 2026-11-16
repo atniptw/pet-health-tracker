@@ -82,3 +82,30 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Log screen; `PetChoices` in `lib/ui/log/pet_choices.dart`; the test "tapping the picked pet again keeps it picked" in `test/ui/log/pet_choices_test.dart`
 - **To undo**: make `onPicked` a `ValueChanged<String?>` and pass null when the picked chip is tapped again, and change that test and the contracts line.
 - **Status**: open
+
+## D-010 · Contract gap · T021: once the log sheet shows the pet choices, they stay after a pet is picked
+
+- **Question**: contracts/screens.md says that with several pets and none picked, the pet choices appear in the log sheet's header and "Save" stays disabled until one is chosen. It doesn't say whether the choices give way to the picked pet's name once one is chosen, which would leave a mis-tapped pet unchangeable in the sheet.
+- **Options**: (a) the choices stay for the sheet's life, with the chosen pet highlighted; (b) they give way to the pet's name, as when a pet was already picked.
+- **Chose**: (a): FR-007 asks for a picked pet that is "clearly shown and changeable", and the highlighted chip shows it as clearly as the name would.
+- **Changed**: contracts/screens.md, Log sheet; `_LogSheetState` in `lib/ui/log/log_sheet.dart`; the test "once chosen in the sheet, the pet choices stay and can change (D-010)" in `test/ui/log/log_sheet_test.dart`
+- **To undo**: show the pet's name in `_LogSheetState._header` once `_isActive(_petId)` is true instead of keeping `_choosingPet` fixed, and change that test and the contracts line.
+- **Status**: open
+
+## D-011 · Contract gap · T021: a time found to be in the future on saving shows its message under "When"
+
+- **Question**: contracts/screens.md and research.md §4 say saving a time after now shows "That time is in the future" and the sheet stays open, but not where the message shows or when it goes away.
+- **Options**: (a) under "When", as the field shows it for a future pick (D-007), until another time is picked; (b) a snack bar; (c) a line above "Save".
+- **Chose**: (a): the message sits on the field the caregiver has to change, in the same place and words as D-007.
+- **Changed**: contracts/screens.md, Log sheet; research.md §4, Validation; `DateTimeField` (its `errorText`) in `lib/ui/common/date_time_field.dart`, `EventFields` (its `whenError`) in `lib/ui/common/event_fields.dart` and `_LogSheetState` in `lib/ui/log/log_sheet.dart`; the future time tests in `test/ui/log/log_sheet_test.dart`
+- **To undo**: drop `DateTimeField.errorText` and `EventFields.whenError`, show the message elsewhere from `_LogSheetState._save`, and change those tests, the contracts line and research.md §4.
+- **Status**: open
+
+## D-012 · Choice · T021: the note stops taking characters at 1000
+
+- **Question**: data-model.md allows a note of up to 1000 characters, and `validNote` refuses a longer one, but neither says what the note field does as the caregiver nears the limit.
+- **Options**: (a) the field stops taking characters at 1000, with no counter; (b) a "0/1000" counter under the field; (c) an error on saving.
+- **Chose**: (a): a note that long is rare, and a counter would show on every log for it.
+- **Changed**: contracts/screens.md, Log sheet; `EventFields` in `lib/ui/common/event_fields.dart`; the test "the note takes up to 1000 characters" in `test/ui/log/log_sheet_test.dart`
+- **To undo**: replace the `LengthLimitingTextInputFormatter` in `EventFields.build` with `maxLength: 1000`, and change that test and the contracts line.
+- **Status**: open
