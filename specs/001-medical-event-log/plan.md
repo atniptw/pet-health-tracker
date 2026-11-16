@@ -71,6 +71,7 @@ lib/
 ├── app.dart                      # MaterialApp, theme, start screen choice
 ├── firebase_options.dart         # generated, unchanged
 ├── domain/
+│   ├── names.dart                # name length check (D-001)
 │   ├── pet.dart                  # Pet, Species
 │   ├── event_type.dart           # EventType, DetailQuestion, match key
 │   ├── built_in_event_types.dart # research §5
