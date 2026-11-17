@@ -163,3 +163,21 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, My event types; `MyEventTypesScreen` in `lib/ui/types/my_event_types_screen.dart`; the tests "a failed read before any list says the types couldn't be loaded (D-018)…", "a failed read after a list keeps the list shown (D-018)" and "when removing fails, \"Remove\" works again…" in `test/ui/types/my_event_types_screen_test.dart`
 - **To undo**: show nothing for the failed case in `_MyEventTypesScreenState.build`, drop `MyEventTypesScreen.loadFailed`, and change those tests and the contracts lines.
 - **Status**: open
+
+## D-019 · New task · T036: an open log sheet saves through the repositories it was opened with
+
+- **Question**: The security review of T023 found that `LogSheet._save` writes through `AppScope.of(context).events` as it is when "Save" is tapped. If `AppScope` were given other repositories while the sheet is open, an event for a pet from the first ones would be saved into the others. Nothing in spec 001 swaps the repositories while the app runs, so this can't happen yet, but the log screen and "Something else" already guard against it, and the sheet doesn't.
+- **Options**: (a) a new task that makes the sheet save through the repository it opened with and close without saving when the repositories have changed; (b) leave it until a feature swaps repositories.
+- **Chose**: (a), as T036 in Phase 8, under stop rule 4: the code is from T021, so it isn't part of T023.
+- **Changed**: tasks.md, T036
+- **To undo**: remove T036 from tasks.md.
+- **Status**: open
+
+## D-020 · New task · T037: the log screen keeps its pets and types when a read fails
+
+- **Question**: The lifecycle review of T024 found that the log screen shows `pets.data ?? const []`, so a failed `watchActive` read empties its pet list until the next good read, and a failed `watchOffered` read empties the grid. The start screen (D-017) and My event types (D-018) keep the last list and report the failure; the log screen doesn't.
+- **Options**: (a) a new task that keeps the last pets and types and reports the failure, as D-017 and D-018 do; (b) leave it.
+- **Chose**: (a), as T037 in Phase 8, under stop rule 4: the code is from T022, so it isn't part of T024.
+- **Changed**: tasks.md, T037
+- **To undo**: remove T037 from tasks.md.
+- **Status**: open
