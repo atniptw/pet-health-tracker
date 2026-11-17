@@ -244,3 +244,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: tasks.md, T038
 - **To undo**: remove T038 from tasks.md.
 - **Status**: open
+
+## D-028 · Contract gap · T031: "Add pet" is a text button in the Pets app bar, and a failed read of the pets says so
+
+- **Question**: contracts/screens.md lists what the Pets screen shows (active pets by name, "Add pet", "Archived pets") but not where "Add pet" sits, or what shows when the pets can't be read.
+- **Options**: "Add pet": (a) a text button in the app bar, as "History" and "Edit pet" are (D-026); (b) a floating button; (c) a row at the end of the list. Failed read: (a) as for the start screen (D-017), My event types (D-018) and Pet history (D-025): keep the list shown, and before any pets have been read, "Your pets couldn't be loaded. Close the app and open it again."; (b) a blank screen.
+- **Chose**: (a) for each. The app bar keeps "Add pet" in the same place however many pets there are, worded rather than an icon (D-026), and the failure handling and wording match the start screen's, through the shared `WatchedView`. Errors go to the app's error handler without the read's own message, which can hold a pet's name.
+- **Changed**: contracts/screens.md, Pets; `PetsScreen` in `lib/ui/pets/pets_screen.dart`; the tests "\"Add pet\" opens the pet form, and the added pet is listed", "a failed read before any pets says they couldn't be loaded (D-028)…" and "a failed read after the pets keeps them shown (D-028)" in `test/ui/pets/pets_screen_test.dart`
+- **To undo**: move the "Add pet" button in `PetsScreen.build`, or give `WatchedView` an empty `loadFailed` there and drop `PetsScreen.loadFailed`, and change those tests and the contracts line.
+- **Status**: open

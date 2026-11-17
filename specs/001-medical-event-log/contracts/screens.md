@@ -64,6 +64,8 @@ Opened from a type button, or from "Something else", which first shows a text fi
 ## Pets
 
 - Active pets by name, each opening Pet history; "Add pet"; "Archived pets".
+- "Add pet", a text button in the app bar, opens Pet form (D-028).
+- If the pets can't be read, the error is reported and the list shown stays. If none have been read yet, it says "Your pets couldn't be loaded. Close the app and open it again." (D-028)
 
 ## Archived pets
 
