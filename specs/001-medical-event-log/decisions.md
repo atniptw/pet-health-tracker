@@ -208,3 +208,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Pet history; `EventTile` in `lib/ui/history/event_tile.dart`; `dateTimeText` in `lib/ui/common/date_time_field.dart`; `test/ui/history/event_tile_test.dart`
 - **To undo**: reorder the children of `EventTile`, and change those tests.
 - **Status**: open
+
+## D-024 · Contract gap · T029: a type logged once reads "1 time", and each summary row reads name, count, average, last
+
+- **Question**: contracts/screens.md gives each summary row as name, "<n> times", "about every <gap>" and "last <ago> ago", which reads "1 times" for a type logged once, and doesn't say how the row is laid out.
+- **Options**: count of one: (a) "1 time", (b) "1 times" as the pattern gives it; layout: (a) the type name as the row's title with the count, the average and the last one each on its own line under it, (b) all on one line.
+- **Chose**: (a) for each. "1 time" matches how `gapText` already writes "1 day". A line each keeps the row readable at twice the text size, and matches the event tiles below (D-023).
+- **Changed**: contracts/screens.md, Pet history; `TypeSummaryList` in `lib/ui/history/type_summary.dart`; `test/ui/history/type_summary_test.dart`
+- **To undo**: write the count as "$count times" instead of `countText` in `_SummaryRow`, and change those tests.
+- **Status**: open

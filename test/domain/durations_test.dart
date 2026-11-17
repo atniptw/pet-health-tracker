@@ -6,6 +6,12 @@ void main() {
   const hour = Duration(hours: 1);
   const twoDays = Duration(days: 2);
 
+  test('countText: "1 <unit>" for one, "<n> <unit>s" otherwise', () {
+    expect(countText(0, 'time'), '0 times');
+    expect(countText(1, 'time'), '1 time');
+    expect(countText(3, 'time'), '3 times');
+  });
+
   group('gapText', () {
     test('under a minute shows 0 minutes (D-022)', () {
       expect(gapText(Duration.zero), '0 minutes');

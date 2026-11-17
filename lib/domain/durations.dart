@@ -1,9 +1,9 @@
 /// [d] in whole minutes under an hour, whole hours under 2 days, otherwise
 /// whole days, each rounded down: "1 minute", "5 hours", "3 days".
 String gapText(Duration d) {
-  if (d < const Duration(hours: 1)) return _count(d.inMinutes, 'minute');
-  if (d < _twoDays) return _count(d.inHours, 'hour');
-  return _count(d.inDays, 'day');
+  if (d < const Duration(hours: 1)) return countText(d.inMinutes, 'minute');
+  if (d < _twoDays) return countText(d.inHours, 'hour');
+  return countText(d.inDays, 'day');
 }
 
 /// [d] as [gapText] shows it, except that from 2 days on it is in days with
@@ -16,4 +16,5 @@ String averageText(Duration d) {
 
 const _twoDays = Duration(days: 2);
 
-String _count(int n, String unit) => n == 1 ? '1 $unit' : '$n ${unit}s';
+/// [n] [unit]s, or "1 [unit]" for one: "1 day", "3 times".
+String countText(int n, String unit) => n == 1 ? '1 $unit' : '$n ${unit}s';
