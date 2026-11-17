@@ -29,7 +29,7 @@ App start
 
 - **Pet**: one active pet → its name shown as a heading, no picker. Several → a row of pet choices with the picked pet highlighted, or "Who is this for?" when none is picked; tapping the picked pet keeps it picked (FR-007, research §9, D-009).
 - **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else", outlined rather than filled since it is not a type (D-015).
-- "History" opens Pet history for the picked pet; it is disabled when none is picked.
+- "History", a text button in the app bar next to the menu, opens Pet history for the picked pet; it is disabled when none is picked (D-026).
 - Menu: "Pets", "My event types".
 - After a save, a "Saved: <type> for <pet>" message, which replaces any earlier one at once (D-013), and the saved event's pet becomes the picked one.
 
@@ -48,7 +48,8 @@ Opened from a type button, or from "Something else", which first shows a text fi
 - Title: the pet's name; "Archived" shown under it for an archived pet.
 - **Summary** (FR-010): period choice "30 days", "90 days" (default), "12 months", "All time"; then one row per type the pet has had in the period: name, "<n> times", "about every <gap>" when the count is 2 or more, and "last <ago> ago", the name as the row's title and the rest each on its own line under it; a type logged once reads "1 time" (D-024). With no events in the period: "Nothing logged in this period".
 - **Events** (FR-008, FR-009): newest first, each with date and time, type, its answered details, note, and "<gap> since the previous one" when there is an earlier event of the same type. No error or gap for the first of a type. Each tile shows the type name, then the date and time in local time as "When" shows them ("Nov 13, 2026 9:30 PM"), each answered detail as "<question>: <answer>" in the type's question order, the note, and the gap (D-023).
-- Actions: "Edit pet" (Pet form), "Archive" (active pet) or "Restore" (archived pet).
+- Actions: "Edit pet" (Pet form), a text button in the app bar (D-026), "Archive" (active pet) or "Restore" (archived pet). The title follows the pet, so a name changed through "Edit pet" shows on return.
+- If the pet can't be read, the error is reported and the title stays. If its events can't be read, the error is reported and the history shown stays; if none have been read yet, it says "This pet's history couldn't be loaded. Close the app and open it again." (D-025)
 
 ## Event
 

@@ -111,7 +111,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 - [X] T027 [P] [US2] Create `lib/domain/durations.dart`, with tests in `test/domain/durations_test.dart`: `String gapText(Duration d)` is "under an hour in minutes, under 2 days in hours, otherwise in days", and `String averageText(Duration d)` does the same, with "averages over 2 days get one decimal" (for example "3.5 days"). Singular and plural forms ("1 day", "2 days").
 - [X] T028 [US2] Create the event tile in `lib/ui/history/event_tile.dart`, with tests in `test/ui/history/event_tile_test.dart` (depends on T026, T027): the date and time in local time (`intl`), the type name, its answered details as "<question>: <answer>", the answer written by the question's `describe`, the note, and "<gap> since the previous one" when there is an earlier event of the same type. **Covers**: 001-FR-008, 001-US2-S2.
 - [X] T029 [US2] Create the summary in `lib/ui/history/type_summary.dart`, with tests in `test/ui/history/type_summary_test.dart` (depends on T026, T027): the period choice "30 days", "90 days" (default), "12 months", "All time", then one row per type in the period with its name, "<n> times", "about every <gap>" when the count is 2 or more, and "last <ago> ago"; with no events in the period, "Nothing logged in this period". **Covers**: 001-FR-010, 001-US2-S3, 001-US2-S4.
-- [ ] T030 [US2] Create the pet history screen in `lib/ui/history/pet_history_screen.dart`, with tests in `test/ui/history/pet_history_screen_test.dart`, and add a "History" button to the log screen (`lib/ui/log/log_screen.dart`), disabled when no pet is picked (depends on T024, T028, T029). Title: the pet's name. The summary, then the pet's events newest first as event tiles (`watchForPet`; type names through `byId`, so removed types still show). An "Edit pet" action opens the pet form for this pet. Add `openHistory(pet)` to the robot. Add the US2 journey test, `test/journeys/us2_history_test.dart`: log Vomiting for Rex at three known times, open History, and see the events newest first, the gaps, "3 times" and the average, then switch periods and see the counts follow. **Covers**: 001-US2-S1, 001-FR-008, 001-US3-S2, 001-SC-003.
+- [X] T030 [US2] Create the pet history screen in `lib/ui/history/pet_history_screen.dart`, with tests in `test/ui/history/pet_history_screen_test.dart`, and add a "History" button to the log screen (`lib/ui/log/log_screen.dart`), disabled when no pet is picked (depends on T024, T028, T029). Title: the pet's name. The summary, then the pet's events newest first as event tiles (`watchForPet`; type names through `byId`, so removed types still show). An "Edit pet" action opens the pet form for this pet. Add `openHistory(pet)` to the robot. Add the US2 journey test, `test/journeys/us2_history_test.dart`: log Vomiting for Rex at three known times, open History, and see the events newest first, the gaps, "3 times" and the average, then switch periods and see the counts follow. **Covers**: 001-US2-S1, 001-FR-008, 001-US3-S2, 001-SC-003.
 
 **Checkpoint**: Stories 1 and 2 and the first half of story 3 work.
 
@@ -147,6 +147,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 
 - [ ] T036 [US1] In `lib/ui/log/log_sheet.dart`, save through the event repository the sheet was opened with, and when `AppScope` holds other repositories by the time "Save" is tapped, save nothing and close the sheet, with a test in `test/ui/log/log_sheet_test.dart` that swaps the repositories while the sheet is open (D-019).
 - [ ] T037 [US1] In `lib/ui/log/log_screen.dart`, keep the last pets and types read when the log screen's `watchActive` or `watchOffered` stream fails, and report the failure with `reportReadFailure` (`lib/ui/common/read_failure.dart`), with tests in `test/ui/log/log_screen_test.dart` (D-020). **Covers**: 001-FR-007.
+- [ ] T038 [US1] In `lib/app.dart`, read the active pets for the start screen through `WatchedView` (`lib/ui/common/watched_view.dart`) instead of `_StartScreenState`'s own subscription, keeping its tests in `test/app_test.dart` passing unchanged (D-027).
 - [ ] T035 Write `specs/001-medical-event-log/untested.md` for the ids a test can't check, each with its reason: `001-FR-013` (the app holds no feed, social features or diary entries, which a test can't prove absent) and `001-SC-002` (a first-time user logging without help needs a person; `expectAccessible` on every screen covers what can be checked). Tick this task, so `check.sh` runs `spec-coverage.sh --strict` on this spec and every other id must have a test. Update `CLAUDE.md` *Specs and design docs* to say spec 001 is implemented, with its plan and tasks in `specs/001-medical-event-log/`. The manual steps in `quickstart.md` are left for the user's own run on a phone.
 
 ---
@@ -175,7 +176,7 @@ T014 → T015 → T016
 T014 → T017, T018, T020 [P];  T018 → T019;  T017 + T019 + T020 → T021 → T022 → T023
 T016 + T023 → T024 → T025
 T005..T008 → T026, T027 [P] → T028, T029 → T030 (also needs T024)
-T030 → T031 → T032 → T033 → T034 → T036 → T037 → T035
+T030 → T031 → T032 → T033 → T034 → T036 → T037 → T038 → T035
 ```
 
 ### Within each task
@@ -223,6 +224,6 @@ Task: "Create lib/domain/durations.dart" (T027)
 5. Phase 5 (US2): history and frequency.
 6. Phase 6 (US3): pets list, archive and restore.
 7. Phase 7 (US4): edit and delete.
-8. Phase 8: the log sheet and log screen fixes (T036, T037), then `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
+8. Phase 8: the log sheet, log screen and start screen fixes (T036, T037, T038), then `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
 
 The feature merges to `main` at the end of each phase (constitution, Workflow 4), so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.

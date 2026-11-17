@@ -6,7 +6,7 @@ import '../../data/repositories.dart';
 import '../../domain/event_type.dart';
 import '../app_scope.dart';
 import '../common/centered_message.dart';
-import '../common/read_failure.dart';
+import '../common/watched_view.dart';
 
 /// The custom types still offered, each with "Remove", which takes the type
 /// out of the list with nothing more asked; past events keep it (FR-004).
@@ -28,9 +28,7 @@ class MyEventTypesScreen extends StatefulWidget {
 
 class _MyEventTypesScreenState extends State<MyEventTypesScreen> {
   EventTypeRepository? _repository;
-  StreamSubscription<List<EventType>>? _subscription;
-  List<EventType>? _types;
-  bool _failed = false;
+  late Stream<List<EventType>> _types;
 
   /// The ids of the types being removed, whose "Remove" is disabled.
   final _removing = <String>{};
@@ -42,27 +40,9 @@ class _MyEventTypesScreenState extends State<MyEventTypesScreen> {
     super.didChangeDependencies();
     final repository = AppScope.of(context).eventTypes;
     if (repository == _repository) return;
-    unawaited(_subscription?.cancel());
     _repository = repository;
-    _types = null;
-    _failed = false;
+    _types = repository.watchCustom();
     _removing.clear();
-    _subscription = repository.watchCustom().listen(
-      (types) => setState(() {
-        _types = types;
-        _failed = false;
-      }),
-      onError: (Object _, StackTrace stack) {
-        reportReadFailure('Reading the custom event types', stack);
-        setState(() => _failed = true);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    unawaited(_subscription?.cancel());
-    super.dispose();
   }
 
   Future<void> _remove(EventType type) async {
@@ -101,12 +81,13 @@ class _MyEventTypesScreenState extends State<MyEventTypesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('My event types')),
-      body: switch (_types) {
-        null when _failed => const CenteredMessage(MyEventTypesScreen.loadFailed),
-        null => const SizedBox.shrink(),
-        [] => const CenteredMessage(MyEventTypesScreen.empty),
-        final types => _list(types),
-      },
+      body: WatchedView(
+        stream: _types,
+        what: 'Reading the custom event types',
+        loadFailed: MyEventTypesScreen.loadFailed,
+        builder: (context, types) =>
+            types.isEmpty ? const CenteredMessage(MyEventTypesScreen.empty) : _list(types),
+      ),
     );
   }
 }
