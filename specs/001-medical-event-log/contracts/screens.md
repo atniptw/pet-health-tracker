@@ -72,3 +72,5 @@ Opened from a type button, or from "Something else", which first shows a text fi
 
 - The custom types still offered, each with "Remove" (FR-004). With none: "Types you type in yourself appear here".
 - Removing asks nothing further: the type can be brought back by typing it again, and past events keep it.
+- "Remove" is disabled while the type is being removed. If removing fails, the error is reported and "Remove" works again.
+- If the types can't be read, the error is reported and the list shown stays. If none have been read yet, it says "Your event types couldn't be loaded. Close the app and open it again." (D-018)

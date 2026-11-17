@@ -11,6 +11,7 @@ import 'package:pet_health_tracker/ui/log/log_screen.dart';
 import 'package:pet_health_tracker/ui/log/log_sheet.dart';
 import 'package:pet_health_tracker/ui/log/pet_choices.dart';
 import 'package:pet_health_tracker/ui/log/type_grid.dart';
+import 'package:pet_health_tracker/ui/types/my_event_types_screen.dart';
 
 import '../../support/robot.dart';
 import '../../support/screen_checks.dart';
@@ -352,6 +353,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pickedInChoices(tester), isNull);
+  });
+
+  testWidgets('001-FR-004: the menu\'s "My event types" opens My event types', (tester) async {
+    await addPet(tester, 'Rex');
+    await openLog(tester);
+
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My event types'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MyEventTypesScreen), findsOneWidget);
   });
 
   testWidgets('the log screen is accessible with one pet and with several', (tester) async {

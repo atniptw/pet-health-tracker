@@ -7,6 +7,7 @@ import '../../domain/event_type.dart';
 import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
+import '../types/my_event_types_screen.dart';
 import 'log_sheet.dart';
 import 'pet_choices.dart';
 import 'something_else_sheet.dart';
@@ -15,7 +16,7 @@ import 'type_grid.dart';
 /// The home screen: the pet an event is for, and a button per offered type
 /// that opens the log sheet, and "Something else" for a type in the
 /// caregiver's own words. After a save, a "Saved" message naming the
-/// type and the pet.
+/// type and the pet. Its menu opens My event types.
 ///
 /// With one active pet, that pet is picked and shown as a heading. With
 /// several, the pet choices show, with the pet last logged for picked if it
@@ -120,6 +121,10 @@ class _LogScreenState extends State<LogScreen> {
       ..showSnackBar(SnackBar(content: Text('Saved: ${sheet.typeName} for ${pet.name}')));
   }
 
+  void _openMyEventTypes() => unawaited(
+    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MyEventTypesScreen())),
+  );
+
   Widget _pet(BuildContext context, List<Pet> pets) {
     if (pets.length == 1) {
       return Semantics(
@@ -155,7 +160,17 @@ class _LogScreenState extends State<LogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Log')),
+      appBar: AppBar(
+        title: const Text('Log'),
+        actions: [
+          PopupMenuButton<void>(
+            tooltip: 'Menu',
+            itemBuilder: (_) => [
+              PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
+            ],
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Pet>>(
         stream: _pets,
         builder: (context, pets) => _body(pets.data ?? const []),

@@ -72,6 +72,24 @@ class Robot {
     await _save();
   }
 
+  /// On the log screen: opens the menu's "My event types", taps "Remove"
+  /// for [name] and goes back to the log screen.
+  Future<void> removeEventType(String name) async {
+    await tester.tap(find.byTooltip('Menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My event types'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(ListTile, name),
+        matching: find.widgetWithText(TextButton, 'Remove'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+  }
+
   Future<void> _save() async {
     final save = find.widgetWithText(FilledButton, 'Save');
     await tester.ensureVisible(save);
