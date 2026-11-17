@@ -26,6 +26,10 @@ This spec covers logging events and seeing how often they happen. Sharing the lo
 - Q: What can a caregiver do with an event type they typed in their own words that they no longer want in the list? → A: Remove it from the list; past events keep their type, and typing it again brings it back.
 - Q: Should the history's frequency periods match the vet view's? → A: Yes: last 30 days, last 90 days, last 12 months or all time.
 
+### Session 2026-11-17 (autonomous run)
+
+- Q: In what order are the history summary's types listed? → A: The type whose newest event happened most recently first (assumed, D-021)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Log an event as it happens (Priority: P1)
