@@ -46,7 +46,7 @@ Opened from a type button, or from "Something else", which first shows a text fi
 ## Pet history
 
 - Title: the pet's name; "Archived" shown under it for an archived pet.
-- **Summary** (FR-010): period choice "30 days", "90 days" (default), "12 months", "All time"; then one row per type the pet has had in the period: name, "<n> times", "about every <gap>" when the count is 2 or more, and "last <ago> ago". With no events in the period: "Nothing logged in this period".
+- **Summary** (FR-010): period choice "30 days", "90 days" (default), "12 months", "All time"; then one row per type the pet has had in the period: name, "<n> times", "about every <gap>" when the count is 2 or more, and "last <ago> ago", the name as the row's title and the rest each on its own line under it; a type logged once reads "1 time" (D-024). With no events in the period: "Nothing logged in this period".
 - **Events** (FR-008, FR-009): newest first, each with date and time, type, its answered details, note, and "<gap> since the previous one" when there is an earlier event of the same type. No error or gap for the first of a type. Each tile shows the type name, then the date and time in local time as "When" shows them ("Nov 13, 2026 9:30 PM"), each answered detail as "<question>: <answer>" in the type's question order, the note, and the gap (D-023).
 - Actions: "Edit pet" (Pet form), "Archive" (active pet) or "Restore" (archived pet).
 

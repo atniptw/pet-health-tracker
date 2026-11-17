@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/names.dart';
 import '../../domain/pet.dart';
+import '../common/value_choices.dart';
 
 /// The pet's name, up to [maxNameLength] characters.
 class PetNameField extends StatelessWidget {
@@ -26,15 +27,10 @@ class SpeciesChoices extends StatelessWidget {
   final ValueChanged<Species> onSelected;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    children: [
-      for (final species in Species.values)
-        ChoiceChip(
-          label: Text(species.label),
-          selected: species == selected,
-          onSelected: (_) => onSelected(species),
-        ),
-    ],
+  Widget build(BuildContext context) => ValueChoices(
+    values: Species.values,
+    label: (species) => species.label,
+    picked: selected,
+    onPicked: onSelected,
   );
 }
