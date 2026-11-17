@@ -29,6 +29,7 @@ This spec covers logging events and seeing how often they happen. Sharing the lo
 ### Session 2026-11-17 (autonomous run)
 
 - Q: In what order are the history summary's types listed? → A: The type whose newest event happened most recently first (assumed, D-021)
+- Q: How are the history's durations rounded, and how do a gap under a minute and a whole-number average over 2 days read? → A: Rounded down; "0 minutes"; one decimal kept, as in "3.0 days" (assumed, D-022)
 
 ## User Scenarios & Testing *(mandatory)*
 

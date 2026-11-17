@@ -190,3 +190,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: spec.md, Clarifications; `summaries` in `lib/domain/frequency.dart`; the test "001-US2-S3: per type, the count, the average time between and the last one, over the period" in `test/domain/frequency_test.dart`
 - **To undo**: sort the result of `summaries` the other way, and change that test and the Clarifications line.
 - **Status**: open
+
+## D-022 · Spec gap · T027: durations are rounded down, under a minute is "0 minutes", averages keep ".0"
+
+- **Question**: research.md §8 shows durations "under an hour in minutes, under 2 days in hours, otherwise in days", and "averages over 2 days get one decimal (for example "every 3.5 days")", but doesn't say how they are rounded, what a gap under a minute shows, or whether a whole-number average shows "3.0 days" or "3 days".
+- **Options**: rounding: (a) down, (b) to the nearest; under a minute: (a) "0 minutes", (b) a separate wording such as "under a minute"; whole-number averages: (a) "3.0 days", (b) "3 days".
+- **Chose**: (a) for each. Rounding down keeps every figure within its unit (59 minutes 59 seconds is "59 minutes", not "60 minutes"; just under 2 days is "47 hours") and never overstates a gap. "0 minutes" follows "in minutes" without adding wording. "One decimal" keeps the decimal on a whole number, so averages over 2 days all read the same way. From exactly 2 days on, an average is in days with one decimal ("2.0 days").
+- **Changed**: spec.md, Clarifications; research.md §8, Showing durations; `gapText` and `averageText` in `lib/domain/durations.dart`; `test/domain/durations_test.dart`
+- **To undo**: change the rounding in `gapText` and `averageText`, and those tests and the Clarifications line.
+- **Status**: open
