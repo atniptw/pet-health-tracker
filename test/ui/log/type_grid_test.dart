@@ -9,15 +9,17 @@ import '../../support/screen_checks.dart';
 const earShaking = EventType(id: 'ear', name: 'Ear shaking', builtIn: false);
 
 /// The grid for [types] in a scrolling screen; each tapped type is added to
-/// the returned list.
-Future<List<EventType>> pumpGrid(WidgetTester tester, List<EventType> types) async {
-  final taps = <EventType>[];
+/// the returned list, and a tap on "Something else" adds null.
+Future<List<EventType?>> pumpGrid(WidgetTester tester, List<EventType> types) async {
+  final taps = <EventType?>[];
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: ListView(
           padding: const EdgeInsets.all(16),
-          children: [TypeGrid(types: types, onTap: taps.add)],
+          children: [
+            TypeGrid(types: types, onTap: taps.add, onSomethingElse: () => taps.add(null)),
+          ],
         ),
       ),
     ),
@@ -44,7 +46,19 @@ void main() {
     await tester.ensureVisible(button('Ear shaking'));
     await tester.tap(button('Ear shaking'));
 
-    expect(taps.map((type) => type.id), ['vomiting', 'ear']);
+    expect(taps.map((type) => type?.id), ['vomiting', 'ear']);
+  });
+
+  testWidgets('"Something else" comes after the types and reports its tap', (tester) async {
+    final taps = await pumpGrid(tester, builtInEventTypes.take(3).toList());
+
+    final something = tester.getRect(find.widgetWithText(OutlinedButton, 'Something else'));
+    final third = tester.getRect(button('Seizure'));
+    expect(something.top, third.top);
+    expect(something.left, greaterThan(third.right));
+    expect(something.height, greaterThanOrEqualTo(TypeGrid.minButtonHeight));
+    await tester.tap(find.text('Something else'));
+    expect(taps, [null]);
   });
 
   testWidgets('the buttons are large, two to a row', (tester) async {

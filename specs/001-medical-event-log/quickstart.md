@@ -35,8 +35,8 @@ Expected: all pass, with no file in `lib/` (other than `main.dart` and `firebase
 | 4 | Tap Seizure, answer "How long it lasted" 2 min, Save | Saved with the duration | Story 1.7 |
 | 5 | Tap Vomiting, set When to yesterday 08:00, Save | Saved at that time | Story 1.4 |
 | 6 | Tap Vomiting, try to set a time later today than now | When keeps its value, with "That time is in the future" under it (D-007) | FR-003 |
-| 7 | "Something else", type "Ear shaking", Save; open a new log | "Ear shaking" is in the grid | Story 1.5 |
-| 8 | "Something else", type "ear SHAKING", Save | Saved as "Ear shaking", counted with the earlier one in History | Edge case |
+| 7 | "Something else", type "Ear shaking", Continue, Save; open a new log | "Ear shaking" is in the grid | Story 1.5 |
+| 8 | "Something else", type "ear SHAKING", Continue, Save | Saved as "Ear shaking", counted with the earlier one in History | Edge case |
 | 9 | History | Newest first; the later Vomiting shows the gap since yesterday 08:00; the summary for 90 days shows Vomiting "2 times" | Story 2.1–2.3 |
 | 10 | Switch the period to 30 days, 12 months, All time | Counts follow the period | FR-010 |
 | 11 | Open the Seizure event | No gap shown; add a note, Save; it shows in the history | Story 2.4, 1.8 |
@@ -47,7 +47,7 @@ Expected: all pass, with no file in `lib/` (other than `main.dart` and `firebase
 | 16 | Mia's history → Archive | Log shows Rex only, no picker | Story 3.3, edge case |
 | 17 | Pets → Archived pets → Mia → Restore | Pet choices back, with Mia picked (still the last logged for) and her history intact | Story 3.4 |
 | 18 | Menu → My event types → Remove "Ear shaking" | Gone from the grid; its event still shows "Ear shaking" in the history | Story 1.9 |
-| 19 | "Something else", type "Ear shaking", Save | Offered again; History counts both events together | Edge case, FR-004 |
+| 19 | "Something else", type "Ear shaking", Continue, Save | Offered again; History counts both events together | Edge case, FR-004 |
 | 20 | Turn on airplane mode, log an event, force-quit and reopen | The event is there | FR-012, SC-004 |
 | 21 | Change the phone's time zone | Times shown move with the zone; gaps stay the same | Edge case |
 | 22 | Archive every pet | "Add your first pet" with "See archived pets" | Edge case |

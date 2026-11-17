@@ -33,6 +33,30 @@ class Robot {
     await tester.ensureVisible(button);
     await tester.tap(button);
     await tester.pumpAndSettle();
+    await _save();
+  }
+
+  /// On the log screen: picks [pet] among the pet choices if given, taps
+  /// "Something else", types [name] under "What happened?", taps
+  /// "Continue" and, in the log sheet, "Save".
+  Future<void> logSomethingElse(String name, {String? pet}) async {
+    if (pet != null) {
+      await tester.tap(find.widgetWithText(ChoiceChip, pet));
+      await tester.pump();
+    }
+    final button = find.widgetWithText(OutlinedButton, 'Something else');
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'What happened?'), name);
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    await _save();
+  }
+
+  Future<void> _save() async {
     final save = find.widgetWithText(FilledButton, 'Save');
     await tester.ensureVisible(save);
     await tester.tap(save);

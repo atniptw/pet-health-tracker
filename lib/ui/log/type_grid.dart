@@ -2,15 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../domain/event_type.dart';
 
-/// A large button per type in [types], two to a row, in the given order.
+/// A large button per type in [types], two to a row, in the given order,
+/// then "Something else".
 class TypeGrid extends StatelessWidget {
-  const TypeGrid({super.key, required this.types, required this.onTap});
+  const TypeGrid({
+    super.key,
+    required this.types,
+    required this.onTap,
+    required this.onSomethingElse,
+  });
 
   /// The offered types.
   final List<EventType> types;
 
   /// Runs with the tapped button's type.
   final ValueChanged<EventType> onTap;
+
+  /// Runs when "Something else" is tapped.
+  final VoidCallback onSomethingElse;
 
   static const _spacing = 8.0;
 
@@ -27,19 +36,31 @@ class TypeGrid extends StatelessWidget {
           runSpacing: _spacing,
           children: [
             for (final type in types)
-              SizedBox(
-                width: width,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: minButtonHeight),
-                  child: FilledButton.tonal(
-                    onPressed: () => onTap(type),
-                    child: Text(type.name, textAlign: TextAlign.center),
-                  ),
+              _sized(
+                width,
+                FilledButton.tonal(
+                  onPressed: () => onTap(type),
+                  child: Text(type.name, textAlign: TextAlign.center),
                 ),
               ),
+            _sized(
+              width,
+              OutlinedButton(
+                onPressed: onSomethingElse,
+                child: const Text('Something else', textAlign: TextAlign.center),
+              ),
+            ),
           ],
         );
       },
     );
   }
+
+  static Widget _sized(double width, Widget button) => SizedBox(
+    width: width,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: minButtonHeight),
+      child: button,
+    ),
+  );
 }
