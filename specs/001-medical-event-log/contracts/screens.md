@@ -13,6 +13,11 @@ App start
                               └──► My event types
 ```
 
+## App start
+
+- The start screen follows the active pets: First pet while there are none, Log otherwise.
+- If the pets can't be read, the error is reported and the screen shown stays. If none have been read yet, it says "Your pets couldn't be loaded. Close the app and open it again." (D-017)
+
 ## First pet
 
 - Shown whenever there are no active pets (story 3 scenario 1; edge case: last active pet archived).

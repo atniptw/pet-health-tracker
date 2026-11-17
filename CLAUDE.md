@@ -35,7 +35,7 @@ In an autonomous run (a session whose prompt starts with `Autonomous run`), `doc
 
 ## Project state
 
-Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only), in its rebuild period (constitution, principle III). The app is a single screen saying it is being rebuilt (`lib/app.dart`), and the Firestore rules deny every read and write. The app before the rebuild is tagged `pre-rebuild`. Crashlytics reports crashes from release builds.
+Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogie, the author's hobby-project label), iOS + Android only), in its rebuild period (constitution, principle III). The app is the medical event log from spec 001 (`lib/app.dart`), stored on the phone in SQLite, and the Firestore rules deny every read and write. The app before the rebuild is tagged `pre-rebuild`. Crashlytics reports crashes from release builds.
 
 ## CI
 
@@ -43,7 +43,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Specs and design docs
 
-The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks; 002 and 003 are specs only. None of it is implemented yet. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and autonomous runs, with each feature's `decisions.md`, in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
+The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks, and is being implemented: adding pets and logging events work. 002 and 003 are specs only. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and autonomous runs, with each feature's `decisions.md`, in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 

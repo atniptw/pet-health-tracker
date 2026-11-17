@@ -10,11 +10,14 @@ import 'test_database.dart';
 
 /// The local repositories on an in-memory database, for screen tests.
 class TestApp {
-  TestApp._(this.pets, this.eventTypes, this.events);
+  TestApp._(this.pets, this.eventTypes, this.events, this.clock);
 
   final PetRepository pets;
   final EventTypeRepository eventTypes;
   final EventRepository events;
+
+  /// The clock the repositories read, for screens that take one.
+  final Clock clock;
 
   /// [child] in a [MaterialApp] inside an [AppScope] with these repositories.
   Widget wrap(Widget child) => AppScope(
@@ -40,5 +43,6 @@ Future<TestApp> openTestApp({DateTime? now}) async {
     LocalPetRepository(db, clock, ids),
     eventTypes,
     LocalEventRepository(db, eventTypes, clock, ids),
+    clock,
   );
 }
