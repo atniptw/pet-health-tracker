@@ -18,6 +18,8 @@ import 'type_summary.dart';
 /// (FR-010), then its events newest first, each with the time since the
 /// previous one of its type over the pet's whole history (FR-008, FR-009).
 /// "Edit pet" opens the pet form, and the title follows the pet's name.
+/// "Archive" archives an active pet and "Restore" restores an archived one,
+/// which shows "Archived" under the title (FR-015); the screen stays open.
 ///
 /// A failed read is reported to the app's error handler and keeps what is
 /// shown; before any events have been read, it shows [loadFailed].
@@ -46,6 +48,9 @@ class _PetHistoryScreenState extends State<PetHistoryScreen> {
   StreamSubscription<Pet?>? _petSubscription;
   late Stream<_History> _history;
   late Pet _pet = widget.pet;
+
+  /// Whether archiving or restoring is in flight, which disables its button.
+  var _archiving = false;
 
   /// Before the first build, and whenever [AppScope] holds other
   /// repositories than before, follows the pet and its events in them.
@@ -85,6 +90,21 @@ class _PetHistoryScreenState extends State<PetHistoryScreen> {
     Navigator.push(context, MaterialPageRoute<void>(builder: (_) => PetFormScreen(pet: _pet))),
   );
 
+  /// Archives the pet if it is active, and restores it otherwise.
+  Future<void> _toggleArchived() async {
+    setState(() => _archiving = true);
+    final pets = AppScope.of(context).pets;
+    try {
+      await pets.setArchived(_pet.id, !_pet.archived);
+    } catch (_, stack) {
+      // The button works again. The app's error handler gets an error
+      // without the write's own message, which can hold the pet's name.
+      if (mounted) setState(() => _archiving = false);
+      Error.throwWithStackTrace(StateError('Archiving or restoring the pet failed'), stack);
+    }
+    if (mounted) setState(() => _archiving = false);
+  }
+
   Widget _list(_History history) {
     final (:events, :types) = history;
     return ListView(
@@ -106,13 +126,31 @@ class _PetHistoryScreenState extends State<PetHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_pet.name),
-        actions: [TextButton(onPressed: _editPet, child: const Text('Edit pet'))],
+        actions: [
+          TextButton(onPressed: _editPet, child: const Text('Edit pet')),
+          TextButton(
+            onPressed: _archiving ? null : _toggleArchived,
+            child: Text(_pet.archived ? 'Restore' : 'Archive'),
+          ),
+        ],
       ),
-      body: WatchedView(
-        stream: _history,
-        what: "Reading the pet's history",
-        loadFailed: PetHistoryScreen.loadFailed,
-        builder: (context, history) => _list(history),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_pet.archived)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text('Archived', style: Theme.of(context).textTheme.titleSmall),
+            ),
+          Expanded(
+            child: WatchedView(
+              stream: _history,
+              what: "Reading the pet's history",
+              loadFailed: PetHistoryScreen.loadFailed,
+              builder: (context, history) => _list(history),
+            ),
+          ),
+        ],
       ),
     );
   }

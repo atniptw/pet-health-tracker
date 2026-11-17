@@ -8,6 +8,7 @@ import 'package:pet_health_tracker/ui/app_scope.dart';
 import 'package:pet_health_tracker/ui/history/pet_history_screen.dart';
 import 'package:pet_health_tracker/ui/log/log_screen.dart';
 import 'package:pet_health_tracker/ui/log/pet_choices.dart';
+import 'package:pet_health_tracker/ui/pets/archived_pets_screen.dart';
 import 'package:pet_health_tracker/ui/pets/pet_form_screen.dart';
 import 'package:pet_health_tracker/ui/pets/pets_screen.dart';
 
@@ -122,6 +123,19 @@ void main() {
 
     expect(find.byType(PetFormScreen), findsNothing);
     expect(listedNames(tester), ['Mia', 'Rex']);
+  });
+
+  testWidgets('001-US3-S3: "Archived pets" opens the archived pets', (tester) async {
+    await addPet(tester, 'Rex');
+    final mia = await addPet(tester, 'Mia');
+    await tester.runAsync(() => app.pets.setArchived(mia.id, true));
+    await openScreen(tester);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Archived pets'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ArchivedPetsScreen), findsOneWidget);
+    expect(listedNames(tester), ['Mia']);
   });
 
   testWidgets('a failed read before any pets says they couldn\'t be loaded (D-028) and reports '

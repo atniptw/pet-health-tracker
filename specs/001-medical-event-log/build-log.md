@@ -42,3 +42,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T029 | 2 | clean-code 2, comment-hygiene 1, test-quality 2 | — | 3 | — | D-024 |
 | T030 | 2 | clean-code 1, test-quality 1 | — | 3, 4 | — | D-025, D-026, D-027 |
 | T031 | 1 | — | — | 3 | — | D-028 |
+| T032 | 2 | clean-code 1, comment-hygiene 1, docs-sync 1, test-quality 1 | — | 3 | — | D-029, D-030 |

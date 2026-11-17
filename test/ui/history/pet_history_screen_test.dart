@@ -57,6 +57,49 @@ List<String> tileTexts(WidgetTester tester) => [
         .join('\n'),
 ];
 
+/// The local [pets], except that `setArchived` fails with an error naming
+/// the pet, as sqflite's `DatabaseException` lists a statement's arguments.
+class FailingArchive implements PetRepository {
+  FailingArchive(this.pets);
+
+  final PetRepository pets;
+
+  @override
+  Stream<Pet?> watch(String id) => pets.watch(id);
+
+  @override
+  Future<void> setArchived(String id, bool archived) =>
+      Future.error(Exception('UPDATE pets failed for Rex'));
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// The local [pets], except that `setArchived` waits for [done] before
+/// writing.
+class SlowArchive implements PetRepository {
+  SlowArchive(this.pets);
+
+  final PetRepository pets;
+  final done = Completer<void>();
+
+  @override
+  Stream<Pet?> watch(String id) => pets.watch(id);
+
+  @override
+  Future<void> setArchived(String id, bool archived) async {
+    await done.future;
+    await pets.setArchived(id, archived);
+  }
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+Finder get archiveButton => find.widgetWithText(TextButton, 'Archive');
+
+Finder get restoreButton => find.widgetWithText(TextButton, 'Restore');
+
 String title(WidgetTester tester) => tester
     .widget<Text>(find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first)
     .data!;
@@ -226,6 +269,93 @@ void main() {
     expect(find.byType(PetHistoryScreen), findsOneWidget);
     expect(title(tester), 'Max');
     expect(tileTexts(tester), ['Vomiting\nNov 13, 2026 8:00\u202fAM']);
+  });
+
+  Future<Pet?> stored(WidgetTester tester, Pet pet) =>
+      tester.runAsync<Pet?>(() => app.pets.watch(pet.id).first);
+
+  testWidgets('001-US3-S3 001-FR-015: "Archive" archives the pet, which then shows "Archived" '
+      'under its title and "Restore", and keeps its history', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 13, 8));
+    await openHistory(tester, rex);
+    expect(find.text('Archived'), findsNothing);
+    expect(restoreButton, findsNothing);
+
+    await tester.tap(archiveButton);
+    await tester.pumpAndSettle();
+
+    expect((await stored(tester, rex))!.archived, isTrue);
+    expect(find.byType(PetHistoryScreen), findsOneWidget);
+    expect(title(tester), 'Rex');
+    expect(find.text('Archived'), findsOneWidget);
+    expect(archiveButton, findsNothing);
+    expect(restoreButton, findsOneWidget);
+    expect(tileTexts(tester), ['Vomiting\nNov 13, 2026 8:00\u202fAM']);
+  });
+
+  testWidgets('001-US3-S4: "Restore" makes an archived pet active again, with its history', (
+    tester,
+  ) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 13, 8));
+    await tester.runAsync(() => app.pets.setArchived(rex.id, true));
+    await openHistory(tester, rex.copyWith(archived: true));
+    expect(find.text('Archived'), findsOneWidget);
+
+    await tester.tap(restoreButton);
+    await tester.pumpAndSettle();
+
+    expect((await stored(tester, rex))!.archived, isFalse);
+    expect(find.text('Archived'), findsNothing);
+    expect(restoreButton, findsNothing);
+    expect(archiveButton, findsOneWidget);
+    expect(tileTexts(tester), ['Vomiting\nNov 13, 2026 8:00\u202fAM']);
+  });
+
+  testWidgets('a failed archive is reported without the pet\'s name, and "Archive" works again', (
+    tester,
+  ) async {
+    final rex = await addPet(tester, 'Rex');
+    await openHistory(tester, rex, pets: FailingArchive(app.pets));
+
+    final errors = <Object>[];
+    await runZonedGuarded(() async {
+      await tester.tap(archiveButton);
+      await tester.pumpAndSettle();
+    }, (error, _) => errors.add(error));
+    await tester.pumpAndSettle();
+
+    expect(errors, hasLength(1));
+    expect(errors.single.toString(), isNot(contains('Rex')));
+    expect(find.text('Archived'), findsNothing);
+    expect(tester.widget<TextButton>(archiveButton).onPressed, isNotNull);
+  });
+
+  testWidgets('"Archive" is disabled while archiving, and "Restore" is enabled once done', (
+    tester,
+  ) async {
+    final rex = await addPet(tester, 'Rex');
+    final pets = SlowArchive(app.pets);
+    await openHistory(tester, rex, pets: pets);
+
+    await tester.tap(archiveButton);
+    await tester.pump();
+    expect(tester.widget<TextButton>(archiveButton).onPressed, isNull);
+
+    pets.done.complete();
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextButton>(restoreButton).onPressed, isNotNull);
+  });
+
+  testWidgets('an archived pet\'s history is accessible', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 13, 8));
+    await tester.runAsync(() => app.pets.setArchived(rex.id, true));
+    await openHistory(tester, rex.copyWith(archived: true));
+
+    await expectAccessible(tester);
   });
 
   testWidgets('a pet that can\'t be found keeps the title', (tester) async {
