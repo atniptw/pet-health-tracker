@@ -6,6 +6,11 @@ import '../../data/repositories.dart';
 /// The message for a time after now, on picking or on saving.
 const futureTimeError = 'That time is in the future';
 
+final _format = DateFormat.yMMMd().add_jm();
+
+/// [moment]'s date and time in local time, as in "Nov 13, 2026 9:30 PM".
+String dateTimeText(DateTime moment) => _format.format(moment.toLocal());
+
 /// "When" an event happened: "Now" while [value] is null, otherwise [value]
 /// in local time. Tapping opens the date picker, up to today, then the time
 /// picker; a moment after [clock]'s now is not accepted. [errorText], such
@@ -33,7 +38,6 @@ class DateTimeField extends StatefulWidget {
 }
 
 class _DateTimeFieldState extends State<DateTimeField> {
-  static final _format = DateFormat.yMMMd().add_jm();
   var _pickedInFuture = false;
 
   Future<void> _pick() async {
@@ -64,7 +68,7 @@ class _DateTimeFieldState extends State<DateTimeField> {
           labelText: 'When',
           errorText: _pickedInFuture ? futureTimeError : widget.errorText,
         ),
-        child: Text(value == null ? 'Now' : _format.format(value.toLocal())),
+        child: Text(value == null ? 'Now' : dateTimeText(value)),
       ),
     );
   }
