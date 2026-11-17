@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'data/repositories.dart';
 import 'domain/pet.dart';
 import 'ui/app_scope.dart';
+import 'ui/common/centered_message.dart';
+import 'ui/common/read_failure.dart';
 import 'ui/log/log_screen.dart';
 import 'ui/pets/first_pet_screen.dart';
 
@@ -84,14 +86,7 @@ class _StartScreenState extends State<_StartScreen> {
         _failed = false;
       }),
       onError: (Object _, StackTrace stack) {
-        // The read's own message can hold a pet's name, so the report
-        // leaves it out.
-        FlutterError.reportError(
-          FlutterErrorDetails(
-            exception: StateError('Reading the active pets failed'),
-            stack: stack,
-          ),
-        );
+        reportReadFailure('Reading the active pets', stack);
         setState(() => _failed = true);
       },
     );
@@ -106,14 +101,7 @@ class _StartScreenState extends State<_StartScreen> {
   @override
   Widget build(BuildContext context) {
     return switch (_active) {
-      null when _failed => const Scaffold(
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(App.loadFailed, textAlign: TextAlign.center),
-          ),
-        ),
-      ),
+      null when _failed => const Scaffold(body: CenteredMessage(App.loadFailed)),
       null => const Scaffold(),
       [] => const FirstPetScreen(),
       _ => LogScreen(clock: widget.clock),

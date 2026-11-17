@@ -154,3 +154,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, App start; `App.loadFailed` and `_StartScreen` in `lib/app.dart`; the tests under "when reading the active pets fails" in `test/app_test.dart`
 - **To undo**: show a blank `Scaffold` for the failed case in `_StartScreen.build`, drop `App.loadFailed`, and change the test "before any list, says the pets couldn't be loaded (D-017)…" and the contracts line.
 - **Status**: open
+
+## D-018 · Choice · T025: a failed read of the custom types says so
+
+- **Question**: The contracts list the custom types on My event types, but don't say what shows when they can't be read, or when removing one fails.
+- **Options**: (a) a blank screen; (b) as for the pets at start (D-017): keep a list already read, and before any, "Your event types couldn't be loaded. Close the app and open it again."; (c) the message with a "Try again" button. For a failed remove: (d) report it and enable "Remove" again; (e) also show a message.
+- **Chose**: (b) and (d). They match how the start screen and the log sheet already handle failures, and add nothing the spec doesn't ask for. Errors go to the app's error handler (Crashlytics in release builds) without the read's or write's own message, which can hold a type's name.
+- **Changed**: contracts/screens.md, My event types; `MyEventTypesScreen` in `lib/ui/types/my_event_types_screen.dart`; the tests "a failed read before any list says the types couldn't be loaded (D-018)…", "a failed read after a list keeps the list shown (D-018)" and "when removing fails, \"Remove\" works again…" in `test/ui/types/my_event_types_screen_test.dart`
+- **To undo**: show nothing for the failed case in `_MyEventTypesScreenState.build`, drop `MyEventTypesScreen.loadFailed`, and change those tests and the contracts lines.
+- **Status**: open
