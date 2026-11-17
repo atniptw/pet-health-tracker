@@ -90,6 +90,18 @@ class Robot {
     await tester.pumpAndSettle();
   }
 
+  /// On the log screen: picks [pet] among the pet choices if they show, and
+  /// taps "History".
+  Future<void> openHistory(String pet) async {
+    final choice = find.widgetWithText(ChoiceChip, pet);
+    if (choice.evaluate().isNotEmpty) {
+      await tester.tap(choice);
+      await tester.pump();
+    }
+    await tester.tap(find.widgetWithText(TextButton, 'History'));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> _save() async {
     final save = find.widgetWithText(FilledButton, 'Save');
     await tester.ensureVisible(save);

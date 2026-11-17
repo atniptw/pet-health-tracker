@@ -7,6 +7,7 @@ import '../../domain/event_type.dart';
 import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
+import '../history/pet_history_screen.dart';
 import '../types/my_event_types_screen.dart';
 import 'log_sheet.dart';
 import 'pet_choices.dart';
@@ -16,7 +17,8 @@ import 'type_grid.dart';
 /// The home screen: the pet an event is for, and a button per offered type
 /// that opens the log sheet, and "Something else" for a type in the
 /// caregiver's own words. After a save, a "Saved" message naming the
-/// type and the pet. Its menu opens My event types.
+/// type and the pet. "History" opens the picked pet's history, and is
+/// disabled while none is picked. Its menu opens My event types.
 ///
 /// With one active pet, that pet is picked and shown as a heading. With
 /// several, the pet choices show, with the pet last logged for picked if it
@@ -125,6 +127,15 @@ class _LogScreenState extends State<LogScreen> {
     Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MyEventTypesScreen())),
   );
 
+  void _openHistory(Pet pet) => unawaited(
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => PetHistoryScreen(pet: pet, clock: widget.clock),
+      ),
+    ),
+  );
+
   Widget _pet(BuildContext context, List<Pet> pets) {
     if (pets.length == 1) {
       return Semantics(
@@ -159,22 +170,32 @@ class _LogScreenState extends State<LogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Log'),
-        actions: [
-          PopupMenuButton<void>(
-            tooltip: 'Menu',
-            itemBuilder: (_) => [
-              PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
+    return StreamBuilder<List<Pet>>(
+      stream: _pets,
+      builder: (context, snapshot) {
+        final pets = snapshot.data ?? const <Pet>[];
+        final pickedId = _pickedAmong(pets);
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Log'),
+            actions: [
+              TextButton(
+                onPressed: pickedId == null
+                    ? null
+                    : () => _openHistory(pets.firstWhere((pet) => pet.id == pickedId)),
+                child: const Text('History'),
+              ),
+              PopupMenuButton<void>(
+                tooltip: 'Menu',
+                itemBuilder: (_) => [
+                  PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-      body: StreamBuilder<List<Pet>>(
-        stream: _pets,
-        builder: (context, pets) => _body(pets.data ?? const []),
-      ),
+          body: _body(pets),
+        );
+      },
     );
   }
 }

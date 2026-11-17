@@ -7,6 +7,7 @@ import 'package:pet_health_tracker/domain/built_in_event_types.dart';
 import 'package:pet_health_tracker/domain/medical_event.dart';
 import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/ui/app_scope.dart';
+import 'package:pet_health_tracker/ui/history/pet_history_screen.dart';
 import 'package:pet_health_tracker/ui/log/log_screen.dart';
 import 'package:pet_health_tracker/ui/log/log_sheet.dart';
 import 'package:pet_health_tracker/ui/log/pet_choices.dart';
@@ -23,6 +24,8 @@ Finder typeButton(String name) =>
     find.descendant(of: find.byType(TypeGrid), matching: find.widgetWithText(FilledButton, name));
 
 Finder get saveButton => find.widgetWithText(FilledButton, 'Save');
+
+Finder get historyButton => find.widgetWithText(TextButton, 'History');
 
 /// An [EventRepository] whose `lastLoggedPetId` waits for [lastLogged];
 /// anything else is unused by the screen.
@@ -353,6 +356,44 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(pickedInChoices(tester), isNull);
+  });
+
+  testWidgets('001-US2-S1: one pet → "History" opens its history', (tester) async {
+    await addPet(tester, 'Rex');
+    await openLog(tester);
+
+    await tester.tap(historyButton);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<PetHistoryScreen>(find.byType(PetHistoryScreen)).pet.name, 'Rex');
+  });
+
+  testWidgets('001-US2-S1: several pets → "History" opens the picked pet\'s history', (
+    tester,
+  ) async {
+    await addPet(tester, 'Rex');
+    await addPet(tester, 'Mia');
+    await openLog(tester);
+    await tester.tap(chip('Mia'));
+    await tester.pump();
+    await tester.tap(chip('Rex'));
+    await tester.pump();
+
+    await tester.tap(historyButton);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<PetHistoryScreen>(find.byType(PetHistoryScreen)).pet.name, 'Rex');
+  });
+
+  testWidgets('"History" is disabled while no pet is picked', (tester) async {
+    await addPet(tester, 'Rex');
+    await addPet(tester, 'Mia');
+    await openLog(tester);
+
+    expect(tester.widget<TextButton>(historyButton).onPressed, isNull);
+    await tester.tap(chip('Rex'));
+    await tester.pump();
+    expect(tester.widget<TextButton>(historyButton).onPressed, isNotNull);
   });
 
   testWidgets('001-FR-004: the menu\'s "My event types" opens My event types', (tester) async {

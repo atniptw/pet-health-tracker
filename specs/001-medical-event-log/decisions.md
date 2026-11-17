@@ -161,7 +161,7 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Options**: (a) a blank screen; (b) as for the pets at start (D-017): keep a list already read, and before any, "Your event types couldn't be loaded. Close the app and open it again."; (c) the message with a "Try again" button. For a failed remove: (d) report it and enable "Remove" again; (e) also show a message.
 - **Chose**: (b) and (d). They match how the start screen and the log sheet already handle failures, and add nothing the spec doesn't ask for. Errors go to the app's error handler (Crashlytics in release builds) without the read's or write's own message, which can hold a type's name.
 - **Changed**: contracts/screens.md, My event types; `MyEventTypesScreen` in `lib/ui/types/my_event_types_screen.dart`; the tests "a failed read before any list says the types couldn't be loaded (D-018)…", "a failed read after a list keeps the list shown (D-018)" and "when removing fails, \"Remove\" works again…" in `test/ui/types/my_event_types_screen_test.dart`
-- **To undo**: show nothing for the failed case in `_MyEventTypesScreenState.build`, drop `MyEventTypesScreen.loadFailed`, and change those tests and the contracts lines.
+- **To undo**: have `MyEventTypesScreen` show nothing when its read fails instead of passing `loadFailed` to `WatchedView`, drop `MyEventTypesScreen.loadFailed`, and change those tests and the contracts lines.
 - **Status**: open
 
 ## D-019 · New task · T036: an open log sheet saves through the repositories it was opened with
@@ -216,4 +216,31 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Chose**: (a) for each. "1 time" matches how `gapText` already writes "1 day". A line each keeps the row readable at twice the text size, and matches the event tiles below (D-023).
 - **Changed**: contracts/screens.md, Pet history; `TypeSummaryList` in `lib/ui/history/type_summary.dart`; `test/ui/history/type_summary_test.dart`
 - **To undo**: write the count as "$count times" instead of `countText` in `_SummaryRow`, and change those tests.
+- **Status**: open
+
+## D-025 · Choice · T030: a failed read of a pet's history says so
+
+- **Question**: contracts/screens.md lists what Pet history shows, but not what shows when the pet or its events can't be read.
+- **Options**: (a) a blank screen; (b) as for the pets at start (D-017) and the custom types (D-018): keep what was shown, and before any events have been read, "This pet's history couldn't be loaded. Close the app and open it again."; (c) the message with a "Try again" button. For the pet itself: (d) keep the title shown, which starts as the pet's name when the screen opened.
+- **Chose**: (b) and (d). They match how the start screen and My event types already handle failures, and add nothing the spec doesn't ask for. A type that can't be found by `byId` fails the read the same way. Errors go to the app's error handler (Crashlytics in release builds) without the read's own message, which can hold a pet's name.
+- **Changed**: contracts/screens.md, Pet history; `PetHistoryScreen` in `lib/ui/history/pet_history_screen.dart`, through `WatchedView` in `lib/ui/common/watched_view.dart`; the tests "a failed read before any events says the history couldn't be loaded (D-025)…", "a failed read after the events keeps them shown (D-025)" and "a failed read of the pet is reported without its name and keeps the title" in `test/ui/history/pet_history_screen_test.dart`
+- **To undo**: give `WatchedView` (`lib/ui/common/watched_view.dart`) an empty `loadFailed` in `_PetHistoryScreenState.build`, drop `PetHistoryScreen.loadFailed`, and change those tests and the contracts line.
+- **Status**: open
+
+## D-026 · Contract gap · T030: "History" and "Edit pet" are text buttons in the app bar
+
+- **Question**: contracts/screens.md says the log screen has "History" and Pet history has an "Edit pet" action, but not where they sit or how they look.
+- **Options**: (a) a text button in each screen's app bar, "History" next to the menu; (b) a button in the body, under the pet; (c) icon buttons with "History" and "Edit pet" as tooltips.
+- **Chose**: (a): the words show without a long press for caregivers not comfortable with apps, and the app bar keeps them in the same place whether there is one pet or several, without pushing the type buttons down.
+- **Changed**: contracts/screens.md, Log (home screen) and Pet history; `LogScreen.build` in `lib/ui/log/log_screen.dart`; `PetHistoryScreen` in `lib/ui/history/pet_history_screen.dart`; the "History" tests in `test/ui/log/log_screen_test.dart`; `Robot.openHistory` in `test/support/robot.dart`
+- **To undo**: move the buttons, and change the finders in those tests and `Robot.openHistory`, and the contracts lines.
+- **Status**: open
+
+## D-027 · New task · T038: the start screen reads the pets through the shared `WatchedView`
+
+- **Question**: The clean-code review of T030 found the same read handling in three places: keep the last value, report a failed read and show a "couldn't be loaded" message before any value, and start over when the repository changes. T030 moved it into `WatchedView` (`lib/ui/common/watched_view.dart`) for Pet history and My event types, but the start screen in `lib/app.dart` still has its own copy.
+- **Options**: (a) a new task that moves the start screen onto `WatchedView`; (b) leave the copy in `lib/app.dart`.
+- **Chose**: (a), as T038 in Phase 8, under stop rule 4: the start screen is from T024, so it isn't part of T030.
+- **Changed**: tasks.md, T038
+- **To undo**: remove T038 from tasks.md.
 - **Status**: open
