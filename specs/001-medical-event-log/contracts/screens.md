@@ -23,7 +23,7 @@ App start
 - Shown whenever there are no active pets (story 3 scenario 1; edge case: last active pet archived).
 - "Add your first pet": name field, species choices, "Save". Save is enabled once a name is entered.
 - After a save, the screen keeps the entered name and species with "Save" disabled until the start screen choice replaces it (D-006).
-- If archived pets exist, a "See archived pets" link opens Archived pets.
+- If archived pets exist, a "See archived pets" text button under the form opens Archived pets. If they can't be read, the error is reported and the button is left out (D-030).
 
 ## Log (home screen)
 
@@ -48,7 +48,7 @@ Opened from a type button, or from "Something else", which first shows a text fi
 - Title: the pet's name; "Archived" shown under it for an archived pet.
 - **Summary** (FR-010): period choice "30 days", "90 days" (default), "12 months", "All time"; then one row per type the pet has had in the period: name, "<n> times", "about every <gap>" when the count is 2 or more, and "last <ago> ago", the name as the row's title and the rest each on its own line under it; a type logged once reads "1 time" (D-024). With no events in the period: "Nothing logged in this period".
 - **Events** (FR-008, FR-009): newest first, each with date and time, type, its answered details, note, and "<gap> since the previous one" when there is an earlier event of the same type. No error or gap for the first of a type. Each tile shows the type name, then the date and time in local time as "When" shows them ("Nov 13, 2026 9:30 PM"), each answered detail as "<question>: <answer>" in the type's question order, the note, and the gap (D-023).
-- Actions: "Edit pet" (Pet form), a text button in the app bar (D-026), "Archive" (active pet) or "Restore" (archived pet). The title follows the pet, so a name changed through "Edit pet" shows on return.
+- Actions: "Edit pet" (Pet form), a text button in the app bar (D-026), "Archive" (active pet) or "Restore" (archived pet), a text button next to it that acts at once, without asking, and leaves the history open; "Archived" shows at the top of the history, under the title (D-029). The title follows the pet, so a name changed through "Edit pet" shows on return.
 - If the pet can't be read, the error is reported and the title stays. If its events can't be read, the error is reported and the history shown stays; if none have been read yet, it says "This pet's history couldn't be loaded. Close the app and open it again." (D-025)
 
 ## Event
@@ -63,13 +63,14 @@ Opened from a type button, or from "Something else", which first shows a text fi
 
 ## Pets
 
-- Active pets by name, each opening Pet history; "Add pet"; "Archived pets".
+- Active pets by name, each opening Pet history; "Add pet"; "Archived pets", a text button at the foot of the screen (D-030).
 - "Add pet", a text button in the app bar, opens Pet form (D-028).
 - If the pets can't be read, the error is reported and the list shown stays. If none have been read yet, it says "Your pets couldn't be loaded. Close the app and open it again." (D-028)
 
 ## Archived pets
 
 - Archived pets by name, each opening its Pet history, where "Restore" is offered (story 3 scenarios 3–4). With none: "No archived pets".
+- If the pets can't be read, the error is reported and the list shown stays. If none have been read yet, it says "Your archived pets couldn't be loaded. Close the app and open it again." (D-030)
 
 ## My event types
 

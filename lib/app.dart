@@ -103,7 +103,7 @@ class _StartScreenState extends State<_StartScreen> {
     return switch (_active) {
       null when _failed => const Scaffold(body: CenteredMessage(App.loadFailed)),
       null => const Scaffold(),
-      [] => const FirstPetScreen(),
+      [] => FirstPetScreen(clock: widget.clock),
       _ => LogScreen(clock: widget.clock),
     };
   }

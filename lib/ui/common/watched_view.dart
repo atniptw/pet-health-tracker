@@ -10,14 +10,14 @@ import 'read_failure.dart';
 ///
 /// A failed read is reported to the app's error handler as [what] failing,
 /// and keeps the last value shown; before any value has been read, it shows
-/// [loadFailed]. Another [stream] is listened to from the start, so the
+/// [loadFailed], or nothing when that is null. Another [stream] is listened to from the start, so the
 /// stream has to be kept between builds rather than made in one.
 class WatchedView<T> extends StatefulWidget {
   const WatchedView({
     super.key,
     required this.stream,
     required this.what,
-    required this.loadFailed,
+    this.loadFailed,
     required this.builder,
   });
 
@@ -27,7 +27,7 @@ class WatchedView<T> extends StatefulWidget {
   final String what;
 
   /// Shown when [stream] fails before any value has been read.
-  final String loadFailed;
+  final String? loadFailed;
 
   final Widget Function(BuildContext context, T value) builder;
 
@@ -79,8 +79,10 @@ class _WatchedViewState<T> extends State<WatchedView<T>> {
 
   @override
   Widget build(BuildContext context) => switch (_latest) {
-    null when _failed => CenteredMessage(widget.loadFailed),
-    null => const SizedBox.shrink(),
+    null => switch (widget.loadFailed) {
+      final loadFailed? when _failed => CenteredMessage(loadFailed),
+      _ => const SizedBox.shrink(),
+    },
     (:final value) => widget.builder(context, value),
   };
 }

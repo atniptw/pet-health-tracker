@@ -6,13 +6,13 @@ import 'package:pet_health_tracker/ui/common/watched_view.dart';
 
 const loadFailed = "The names couldn't be loaded.";
 
-Widget viewOf(Stream<String?> stream, {Key? key}) => MaterialApp(
+Widget viewOf(Stream<String?> stream, {Key? key, String? failed = loadFailed}) => MaterialApp(
   home: Scaffold(
     body: WatchedView<String?>(
       key: key,
       stream: stream,
       what: 'Reading the names',
-      loadFailed: loadFailed,
+      loadFailed: failed,
       builder: (context, name) => Text('Name: $name'),
     ),
   ),
@@ -61,6 +61,22 @@ void main() {
     names.add('Rex');
     await tester.pumpAndSettle();
     expect(find.text(loadFailed), findsNothing);
+    expect(find.text('Name: Rex'), findsOneWidget);
+  });
+
+  testWidgets('a failed read before any value, with no load failed message, is reported and '
+      'shows nothing', (tester) async {
+    final names = StreamController<String?>();
+    addTearDown(names.close);
+    await tester.pumpWidget(viewOf(names.stream, failed: null));
+
+    names.addError(Exception('SELECT failed for Rex'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isA<StateError>());
+    expect(find.byType(Text), findsNothing);
+    names.add('Rex');
+    await tester.pumpAndSettle();
     expect(find.text('Name: Rex'), findsOneWidget);
   });
 

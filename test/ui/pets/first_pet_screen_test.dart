@@ -2,8 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pet_health_tracker/data/repositories.dart';
 import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/ui/app_scope.dart';
+import 'package:pet_health_tracker/ui/history/pet_history_screen.dart';
+import 'package:pet_health_tracker/ui/pets/archived_pets_screen.dart';
 import 'package:pet_health_tracker/ui/pets/first_pet_screen.dart';
 
 import '../../support/failing_pets.dart';
@@ -13,14 +16,26 @@ import '../../support/test_app.dart';
 
 Finder get saveButton => find.widgetWithText(FilledButton, 'Save');
 
+Finder get seeArchived => find.widgetWithText(TextButton, 'See archived pets');
+
 Finder get nameField => find.widgetWithText(TextField, 'Name');
 
-/// Pumps the first pet screen in [app]. It's built through a constructor
-/// tear-off rather than as a constant: the full coverage run misses the
-/// constructor line of a widget only ever built as a constant.
-Future<void> pumpScreen(WidgetTester tester, TestApp app) {
-  const screen = FirstPetScreen.new;
-  return tester.pumpWidget(app.wrap(screen()));
+/// Pumps the first pet screen in [app].
+Future<void> pumpScreen(WidgetTester tester, TestApp app) =>
+    tester.pumpWidget(app.wrap(FirstPetScreen(clock: app.clock)));
+
+/// A [PetRepository] whose archived pets come from [archived]; anything
+/// else is unused by the screen.
+class ArchivedPetsFrom implements PetRepository {
+  ArchivedPetsFrom(this.archived);
+
+  final Stream<List<Pet>> archived;
+
+  @override
+  Stream<List<Pet>> watchArchived() => archived;
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
 bool isEnabled(WidgetTester tester, Finder button) =>
@@ -79,7 +94,7 @@ void main() {
           pets: FailingPets(),
           eventTypes: app.eventTypes,
           events: app.events,
-          child: const MaterialApp(home: FirstPetScreen()),
+          child: MaterialApp(home: FirstPetScreen(clock: app.clock)),
         ),
       );
       await tester.enterText(nameField, 'Rex');
@@ -94,4 +109,60 @@ void main() {
       expect(isEnabled(tester, saveButton), isTrue);
     },
   );
+
+  testWidgets('001-EC-08: no archived pets → no "See archived pets"', (tester) async {
+    await pumpScreen(tester, app);
+    await tester.pumpAndSettle();
+
+    expect(seeArchived, findsNothing);
+  });
+
+  testWidgets('001-EC-08 001-FR-015: archived pets → "See archived pets" opens Archived pets, '
+      'and each pet\'s history', (tester) async {
+    final mia = (await tester.runAsync(() => app.pets.add(name: 'Mia', species: Species.cat)))!;
+    await tester.runAsync(() => app.pets.setArchived(mia.id, true));
+    await pumpScreen(tester, app);
+    await tester.pumpAndSettle();
+    expect(find.text('Add your first pet'), findsOneWidget);
+
+    await tester.tap(seeArchived);
+    await tester.pumpAndSettle();
+    expect(find.byType(ArchivedPetsScreen), findsOneWidget);
+    await tester.tap(find.widgetWithText(ListTile, 'Mia'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<PetHistoryScreen>(find.byType(PetHistoryScreen)).pet.name, 'Mia');
+  });
+
+  testWidgets('a failed read of the archived pets is reported without a pet\'s name and leaves '
+      'out "See archived pets" (D-030)', (tester) async {
+    final archived = StreamController<List<Pet>>();
+    addTearDown(archived.close);
+    await tester.pumpWidget(
+      AppScope(
+        pets: ArchivedPetsFrom(archived.stream),
+        eventTypes: app.eventTypes,
+        events: app.events,
+        child: MaterialApp(home: FirstPetScreen(clock: app.clock)),
+      ),
+    );
+
+    archived.addError(Exception('SELECT FROM pets failed for Mia'), StackTrace.current);
+    await tester.pumpAndSettle();
+
+    final error = tester.takeException();
+    expect(error, isNotNull);
+    expect(error.toString(), isNot(contains('Mia')));
+    expect(seeArchived, findsNothing);
+    expect(find.text('Add your first pet'), findsOneWidget);
+  });
+
+  testWidgets('the first pet screen with "See archived pets" is accessible', (tester) async {
+    final mia = (await tester.runAsync(() => app.pets.add(name: 'Mia', species: Species.cat)))!;
+    await tester.runAsync(() => app.pets.setArchived(mia.id, true));
+    await pumpScreen(tester, app);
+    await tester.pumpAndSettle();
+
+    await expectAccessible(tester);
+  });
 }
