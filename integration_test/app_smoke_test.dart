@@ -1,17 +1,29 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pet_health_tracker/app.dart';
+import 'package:path/path.dart';
+import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/main.dart' as app;
+import 'package:sqflite/sqflite.dart';
 
-/// Boots the real app on a device to catch crashes on startup that widget
-/// tests can't see.
+import '../test/support/robot.dart';
+
+/// Boots the real app on a device, with its SQLite database and no network
+/// or sign-in, to catch what widget tests can't see.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('starts and says the app is being rebuilt', (tester) async {
+  testWidgets('001-FR-014: signed out, adds Rex and logs Vomiting for him on a device', (
+    tester,
+  ) async {
+    // The database outlives the app on the device; start from none.
+    await deleteDatabase(join(await getDatabasesPath(), app.databaseFileName));
     await app.main();
     await tester.pumpAndSettle();
+    final robot = Robot(tester);
 
-    expect(find.text(App.message), findsOneWidget);
+    await robot.addPet('Rex', Species.dog);
+    await robot.logEvent('Vomiting');
+
+    expect(find.text('Saved: Vomiting for Rex'), findsOneWidget);
   });
 }

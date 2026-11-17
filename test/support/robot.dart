@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/ui/log/type_grid.dart';
 
+import 'pickers.dart';
+
 /// Drives the app's screens in the spec's words.
 class Robot {
   Robot(this.tester);
@@ -20,8 +22,10 @@ class Robot {
   }
 
   /// On the log screen: picks [pet] among the pet choices if given, taps
-  /// the [type] button and, in the log sheet, "Save".
-  Future<void> logEvent(String type, {String? pet}) async {
+  /// the [type] button and, in the log sheet, sets "When" to [at] (a day of
+  /// the month the picker opens on) and the duration to [minutes] if given,
+  /// and taps "Save".
+  Future<void> logEvent(String type, {String? pet, DateTime? at, int? minutes}) async {
     if (pet != null) {
       await tester.tap(find.widgetWithText(ChoiceChip, pet));
       await tester.pump();
@@ -33,7 +37,19 @@ class Robot {
     await tester.ensureVisible(button);
     await tester.tap(button);
     await tester.pumpAndSettle();
+    if (at != null) await _setWhen(at);
+    if (minutes != null) {
+      await tester.enterText(find.widgetWithText(TextField, 'Minutes'), '$minutes');
+      await tester.pump();
+    }
     await _save();
+  }
+
+  Future<void> _setWhen(DateTime at) async {
+    await openPickers(tester);
+    await pickDay(tester, at.day);
+    final hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
+    await pickTime(tester, hour, at.minute, at.hour < 12 ? 'AM' : 'PM');
   }
 
   /// On the log screen: picks [pet] among the pet choices if given, taps

@@ -145,3 +145,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: tasks.md, T023; `logSheetFor` in `lib/ui/log/something_else_sheet.dart`; the test "001-FR-004: a removed type typed again is offered again" in `test/ui/log/something_else_sheet_test.dart`
 - **To undo**: in `logSheetFor`, use `LogSheet.forType` for every match (drop the `type.removed` case), and change that test and the T023 text.
 - **Status**: open
+
+## D-017 · Choice · T024: a failed read of the pets at start says so
+
+- **Question**: The spec and contracts choose the start screen from the active pets, but don't say what shows when they can't be read. After a list has been read, keeping the screen shown (and the log screen's pick) is the least for the user. Before any has been read, something has to show.
+- **Options**: (a) a blank screen; (b) a message, "Your pets couldn't be loaded. Close the app and open it again."; (c) the message with a "Try again" button; (d) the first pet screen.
+- **Chose**: (b). A blank screen leaves the caregiver with no way to tell what's wrong, and the first pet screen would make them add pets they already have. A "Try again" button adds more than the spec asks for. The error is reported to the app's error handler (Crashlytics in release builds) without the read's own message, which can hold a pet's name.
+- **Changed**: contracts/screens.md, App start; `App.loadFailed` and `_StartScreen` in `lib/app.dart`; the tests under "when reading the active pets fails" in `test/app_test.dart`
+- **To undo**: show a blank `Scaffold` for the failed case in `_StartScreen.build`, drop `App.loadFailed`, and change the test "before any list, says the pets couldn't be loaded (D-017)…" and the contracts line.
+- **Status**: open
