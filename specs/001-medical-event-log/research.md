@@ -74,7 +74,7 @@ The spec leaves the exact list to the plan. It is the list from the spec's Assum
 - **Count**: events of the type whose moment falls in the period.
 - **Average time between**: (newest − oldest) ÷ (count − 1) over the events in the period, shown only when the count is 2 or more (story 2 scenario 4). The same functions serve the vet view (spec 003, FR-005).
 - **Last one**: each type's summary also shows how long ago its newest event was, which is what SC-003 asks a caregiver to find.
-- **Showing durations**: under an hour in minutes, under 2 days in hours, otherwise in days; averages over 2 days get one decimal (for example "every 3.5 days").
+- **Showing durations**: under an hour in whole minutes ("0 minutes" under a minute), under 2 days in whole hours, otherwise in whole days, each rounded down; averages from 2 days on are in days with one decimal, rounded down (for example "every 3.5 days", "every 3.0 days") (D-022).
 - **Where it runs**: plain Dart functions over the events already loaded for a pet, so they are unit-tested without a database. Hundreds of events per pet is well within what a list scan handles at once.
 
 ## 9. Picking the pet when logging
