@@ -181,3 +181,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: tasks.md, T037
 - **To undo**: remove T037 from tasks.md.
 - **Status**: open
+
+## D-021 · Spec gap · T026: the summary lists the most recently happened type first
+
+- **Question**: The spec and contracts give one summary row per type in the period, but not their order.
+- **Options**: (a) the type whose newest event happened most recently first, as the events below are newest first; (b) by type name; (c) by count.
+- **Chose**: (a): it matches the newest-first history (story 2 scenario 1), and the type that just happened again is what the caregiver is likely checking.
+- **Changed**: spec.md, Clarifications; `summaries` in `lib/domain/frequency.dart`; the test "001-US2-S3: per type, the count, the average time between and the last one, over the period" in `test/domain/frequency_test.dart`
+- **To undo**: sort the result of `summaries` the other way, and change that test and the Clarifications line.
+- **Status**: open
