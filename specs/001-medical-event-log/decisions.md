@@ -199,3 +199,12 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: spec.md, Clarifications; research.md §8, Showing durations; `gapText` and `averageText` in `lib/domain/durations.dart`; `test/domain/durations_test.dart`
 - **To undo**: change the rounding in `gapText` and `averageText`, and those tests and the Clarifications line.
 - **Status**: open
+
+## D-023 · Contract gap · T028: an event tile shows the type first, then the date and time, details in question order, note, gap
+
+- **Question**: contracts/screens.md lists what each event in Pet history shows (date and time, type, its answered details, note, gap) but not their order on the tile, or the order of the details.
+- **Options**: (a) the type name as the tile's title, then the date and time, each answered detail in the type's question order, the note, and the gap; (b) the date and time as the title, then the type; (c) details in the order they were answered.
+- **Chose**: (a): the type name is what a caregiver scans for, the date and time sit right under it, and the details read in the same order the log sheet asks them. The order answers were given isn't stored. The date and time are written as "When" shows them on the log sheet ("Nov 13, 2026 9:30 PM").
+- **Changed**: contracts/screens.md, Pet history; `EventTile` in `lib/ui/history/event_tile.dart`; `dateTimeText` in `lib/ui/common/date_time_field.dart`; `test/ui/history/event_tile_test.dart`
+- **To undo**: reorder the children of `EventTile`, and change those tests.
+- **Status**: open
