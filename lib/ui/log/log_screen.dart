@@ -8,6 +8,7 @@ import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
 import '../history/pet_history_screen.dart';
+import '../pets/pets_screen.dart';
 import '../types/my_event_types_screen.dart';
 import 'log_sheet.dart';
 import 'pet_choices.dart';
@@ -18,7 +19,7 @@ import 'type_grid.dart';
 /// that opens the log sheet, and "Something else" for a type in the
 /// caregiver's own words. After a save, a "Saved" message naming the
 /// type and the pet. "History" opens the picked pet's history, and is
-/// disabled while none is picked. Its menu opens My event types.
+/// disabled while none is picked. Its menu opens Pets and My event types.
 ///
 /// With one active pet, that pet is picked and shown as a heading. With
 /// several, the pet choices show, with the pet last logged for picked if it
@@ -123,6 +124,13 @@ class _LogScreenState extends State<LogScreen> {
       ..showSnackBar(SnackBar(content: Text('Saved: ${sheet.typeName} for ${pet.name}')));
   }
 
+  void _openPets() => unawaited(
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => PetsScreen(clock: widget.clock)),
+    ),
+  );
+
   void _openMyEventTypes() => unawaited(
     Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const MyEventTypesScreen())),
   );
@@ -188,6 +196,7 @@ class _LogScreenState extends State<LogScreen> {
               PopupMenuButton<void>(
                 tooltip: 'Menu',
                 itemBuilder: (_) => [
+                  PopupMenuItem(onTap: _openPets, child: const Text('Pets')),
                   PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
                 ],
               ),
