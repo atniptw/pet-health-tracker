@@ -118,3 +118,30 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Changed**: contracts/screens.md, Log (home screen); `_LogScreenState._log` in `lib/ui/log/log_screen.dart`; the test "a new "Saved" message replaces the one before it (D-013)" in `test/ui/log/log_screen_test.dart`
 - **To undo**: drop `removeCurrentSnackBar()` in `_LogScreenState._log`, and change that test, the "Saved: Vomiting for Mia" check in the 001-EC-05 test and the contracts line.
 - **Status**: open
+
+## D-014 · Contract gap · T023: "What happened?" takes up to 40 characters, and "Continue" waits for a name
+
+- **Question**: contracts/screens.md says "Something else" first shows a text field "What happened?", but not how the caregiver moves on to the log sheet, what happens with nothing typed, or what the field does past the 40 characters a type name may have (data-model.md, `validTypeName`).
+- **Options**: (a) a "Continue" button, disabled while the field is empty or only spaces, with the keyboard's done key doing the same, and the field stopping at 40 characters; (b) the same with an error message under the field instead of a disabled button; (c) a "0/40" counter.
+- **Chose**: (a): the same pattern as "Save" on the first pet screen and the note's limit (D-012), with nothing to read or fix.
+- **Changed**: contracts/screens.md, Log sheet; quickstart.md, steps 7, 8 and 19; `SomethingElseSheet` in `lib/ui/log/something_else_sheet.dart`; the tests "\"Continue\" is disabled while \"What happened?\" is empty or only spaces (D-014)", "\"What happened?\" takes up to 40 characters (D-014)" and the done key tests in `test/ui/log/something_else_sheet_test.dart`
+- **To undo**: change `_SomethingElseSheetState` (its `_hasName` check, `onSubmitted` and the `LengthLimitingTextInputFormatter`), and those tests, the contracts line and quickstart.md steps 7, 8 and 19.
+- **Status**: open
+
+## D-015 · Choice · T023: "Something else" is an outlined button
+
+- **Question**: contracts/screens.md makes "Something else" the last button in the type grid, but not whether it looks like the type buttons.
+- **Options**: (a) the same size as the type buttons, outlined rather than filled; (b) the same as a type button.
+- **Chose**: (a): it opens a question rather than logging a type, and the outline sets it apart while keeping it as large as the rest.
+- **Changed**: contracts/screens.md, Log (home screen); `TypeGrid` in `lib/ui/log/type_grid.dart`; the test "\"Something else\" comes after the types and reports its tap" in `test/ui/log/type_grid_test.dart`; `Robot.logSomethingElse` in `test/support/robot.dart`
+- **To undo**: make the "Something else" button a `FilledButton.tonal` in `TypeGrid.build`, and change the finders in those tests, `test/ui/log/something_else_sheet_test.dart`, `Robot.logSomethingElse` and the contracts line.
+- **Status**: open
+
+## D-016 · Conflict · T023: a typed name matching a removed custom type is logged by name, which un-removes it
+
+- **Question**: T023 in tasks.md said a typed name that `match`es an existing type uses that `ExistingType`. But FR-004 says a removed type entered again "MUST offer it again", research §7 says a match "un-removes it if it was removed", and data-model.md says a typed name matching a removed custom type sets `removed` back to false. The event type repository only un-removes a type for a `NewTypeName`, so an `ExistingType` for a removed type would leave it out of the grid.
+- **Options**: (a) follow the spec, research and data model: a match to a removed custom type is logged as a `NewTypeName` of that type's name; (b) follow the task text and log it as `ExistingType`, leaving it removed.
+- **Chose**: (a), the spec. The task text is changed to match.
+- **Changed**: tasks.md, T023; `logSheetFor` in `lib/ui/log/something_else_sheet.dart`; the test "001-FR-004: a removed type typed again is offered again" in `test/ui/log/something_else_sheet_test.dart`
+- **To undo**: in `logSheetFor`, use `LogSheet.forType` for every match (drop the `type.removed` case), and change that test and the T023 text.
+- **Status**: open

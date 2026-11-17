@@ -23,14 +23,14 @@ App start
 ## Log (home screen)
 
 - **Pet**: one active pet → its name shown as a heading, no picker. Several → a row of pet choices with the picked pet highlighted, or "Who is this for?" when none is picked; tapping the picked pet keeps it picked (FR-007, research §9, D-009).
-- **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else".
+- **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else", outlined rather than filled since it is not a type (D-015).
 - "History" opens Pet history for the picked pet; it is disabled when none is picked.
 - Menu: "Pets", "My event types".
 - After a save, a "Saved: <type> for <pet>" message, which replaces any earlier one at once (D-013), and the saved event's pet becomes the picked one.
 
 ## Log sheet
 
-Opened from a type button, or from "Something else" (which first shows a text field "What happened?"; a typed name that matches an existing type, ignoring capitalization and spacing, uses that type).
+Opened from a type button, or from "Something else", which first shows a text field "What happened?" (up to 40 characters; typing stops there) and "Continue", disabled while the field is empty or only spaces; the keyboard's done key continues too (D-014). A typed name that matches an existing type, ignoring capitalization and spacing, uses that type, a removed custom type included, which is then offered again; any other name is a new type, trimmed and with inner runs of spaces collapsed. Closing "What happened?" opens no log sheet.
 
 - Header: the type name and the pet. With several pets and none picked, the pet choices appear here and "Save" stays disabled until one is chosen (story 1 scenario 3). Once shown, the choices stay for the sheet's life, so a pet chosen there can be changed before saving (D-010).
 - "When": "Now" by default; tapping opens date and time pickers that stop at now (FR-003). A time picked after now is not taken: the field keeps what it showed, with "That time is in the future" under it (D-007).
