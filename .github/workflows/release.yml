@@ -91,6 +91,21 @@ jobs:
             ~/.android/adb*
             /usr/local/lib/android/sdk/system-images/android-35/google_apis/x86_64
           key: emulator-35-google_apis-x86_64
+      # The emulator runner installs the latest emulator package on every run,
+      # and that download has come back corrupt and failed a run. It is
+      # installed here first, with retries, so the runner finds it up to date.
+      - name: Install the Android emulator package
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$sdkmanager" --licenses >/dev/null || true
+          for attempt in 1 2 3; do
+            if "$sdkmanager" --install emulator --channel=0 >/dev/null; then
+              exit 0
+            fi
+            echo "Installing the emulator package failed (attempt $attempt of 3)." >&2
+            if [ "$attempt" -lt 3 ]; then sleep 30; fi
+          done
+          exit 1
       - name: Create the emulator snapshot to cache
         if: steps.emulator-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
