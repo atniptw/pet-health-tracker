@@ -18,6 +18,17 @@ expect() {
 blocks() { expect 2 "$@"; }
 allows() { expect 0 "$@"; }
 
+# Checks that a hook denies the command with a message containing the hint.
+says() {
+  local hook=$1 hint=$2 command=$3 message
+  message=$(jq -n --arg c "$command" '{tool_input: {command: $c}}' | ".claude/hooks/$hook" 2>&1 >/dev/null || true)
+  case "$message" in *"$hint"*) ;; *)
+    echo "FAIL $hook: expected the message to say '$hint' for: $command, got: $message"
+    failures=$((failures + 1))
+    ;;
+  esac
+}
+
 blocks block-no-verify.sh 'git commit --no-verify -m "x"'
 blocks block-no-verify.sh 'git push --no-verify'
 blocks block-no-verify.sh 'git push -u origin main --no-verify'
@@ -152,6 +163,23 @@ blocks reviewer-bash.sh 'git grep ${X:--Osh} -e . -- scripts/check.sh'
 blocks reviewer-bash.sh 'git log --exe=sh'
 blocks reviewer-bash.sh "git diff
 rm -rf lib"
+
+# Commands reviewers have sent, each denied with a hint at what to send instead.
+says reviewer-bash.sh 'one git command per call' 'git diff --cached --stat && git diff --cached -- lib test'
+says reviewer-bash.sh 'one git command per call' 'git diff --cached; ls lib/ui'
+says reviewer-bash.sh 'already runs in the repository' 'git -C /Users/tom/Projects/pet-health-tracker-autopilot diff --cached'
+says reviewer-bash.sh 'already runs in the repository' 'git -C /Users/tom/Projects/pet-health-tracker-autopilot ls-files lib'
+says reviewer-bash.sh 'instead of A\|B' 'git grep -n "US1-S2\|last logged" -- specs'
+says reviewer-bash.sh 'counts as a pipe' 'git grep -n -E "US3|FR-015" -- specs'
+says reviewer-bash.sh 'counts as a pipe' 'git diff --cached -G "SlowArchive|PetNameList" --name-only'
+says reviewer-bash.sh 'A backslash counts' 'git grep -n "pet\.name" -- lib'
+says reviewer-bash.sh 'without $ or backticks' 'git diff $(git merge-base HEAD main)'
+says reviewer-bash.sh 'without $ or backticks' 'git diff `git merge-base HEAD main`'
+says reviewer-bash.sh 'Grep tool' 'git grep -n -e "PetHistoryScreen({" -- lib'
+says reviewer-bash.sh 'Grep tool' 'git grep -n -A12 "Future<void> openHistory" -- test'
+says reviewer-bash.sh 'Read tool' 'cat lib/ui/common/watched_view.dart'
+says reviewer-bash.sh 'Read tool' 'sed -n 1,60p lib/ui/common/watched_view.dart'
+says reviewer-bash.sh 'Grep tool' 'grep -rn watchActive lib'
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures hook test(s) failed"
