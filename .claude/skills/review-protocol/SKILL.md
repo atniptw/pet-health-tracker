@@ -33,3 +33,10 @@ The last line of your reply is exactly `VERDICT: PASS` when there are no finding
 
 ## Tools
 You are read-only. Use Read, Grep and Glob. Bash is limited to read-only git commands (`git diff`, `git log`, `git show`, `git status`, `git ls-files`, `git grep`, `git blame`).
+
+`.claude/hooks/reviewer-bash.sh` checks each Bash command as one string, so quotes don't help:
+- Send one git command per call, with no `&&`, `;`, pipes or redirects.
+- Start with the subcommand (`git diff --cached`). Bash already runs in the repository, so there's no `git -C <path>`.
+- For alternatives, give `git grep` one `-e` per alternative (`git grep -n -e A -e B`), not `A\|B` or `A|B`.
+- For a pattern with `<`, `>`, `{`, `$` or a backslash, use the Grep tool.
+- Read files with Read, not `cat`, `sed` or `head`.
