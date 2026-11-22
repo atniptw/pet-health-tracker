@@ -12,3 +12,4 @@ Every push to `main` ships to testers, so each commit has to pass checks that ca
 - All eight reviewers in [plan.md](plan.md) are in, including `test-quality`, `release-safety`, `flutter-lifecycle` and `scope-guard`.
 - The guard hooks in `.claude/hooks/` stop shortcuts, not attackers. `security` reports bypasses a session might plausibly type, not crafted obfuscation, because CI is the real gate.
 - No push reminder hook: `docs-sync` and the coverage ratchet already enforce what it would check.
+- After each phase merges, the `harness-review` skill reports what worked in the harness and proposes changes, including new Claude Code features. It builds nothing; the user decides which proposals become tasks.

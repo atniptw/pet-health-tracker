@@ -12,3 +12,4 @@ One commit per task, each safe to ship on its own.
 - [x] T006 Review gate and stamp hooks
 - T007 Push reminder hook: dropped, see hook 4 in [plan.md](plan.md).
 - [x] T008 Workflow section in `CLAUDE.md`
+- [x] T009 Harness review after each phase: the `harness-review` skill and constitution workflow step 6
