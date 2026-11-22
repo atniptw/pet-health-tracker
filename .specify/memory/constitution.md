@@ -1,13 +1,14 @@
 <!--
 Sync Impact Report
-- Version: 3.1.0 → 3.2.0 (MINOR: removed section)
-- Modified principles: III (gaps are settled with the user again; the choices made in the
-  autonomous runs stand until the user reviews them)
-- Added sections: none
-- Removed sections: Autonomous runs, as the user decided on 2026-11-21
+- Version: 3.2.0 → 3.3.0 (MINOR: workflow step added)
+- Modified principles: none
+- Added sections: Workflow step 6, Review the harness. After each phase merges, the
+  harness-review skill reports what worked and proposes changes; the user decides which to
+  build. As the user decided on 2026-11-22.
+- Removed sections: none
 - Modified sections: none
-- Dependent files to update: CLAUDE.md (stop rules, commands), docs/dev-workflow/autonomous-runs.md,
-  docs/ci.md, scripts/check.sh
+- Dependent files to update: CLAUDE.md (Implementing a task), docs/dev-workflow/spec.md,
+  docs/dev-workflow/plan.md, docs/dev-workflow/tasks.md; added .claude/skills/harness-review/SKILL.md
 - Deferred placeholders: none
 -->
 
@@ -41,6 +42,7 @@ Every behavior change comes with tests: unit and widget tests in `test/`, securi
 3. **Implement one task per commit.** For each task: write the failing test, make the change, run `./scripts/check.sh`, stage exactly that task, review it with the `targeted-review` skill, then `git commit -q -m "<type>: <subject>"` and tick the task in `tasks.md` in the same commit. `/speckit-implement` works through the tasks the same way. The git extension's auto-commit stays off.
 4. **Merge.** Push the branch and open a pull request with `gh`. It is merged to `main` with a rebase merge, so every reviewed commit lands on `main` as it is. A feature can merge after each task, after each phase of its `tasks.md`, or once at the end.
 5. **Keep docs true.** When a task ships or a decision changes, the spec, plan and tasks, `CLAUDE.md` and the docs in `docs/` they affect are updated in the same commit.
+6. **Review the harness.** After each phase merges, the session that starts the next phase first runs the `harness-review` skill over the phase that merged. It reads the phase's pull request, commits, CI runs, `build-log.md` rows and session transcripts, and Claude Code's releases since the phase began, and reports what worked and what to change, with the evidence for each. It changes nothing. The user decides which proposals to build; each becomes a task in `docs/dev-workflow/tasks.md` and is built as in steps 3 and 4.
 
 ## Review gates
 
@@ -50,4 +52,4 @@ The reviewer agents in `.claude/agents/` each own one concern. `./scripts/requir
 
 This constitution takes precedence over other workflow guidance in the repository. `CLAUDE.md` holds the commands, project state and CI details, and points here for the rules. An amendment is its own reviewed commit that records the user's decision, bumps the version (major for a removed or redefined principle, minor for an added principle or section, patch for wording) and updates `CLAUDE.md` where it depends on the change. The `Constitution Check` in each plan `/speckit-plan` writes checks it against these principles.
 
-**Version**: 3.2.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-21
+**Version**: 3.3.0 | **Ratified**: 2026-11-07 | **Last Amended**: 2026-11-22

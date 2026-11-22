@@ -31,7 +31,7 @@ Stop rules:
 3. A spec gap or a conflict between spec, plan and contracts: stop and ask (`/speckit-clarify`), rather than guessing.
 4. Change only the files the task needs. Something else that's broken becomes a new task in `tasks.md`, not part of this one.
 5. A reviewer `FAIL` that still stands after one round of fixes, or that conflicts with the spec: ask the user.
-6. Start a fresh session for each phase in `tasks.md`; the ticked tasks carry the state.
+6. Start a fresh session for each phase in `tasks.md`; the ticked tasks carry the state. When the phase before it has merged, the session first runs the `harness-review` skill (constitution, workflow step 6) and waits for the user's decisions on its proposals.
 
 The choices Claude made in the earlier autonomous runs, where it would otherwise have asked, are in each feature's `decisions.md`, waiting for the user's review (`docs/dev-workflow/autonomous-runs.md`).
 
