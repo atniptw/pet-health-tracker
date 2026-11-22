@@ -31,7 +31,7 @@ Stop rules:
 5. A reviewer `FAIL` that still stands after one round of fixes, or that conflicts with the spec: ask the user.
 6. Start a fresh session for each phase in `tasks.md`; the ticked tasks carry the state.
 
-In an autonomous run (a session whose prompt starts with `Autonomous run`), `docs/dev-workflow/autonomous-runs.md` replaces stop rules 1, 3 and 5: Claude settles spec gaps itself, records every such choice and every blocker in the feature's `decisions.md` for the user to review after the run, and ends the run on a blocker.
+The choices Claude made in the earlier autonomous runs, where it would otherwise have asked, are in each feature's `decisions.md`, waiting for the user's review (`docs/dev-workflow/autonomous-runs.md`).
 
 ## Project state
 
@@ -43,7 +43,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Specs and design docs
 
-The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks, and is being implemented: adding pets, logging events, seeing a pet's history, and archiving and restoring pets work. 002 and 003 are specs only. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and autonomous runs, with each feature's `decisions.md`, in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
+The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks, and is being implemented: adding pets, logging events, seeing a pet's history, and archiving and restoring pets work. 002 and 003 are specs only. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and the `decisions.md` left by the earlier autonomous runs in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 
@@ -51,7 +51,7 @@ The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-hou
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, git hook tests, autopilot tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, git hook tests, rules tests
 ./scripts/test.sh                        # run all tests in test/, in the America/Chicago time zone, printing only failures; use it instead of flutter test for test/
 ./scripts/test.sh test/app_test.dart     # run a single test file
 ./scripts/test.sh --plain-name "<test name>"  # run a single test by name
@@ -70,8 +70,6 @@ dart tool/size_check.dart                # size limits for lib/ (300 lines a fil
 ./scripts/test-required-reviewers.sh     # tests for scripts/required-reviewers.sh
 ./scripts/test-review-gate.sh            # tests for the review stamp and commit gate hooks in .claude/hooks
 ./scripts/test-githooks.sh               # tests for the git hooks in .githooks
-./scripts/autopilot.sh [--next]          # autonomous run: one fresh session per plan or phase step until every spec is built (docs/dev-workflow/autonomous-runs.md); --next prints the next step
-./scripts/test-autopilot.sh              # tests for scripts/autopilot.sh
 specify check                            # Spec Kit CLI, installed with uv tool install specify-cli --from git+https://github.com/github/spec-kit.git; its skills are /speckit-*
 flutter test integration_test            # smoke test on a running device
 ```
