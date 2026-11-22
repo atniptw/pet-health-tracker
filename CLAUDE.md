@@ -8,7 +8,7 @@ A mobile app (iOS + Android) for pet owners to record their pets' medical events
 
 ## Rules and workflow
 
-The project is a [Spec Kit](https://github.com/github/spec-kit) project. Its rules and workflow are in the constitution, `.specify/memory/constitution.md`: only what was asked, every commit ships (backward compatible only once there is a production release; testers may need to reset the app or its data; during the rebuild period deploys are off and the app is built from the specs alone), tests with every behavior change, checks are never bypassed, and one reviewed commit per task on a feature branch, rebase-merged to `main` through a pull request. The `/speckit-*` skills write each feature's `spec.md`, `plan.md` and `tasks.md` under `specs/`.
+The project is a [Spec Kit](https://github.com/github/spec-kit) project. Its rules and workflow are in the constitution, `.specify/memory/constitution.md`, which takes precedence over this file. The `/speckit-*` skills write each feature's `spec.md`, `plan.md` and `tasks.md` under `specs/`.
 
 Each commit is staged exactly, reviewed with the `targeted-review` skill, and made with `git commit -q -m "<type>: <subject>"`. The commit gate (`.claude/hooks/review-gate.sh`) denies it until every reviewer `./scripts/required-reviewers.sh` names has passed the staged diff, and allows only `-m`, `-q`, `-s`, `-v`, `--amend`, `--no-edit`, `--allow-empty` and `--dry-run`. `git commit --dry-run -q -m x` names the reviewers still missing. Don't stage while reviewers run. The pre-push hook runs `check.sh` on every push, and CI runs it again with `scripts/tests-changed.sh` and the integration tests on every push to `main` before anything deploys. `docs/dev-workflow/plan.md` has the details.
 
@@ -55,21 +55,13 @@ flutter run                              # run on a connected device/emulator
 ./scripts/test.sh                        # run all tests in test/, in the America/Chicago time zone, printing only failures; use it instead of flutter test for test/
 ./scripts/test.sh test/app_test.dart     # run a single test file
 ./scripts/test.sh --plain-name "<test name>"  # run a single test by name
-./scripts/test-test-sh.sh                # tests for scripts/test.sh
 ./scripts/spec-coverage.sh [--strict] <spec dir>…  # spec ids (NNN-US<n>-S<m>, NNN-FR-NNN, NNN-EC-NN, NNN-SC-NNN) that no test name or untested.md line covers; fails on unknown ids, and with --strict on missing ones
-./scripts/test-spec-coverage.sh          # tests for scripts/spec-coverage.sh
 npm --prefix firestore-tests test        # security rules tests (starts the Firestore emulator on 8180)
 dart tool/size_check.dart                # size limits for lib/ (300 lines a file, 40 a function) against tool/size_baseline.txt
 ./scripts/comment-check.sh               # comments with wording like "for now" or "v2" (allowed uses in scripts/comment-allowlist.txt)
-./scripts/test-comment-check.sh          # tests for scripts/comment-check.sh
 ./scripts/tests-changed.sh [<from> <to>]  # commits that change lib/ without tests, unless a refactor (default: not yet on origin/main)
-./scripts/test-tests-changed.sh          # tests for scripts/tests-changed.sh
-./scripts/test-hooks.sh                  # tests for the Claude Code hooks in .claude/hooks
-./scripts/test-coverage.sh               # tests for the coverage minimum and ratchet in scripts/coverage.sh
 ./scripts/required-reviewers.sh [<from> <to>]  # reviewer agents a diff needs (default: the staged change); --hashes for the commit gate
-./scripts/test-required-reviewers.sh     # tests for scripts/required-reviewers.sh
-./scripts/test-review-gate.sh            # tests for the review stamp and commit gate hooks in .claude/hooks
-./scripts/test-githooks.sh               # tests for the git hooks in .githooks
+./scripts/test-<name>.sh                 # tests for scripts/<name>.sh (test-test-sh.sh for test.sh); test-hooks.sh and test-review-gate.sh test .claude/hooks, test-githooks.sh tests .githooks
 specify check                            # Spec Kit CLI, installed with uv tool install specify-cli --from git+https://github.com/github/spec-kit.git; its skills are /speckit-*
 flutter test integration_test            # smoke test on a running device
 ```
