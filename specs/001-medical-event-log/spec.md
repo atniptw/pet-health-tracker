@@ -31,6 +31,14 @@ This spec covers logging events and seeing how often they happen. Sharing the lo
 - Q: In what order are the history summary's types listed? → A: The type whose newest event happened most recently first (assumed, D-021)
 - Q: How are the history's durations rounded, and how do a gap under a minute and a whole-number average over 2 days read? → A: Rounded down; "0 minutes"; one decimal kept, as in "3.0 days" (assumed, D-022)
 
+### Session 2026-11-22
+
+- Q: On the Event screen, how is the event's type changed? → A: A "Type" dropdown showing the current type.
+- Q: What happens after "Save" on the Event screen? → A: The screen closes and the pet history shows the changed event.
+- Q: What does the Event screen look like? → A: A full screen with an app bar titled "Event".
+- Q: Where does "Delete" sit on the Event screen? → A: A text button in the app bar.
+- Q: FR-015 says archived pets aren't offered when editing an event, but can an archived pet's own events still be edited? → A: Yes: the Event screen keeps the event's own archived pet picked, and offers no other archived pet.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Log an event as it happens (Priority: P1)
@@ -134,7 +142,7 @@ A caregiver who logged the wrong pet, event, time or details fixes the entry, or
 - **FR-012**: Logging MUST work without a network connection, and entries MUST NOT be lost.
 - **FR-013**: The app MUST hold only medical events and pets: no photos feed, no social features and no general diary entries.
 - **FR-014**: Everything in this spec MUST work without signing in. Events logged before a caregiver signs in MUST be kept when they do sign in.
-- **FR-015**: Caregivers MUST be able to archive a pet and restore it later. Archived pets MUST NOT be offered when logging or editing an event, and their history MUST stay viewable.
+- **FR-015**: Caregivers MUST be able to archive a pet and restore it later. Archived pets MUST NOT be offered when logging an event or as the pet to move an event to; an archived pet's own events stay editable, with that pet still picked. Their history MUST stay viewable.
 
 ### Key Entities
 

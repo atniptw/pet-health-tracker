@@ -53,8 +53,10 @@ Opened from a type button, or from "Something else", which first shows a text fi
 
 ## Event
 
-- Opened from Pet history. The same fields as the Log sheet, filled in, plus the pet (active pets, and the event's own pet if archived) and the type (`watchOffered` plus the event's own type).
-- "Save" applies the changes (FR-011, story 1 scenario 8). "Delete" asks "Delete this event?" with "Delete" and "Cancel"; on Delete it returns to Pet history.
+- Opened by tapping an event in Pet history: a full screen titled "Event".
+- The pet choices (active pets, and the event's own pet if archived), then a "Type" dropdown showing the event's type (`watchOffered` plus the event's own type, a removed one included), then the same fields as the Log sheet, filled in. Picking another type keeps only the details its questions share.
+- "Save" applies the changes and returns to Pet history (FR-011, story 1 scenario 8); it is disabled while saving, and a failed save is reported without the write's own message and leaves the screen open. "Delete", a text button in the app bar, asks "Delete this event?" with "Delete" and "Cancel"; on Delete it returns to Pet history.
+- If the pets or types can't be read, the error is reported and the choices keep what they show, which always includes the event's own pet and type.
 
 ## Pet form
 

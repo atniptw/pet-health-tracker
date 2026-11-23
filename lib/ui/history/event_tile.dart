@@ -8,9 +8,10 @@ import '../common/date_time_field.dart';
 /// One event in a pet's history: [type]'s name, then the date and time in
 /// local time, each answered detail as "question: answer" in [type]'s
 /// question order, the note, and "3 days since the previous one" when [gap],
-/// the time since the previous event of the type, is given.
+/// the time since the previous event of the type, is given. Tapping it calls
+/// [onTap].
 class EventTile extends StatelessWidget {
-  const EventTile({super.key, required this.event, required this.type, this.gap});
+  const EventTile({super.key, required this.event, required this.type, this.gap, this.onTap});
 
   final MedicalEvent event;
 
@@ -20,11 +21,14 @@ class EventTile extends StatelessWidget {
   /// Null for the first event of its type.
   final Duration? gap;
 
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final note = event.note;
     final gap = this.gap;
     return ListTile(
+      onTap: onTap,
       title: Text(type.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

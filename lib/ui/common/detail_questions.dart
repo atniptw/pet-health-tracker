@@ -6,10 +6,19 @@ import 'duration_field.dart';
 /// A type's optional detail questions, each with the input its kind needs.
 /// Each answer or skip reports every answered question, keyed by question id,
 /// in the shape `validDetails` accepts; a skipped question has no key.
+/// [initial] answers are shown at first.
 class DetailQuestions extends StatefulWidget {
-  const DetailQuestions({super.key, required this.questions, required this.onChanged});
+  const DetailQuestions({
+    super.key,
+    required this.questions,
+    this.initial = const {},
+    required this.onChanged,
+  });
 
   final List<DetailQuestion> questions;
+
+  /// Answers keyed by question id, as [onChanged] reports them.
+  final Map<String, Object> initial;
 
   final ValueChanged<Map<String, Object>> onChanged;
 
@@ -18,7 +27,7 @@ class DetailQuestions extends StatefulWidget {
 }
 
 class _DetailQuestionsState extends State<DetailQuestions> {
-  final _answers = <String, Object>{};
+  late final _answers = <String, Object>{...widget.initial};
 
   void _report() => widget.onChanged(Map.unmodifiable(_answers));
 
@@ -41,6 +50,7 @@ class _DetailQuestionsState extends State<DetailQuestions> {
     ),
     DurationQuestion() => DurationField(
       label: question.label,
+      initialSeconds: _answers[question.id] as int?,
       onChanged: (seconds) => _answer(question.id, seconds),
     ),
   };

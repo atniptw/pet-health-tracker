@@ -16,6 +16,7 @@ class EventFields extends StatelessWidget {
     required this.onWhenChanged,
     this.whenError,
     required this.questions,
+    this.initialDetails = const {},
     required this.onDetailsChanged,
     required this.note,
   });
@@ -33,6 +34,9 @@ class EventFields extends StatelessWidget {
   /// The type's questions, fixed for this widget's life.
   final List<DetailQuestion> questions;
 
+  /// The answers shown at first, keyed by question id.
+  final Map<String, Object> initialDetails;
+
   /// Every answered question, keyed by question id, after each change.
   final ValueChanged<Map<String, Object>> onDetailsChanged;
 
@@ -46,7 +50,7 @@ class EventFields extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         DateTimeField(clock: clock, value: when, onChanged: onWhenChanged, errorText: whenError),
-        DetailQuestions(questions: questions, onChanged: onDetailsChanged),
+        DetailQuestions(questions: questions, initial: initialDetails, onChanged: onDetailsChanged),
         TextField(
           controller: note,
           decoration: const InputDecoration(labelText: 'Note (optional)'),
