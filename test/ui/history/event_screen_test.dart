@@ -18,7 +18,8 @@ import '../../support/screen_checks.dart';
 import '../../support/test_app.dart';
 
 /// The local [events], except that `update` fails with an error holding the
-/// note, as sqflite's `DatabaseException` lists a statement's arguments.
+/// note, as sqflite's `DatabaseException` lists a statement's arguments, and
+/// `delete` fails too.
 class FailingUpdate implements EventRepository {
   FailingUpdate(this.events);
 
@@ -38,12 +39,16 @@ class FailingUpdate implements EventRepository {
   }) => Future.error(Exception('UPDATE events failed for $note'));
 
   @override
+  Future<void> delete(String id) => Future.error(Exception('DELETE FROM events failed'));
+
+  @override
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
-/// The local [events], except that `update` waits for [done] before writing.
-class SlowUpdate implements EventRepository {
-  SlowUpdate(this.events);
+/// The local [events], except that `update` and `delete` wait for [done]
+/// before writing.
+class SlowWrites implements EventRepository {
+  SlowWrites(this.events);
 
   final EventRepository events;
   final done = Completer<void>();
@@ -69,6 +74,12 @@ class SlowUpdate implements EventRepository {
       details: details,
       note: note,
     );
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await done.future;
+    await events.delete(id);
   }
 
   @override
@@ -111,6 +122,8 @@ Finder inSummary(String text) =>
     find.descendant(of: find.byType(TypeSummaryList), matching: find.text(text));
 
 Finder get saveButton => find.widgetWithText(FilledButton, 'Save');
+
+Finder get deleteButton => find.widgetWithText(TextButton, 'Delete');
 
 Finder get typeField => find.byType(DropdownButtonFormField<String>);
 
@@ -453,10 +466,12 @@ void main() {
     expect(tester.widget<FilledButton>(saveButton).onPressed, isNotNull);
   });
 
-  testWidgets('"Save" is disabled while saving, and the screen closes once saved', (tester) async {
+  testWidgets('"Save" and "Delete" are disabled while saving, and the screen closes once saved', (
+    tester,
+  ) async {
     final rex = await addPet(tester, 'Rex');
     await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
-    final events = SlowUpdate(app.events);
+    final events = SlowWrites(app.events);
     await openHistory(tester, rex, events: events);
     await openEvent(tester, 'Vomiting');
 
@@ -465,11 +480,100 @@ void main() {
     await tester.pump();
 
     expect(tester.widget<FilledButton>(saveButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(deleteButton).onPressed, isNull);
     await tester.runAsync(() async {
       events.done.complete();
       await Future<void>.delayed(Duration.zero);
     });
     await tester.pumpAndSettle();
     expect(find.byType(EventScreen), findsNothing);
+  });
+
+  Future<void> tapDelete(WidgetTester tester) async {
+    await tester.tap(find.descendant(of: find.byType(AppBar), matching: deleteButton));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('001-US4-S2: "Delete" asks "Delete this event?" first, and "Cancel" keeps it', (
+    tester,
+  ) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
+    await openHistory(tester, rex);
+    await openEvent(tester, 'Vomiting');
+
+    await tapDelete(tester);
+
+    expect(find.text('Delete this event?'), findsOneWidget);
+    await expectAccessible(tester);
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this event?'), findsNothing);
+    expect(find.byType(EventScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(tileTexts(tester), ['Vomiting\nNov 10, 2026 8:00 AM']);
+  });
+
+  testWidgets('001-US4-S2 001-FR-011: "Delete" in the question deletes the event and returns to '
+      'the history, where it is gone from the list and the summary counts', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 12, 8));
+    await openHistory(tester, rex);
+    expect(inSummary('2 times'), findsOneWidget);
+
+    await openEvent(tester, 'Nov 10');
+    await tapDelete(tester);
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: deleteButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EventScreen), findsNothing);
+    expect(tileTexts(tester), ['Vomiting\nNov 12, 2026 8:00 AM']);
+    expect(inSummary('1 time'), findsOneWidget);
+    expect(inSummary('2 times'), findsNothing);
+  });
+
+  testWidgets('a failed delete is reported, and the event screen stays open', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
+    await openHistory(tester, rex, events: FailingUpdate(app.events));
+    await openEvent(tester, 'Vomiting');
+
+    final errors = <Object>[];
+    await runZonedGuarded(() async {
+      await tapDelete(tester);
+      await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: deleteButton));
+      await tester.pumpAndSettle();
+    }, (error, _) => errors.add(error));
+    await tester.pumpAndSettle();
+
+    expect(errors, hasLength(1));
+    expect(errors.single, isA<StateError>());
+    expect(find.byType(EventScreen), findsOneWidget);
+    expect(tester.widget<TextButton>(deleteButton).onPressed, isNotNull);
+  });
+
+  testWidgets('"Delete" and "Save" are disabled while deleting, and the screen closes once '
+      'deleted', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
+    final events = SlowWrites(app.events);
+    await openHistory(tester, rex, events: events);
+    await openEvent(tester, 'Vomiting');
+
+    await tapDelete(tester);
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: deleteButton));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextButton>(deleteButton).onPressed, isNull);
+    expect(tester.widget<FilledButton>(saveButton).onPressed, isNull);
+    await tester.runAsync(() async {
+      events.done.complete();
+      await Future<void>.delayed(Duration.zero);
+    });
+    await tester.pumpAndSettle();
+    expect(find.byType(EventScreen), findsNothing);
+    expect(tileTexts(tester), isEmpty);
   });
 }
