@@ -29,7 +29,7 @@ As reports arrive, tell the user briefly which passed and which failed. When all
 Check each finding before acting on it. A reviewer can be wrong, can have read an older version of a file, or can flag something the user decided. If you disagree with a finding, tell the user why rather than quietly skipping it.
 
 ### 5. Fix and re-check
-Fix the findings, with tests first where the fix changes behavior. Stage the fixes and run `./scripts/check.sh`.
+Fix the findings, with tests first where the fix changes behavior. Stage the fixes and run `./scripts/check.sh`. Before continuing any reviewer, check that `git diff --cached --stat` lists the fixes and `git status --short` shows nothing unstaged. A `git add` chained with a command the commit gate denies doesn't run, so stage in its own call.
 
 Then run `./scripts/required-reviewers.sh` again. Every listed reviewer whose paths the fixes touched has to pass the new staged diff, including reviewers that passed before. To save time, use `SendMessage` to continue the reviewer's existing agent with a short note on what changed, rather than starting a new one. The note says where to look hardest; the reviewer still reads its whole staged diff, because its pass covers all of it. A reviewer whose paths the fixes didn't touch keeps its pass.
 
