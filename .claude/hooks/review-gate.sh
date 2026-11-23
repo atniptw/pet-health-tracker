@@ -8,7 +8,15 @@
 set -euo pipefail
 
 deny() {
-  echo "Commit blocked: $1" >&2
+  local note=''
+  # A denial stops the whole command, so a git add chained with the commit
+  # didn't run either. It reads $plain, which has commit messages dropped, so a
+  # ';' or '&&' inside a message doesn't count; before $plain is set, it reads
+  # the raw command.
+  case "${plain:-${command:-}}" in
+    *'&&'* | *'||'* | *';'* | *'|'* | *$'\n'*) note=' Nothing else in this command ran either: run git add and the other commands in their own call, then git commit in its own.' ;;
+  esac
+  echo "Commit blocked: $1$note" >&2
   exit 2
 }
 

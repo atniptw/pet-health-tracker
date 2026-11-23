@@ -71,6 +71,21 @@ echo x >lib/a.dart && git add lib/a.dart
 blocks 'a lib change with no review'
 message=$(jq -n '{hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {command: "git commit -m x"}}' | "$gate" 2>&1 >/dev/null || true)
 case "$message" in *lib-reviewer*) ;; *) fail "the message names the missing reviewer: got '$message'" ;; esac
+case "$message" in *'Nothing else in this command ran'*) fail "a commit on its own gets no note about chained commands: got '$message'" ;; esac
+# Separators inside a commit message don't chain anything.
+for lone in 'git commit -q -m "fix: a; b && c | d"' 'git commit -q -m "$(cat <<'"'EOF'"'
+feat: a; b
+EOF
+)"'; do
+  message=$(jq -n --arg c "$lone" '{hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {command: $c}}' | "$gate" 2>&1 >/dev/null || true)
+  case "$message" in *'Nothing else in this command ran'*) fail "a lone commit with separators in its message gets no note, for: $lone" ;; *lib-reviewer*) ;; *) fail "names the missing reviewer, for: $lone, got '$message'" ;; esac
+done
+# A denial stops the whole command, so a git add chained with the commit doesn't run either.
+for chained in 'git add -A && git commit --dry-run -q -m x' 'git add lib; git commit -m x' 'git status --short
+git commit -m x' 'git add lib || git commit -m x' 'git commit -m x 2>&1 | tail -5'; do
+  message=$(jq -n --arg c "$chained" '{hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {command: $c}}' | "$gate" 2>&1 >/dev/null || true)
+  case "$message" in *lib-reviewer*'Nothing else in this command ran'*) ;; *) fail "says nothing chained with the commit ran, for: $chained, got '$message'" ;; esac
+done
 
 review r1 lib-reviewer PASS
 allows 'a lib change its reviewer passed'

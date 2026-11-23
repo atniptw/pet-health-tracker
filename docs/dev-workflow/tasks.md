@@ -14,4 +14,4 @@ One commit per task, each safe to ship on its own.
 - [x] T008 Workflow section in `CLAUDE.md`
 - [x] T009 Harness review after each phase: the `harness-review` skill and constitution workflow step 6
 - [x] T010 Reviewer Bash denials say what to send instead: one command per call, no `git -C`, `git grep -e` per alternative, the Grep or Read tool (harness review of 001 Phase 6)
-- [ ] T011 The commit gate's denial says when nothing chained with the commit ran, and `targeted-review` checks the fixes are staged before reviewers re-check them (harness review of 001 Phase 6)
+- [x] T011 The commit gate's denial says when nothing chained with the commit ran, and `targeted-review` checks the fixes are staged before reviewers re-check them (harness review of 001 Phase 6)
