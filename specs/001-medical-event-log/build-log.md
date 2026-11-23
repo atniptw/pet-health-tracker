@@ -43,3 +43,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T030 | 2 | clean-code 1, test-quality 1 | — | 3, 4 | — | D-025, D-026, D-027 |
 | T031 | 1 | — | — | 3 | — | D-028 |
 | T032 | 2 | clean-code 1, comment-hygiene 1, docs-sync 1, test-quality 1 | — | 3 | — | D-029, D-030 |
+| T033 | 3 | test-quality 3 | 5 | 3 | answered 4 questions on the Event screen (type dropdown, Save returns to the history, full screen "Event", Delete in the app bar), and kept an archived pet's own events editable (FR-015 reworded) | — |

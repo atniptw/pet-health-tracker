@@ -4,11 +4,19 @@ import 'package:flutter/services.dart';
 /// A duration question: [label] above "Minutes" and "Seconds" number fields.
 /// Each edit reports the total in whole seconds, or null when both are empty
 /// or zero, so the question is skipped. Seconds over 59 are added as they
-/// are (D-008).
+/// are (D-008). [initialSeconds], if given, fills the fields in.
 class DurationField extends StatefulWidget {
-  const DurationField({super.key, required this.label, required this.onChanged});
+  const DurationField({
+    super.key,
+    required this.label,
+    this.initialSeconds,
+    required this.onChanged,
+  });
 
   final String label;
+
+  /// Whole seconds to show at first, or null for empty fields.
+  final int? initialSeconds;
 
   /// Whole seconds, at least 1, or null when unanswered.
   final ValueChanged<int?> onChanged;
@@ -18,8 +26,14 @@ class DurationField extends StatefulWidget {
 }
 
 class _DurationFieldState extends State<DurationField> {
-  final _minutes = TextEditingController();
-  final _seconds = TextEditingController();
+  late final _minutes = TextEditingController(text: _part(widget.initialSeconds, (s) => s ~/ 60));
+  late final _seconds = TextEditingController(text: _part(widget.initialSeconds, (s) => s % 60));
+
+  /// [part] of [seconds] as text, empty when there are none or it is zero.
+  static String _part(int? seconds, int Function(int) part) {
+    final value = seconds == null ? 0 : part(seconds);
+    return value == 0 ? '' : '$value';
+  }
 
   @override
   void dispose() {

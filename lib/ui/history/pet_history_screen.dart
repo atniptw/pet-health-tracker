@@ -11,6 +11,7 @@ import '../app_scope.dart';
 import '../common/read_failure.dart';
 import '../common/watched_view.dart';
 import '../pets/pet_form_screen.dart';
+import 'event_screen.dart';
 import 'event_tile.dart';
 import 'type_summary.dart';
 
@@ -90,6 +91,15 @@ class _PetHistoryScreenState extends State<PetHistoryScreen> {
     Navigator.push(context, MaterialPageRoute<void>(builder: (_) => PetFormScreen(pet: _pet))),
   );
 
+  void _openEvent(MedicalEvent event, EventType type) => unawaited(
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => EventScreen(event: event, pet: _pet, type: type, clock: widget.clock),
+      ),
+    ),
+  );
+
   /// Archives the pet if it is active, and restores it otherwise.
   Future<void> _toggleArchived() async {
     setState(() => _archiving = true);
@@ -116,6 +126,7 @@ class _PetHistoryScreenState extends State<PetHistoryScreen> {
             event: event,
             type: types[event.typeId]!,
             gap: timeSincePrevious(event, events),
+            onTap: () => _openEvent(event, types[event.typeId]!),
           ),
       ],
     );
