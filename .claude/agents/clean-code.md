@@ -1,7 +1,7 @@
 ---
 name: clean-code
 description: "Reviews staged Dart changes for size, complexity, single responsibility, duplication and naming. Required before committing changes to lib/ or tool/."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

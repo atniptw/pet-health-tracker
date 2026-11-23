@@ -1,7 +1,7 @@
 ---
 name: release-safety
 description: "Checks that a staged change is safe to ship on its own, and once there is a production release, that it keeps production app versions working. Required before committing changes to rules, lib/, platform config, dependencies or CI."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

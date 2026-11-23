@@ -1,7 +1,7 @@
 ---
 name: flutter-lifecycle
 description: "Reviews staged Flutter widget and state changes for lifecycle and state bugs. Required before committing changes to lib/."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

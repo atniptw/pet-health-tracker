@@ -32,11 +32,11 @@ If there are no findings, write `No findings.`
 The last line of your reply is exactly `VERDICT: PASS` when there are no findings, or `VERDICT: FAIL` when there is at least one.
 
 ## Tools
-You are read-only. Use Read, Grep and Glob. Bash is limited to read-only git commands (`git diff`, `git log`, `git show`, `git status`, `git ls-files`, `git grep`, `git blame`).
+You are read-only. Read files with Read. Bash is limited to read-only git commands (`git diff`, `git log`, `git show`, `git status`, `git ls-files`, `git grep`, `git blame`): search with `git grep` and list files with `git ls-files`. Claude Code here gives you no Grep or Glob tool, and the hook below refuses `grep`, `find` and `ls`.
 
 `.claude/hooks/reviewer-bash.sh` checks each Bash command as one string, so quotes don't help:
 - Send one git command per call, with no `&&`, `;`, pipes or redirects.
 - Start with the subcommand (`git diff --cached`). Bash already runs in the repository, so there's no `git -C <path>`.
 - For alternatives, give `git grep` one `-e` per alternative (`git grep -n -e A -e B`), not `A\|B` or `A|B`.
-- For a pattern with `<`, `>`, `{`, `$` or a backslash, use the Grep tool.
+- In a `git grep` pattern, put `.` in place of each `<`, `>`, `{`, `|`, `$` or backslash: `git grep -n -e "Future.void. update("` finds `Future<void> update(`.
 - Read files with Read, not `cat`, `sed` or `head`.

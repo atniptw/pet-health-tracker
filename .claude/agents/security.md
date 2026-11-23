@@ -1,7 +1,7 @@
 ---
 name: security
 description: "Reviews staged changes for security problems in Firestore rules, data access, auth, platform config, CI and admin scripts. Required before committing changes to those areas, the Claude Code hooks or their settings."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:
