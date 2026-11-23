@@ -16,7 +16,8 @@ import '../log/pet_choices.dart';
 /// plus the event's own, and the types the offered ones plus the event's
 /// own, so an archived pet or a removed type stays choosable. Changing the
 /// type keeps only the details its questions share. "Save" applies the
-/// changes and returns to the pet history.
+/// changes and returns to the pet history. "Delete" asks "Delete this
+/// event?" first, then deletes the event and returns to the pet history.
 ///
 /// A failed read of the pets or types is reported to the app's error handler
 /// and keeps the choices shown, which always hold the event's own.
@@ -56,6 +57,10 @@ class _EventScreenState extends State<EventScreen> {
   late Map<String, Object> _details = widget.event.details;
   late final _note = TextEditingController(text: widget.event.note);
   var _saving = false;
+  var _deleting = false;
+
+  /// Whether a save or delete is in flight, which disables both buttons.
+  bool get _busy => _saving || _deleting;
 
   /// Before the first build, and whenever [AppScope] holds other
   /// repositories than before, follows the active pets and offered types in
@@ -125,6 +130,30 @@ class _EventScreenState extends State<EventScreen> {
     if (mounted) Navigator.pop(context);
   }
 
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this event?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      await AppScope.of(context).events.delete(widget.event.id);
+    } catch (_, stack) {
+      // Delete works again. The app's error handler gets an error without
+      // the write's own message.
+      if (mounted) setState(() => _deleting = false);
+      Error.throwWithStackTrace(StateError('Deleting the event failed'), stack);
+    }
+    if (mounted) Navigator.pop(context);
+  }
+
   Widget _typeField() => DropdownButtonFormField<String>(
     initialValue: _type.id,
     decoration: const InputDecoration(labelText: 'Type'),
@@ -142,7 +171,10 @@ class _EventScreenState extends State<EventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Event')),
+      appBar: AppBar(
+        title: const Text('Event'),
+        actions: [TextButton(onPressed: _busy ? null : _delete, child: const Text('Delete'))],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -168,7 +200,7 @@ class _EventScreenState extends State<EventScreen> {
               note: _note,
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _saving ? null : _save, child: const Text('Save')),
+            FilledButton(onPressed: _busy ? null : _save, child: const Text('Save')),
           ],
         ),
       ),

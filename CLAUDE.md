@@ -45,7 +45,7 @@ Flutter app (package `pet_health_tracker`, org `com.pootzandboogie` (Pootz&Boogi
 
 ## Specs and design docs
 
-The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks, and is being implemented: adding pets, logging events, seeing a pet's history, editing an event, and archiving and restoring pets work. 002 and 003 are specs only. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and the `decisions.md` left by the earlier autonomous runs in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
+The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-households` and `specs/003-vet-view`. 001 has its plan, data model and tasks, and is being implemented: adding pets, logging events, seeing a pet's history, editing and deleting events, and archiving and restoring pets work. 002 and 003 are specs only. Each feature's plan, data model and tasks go in its `specs/NNN-name/` directory, with its tasks showing which are done. The Firebase project, its cost limits and the sign-in providers' setup are in `docs/firebase-setup.md`. Reviewer agents (`.claude/agents/`) and the commit gates are described in `docs/dev-workflow/plan.md`, and the `decisions.md` left by the earlier autonomous runs in `docs/dev-workflow/autonomous-runs.md`. Keep them updated when decisions change or a planned piece ships.
 
 ## Commands
 
