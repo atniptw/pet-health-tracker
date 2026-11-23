@@ -148,6 +148,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 - [ ] T036 [US1] In `lib/ui/log/log_sheet.dart`, save through the event repository the sheet was opened with, and when `AppScope` holds other repositories by the time "Save" is tapped, save nothing and close the sheet, with a test in `test/ui/log/log_sheet_test.dart` that swaps the repositories while the sheet is open (D-019).
 - [ ] T037 [US1] In `lib/ui/log/log_screen.dart`, keep the last pets and types read when the log screen's `watchActive` or `watchOffered` stream fails, and report the failure with `reportReadFailure` (`lib/ui/common/read_failure.dart`), with tests in `test/ui/log/log_screen_test.dart` (D-020). **Covers**: 001-FR-007.
 - [ ] T038 [US1] In `lib/app.dart`, read the active pets for the start screen through `WatchedView` (`lib/ui/common/watched_view.dart`) instead of `_StartScreenState`'s own subscription, keeping its tests in `test/app_test.dart` passing unchanged (D-027).
+- [X] T039 Make the Android smoke test, `integration_test/app_smoke_test.dart`, pass reliably: it failed on two pushes to `main` that changed nothing the app runs (b421853, 8b56006), not finding "Saved: Vomiting for Rex" after logging. Find the cause from evidence before changing it, keep what the test checks (adding Rex and logging Vomiting for him on a device, 001-FR-014), and record the cause in the commit. **Covers**: 001-FR-014.
 - [ ] T035 Write `specs/001-medical-event-log/untested.md` for the ids a test can't check, each with its reason: `001-FR-013` (the app holds no feed, social features or diary entries, which a test can't prove absent) and `001-SC-002` (a first-time user logging without help needs a person; `expectAccessible` on every screen covers what can be checked). Tick this task, so `check.sh` runs `spec-coverage.sh --strict` on this spec and every other id must have a test. Update `CLAUDE.md` *Specs and design docs* to say spec 001 is implemented, with its plan and tasks in `specs/001-medical-event-log/`. The manual steps in `quickstart.md` are left for the user's own run on a phone.
 
 ---
@@ -176,7 +177,7 @@ T014 → T015 → T016
 T014 → T017, T018, T020 [P];  T018 → T019;  T017 + T019 + T020 → T021 → T022 → T023
 T016 + T023 → T024 → T025
 T005..T008 → T026, T027 [P] → T028, T029 → T030 (also needs T024)
-T030 → T031 → T032 → T033 → T034 → T036 → T037 → T038 → T035
+T030 → T031 → T032 → T033 → T034 → T039 → T036 → T037 → T038 → T035
 ```
 
 ### Within each task
@@ -224,6 +225,6 @@ Task: "Create lib/domain/durations.dart" (T027)
 5. Phase 5 (US2): history and frequency.
 6. Phase 6 (US3): pets list, archive and restore.
 7. Phase 7 (US4): edit and delete.
-8. Phase 8: the log sheet, log screen and start screen fixes (T036, T037, T038), then `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
+8. Phase 8: the smoke test fix (T039), the log sheet, log screen and start screen fixes (T036, T037, T038), then `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
 
 The feature merges to `main` at the end of each phase (constitution, Workflow 4), so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.
