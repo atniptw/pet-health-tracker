@@ -1,7 +1,7 @@
 ---
 name: scope-guard
 description: "Checks that staged changes add only what was asked for: no extra features, options or roadmap wording. Required before committing changes to lib/, docs/ or CLAUDE.md."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

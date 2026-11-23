@@ -175,11 +175,31 @@ says reviewer-bash.sh 'counts as a pipe' 'git diff --cached -G "SlowArchive|PetN
 says reviewer-bash.sh 'A backslash counts' 'git grep -n "pet\.name" -- lib'
 says reviewer-bash.sh 'without $ or backticks' 'git diff $(git merge-base HEAD main)'
 says reviewer-bash.sh 'without $ or backticks' 'git diff `git merge-base HEAD main`'
-says reviewer-bash.sh 'Grep tool' 'git grep -n -e "PetHistoryScreen({" -- lib'
-says reviewer-bash.sh 'Grep tool' 'git grep -n -A12 "Future<void> openHistory" -- test'
+says reviewer-bash.sh 'put . in place of each' 'git grep -n -e "PetHistoryScreen({" -- lib'
+says reviewer-bash.sh 'put . in place of each' 'git grep -n -A12 "Future<void> openHistory" -- test'
+says reviewer-bash.sh 'put . in its place' 'git grep -n "pet\.name" -- lib'
+says reviewer-bash.sh 'put . in place of a | that is part of the text' 'git grep -n -e "a || b" -- lib'
+says reviewer-bash.sh 'put . in place of a $' 'git grep -n -e "end$" -- lib'
 says reviewer-bash.sh 'Read tool' 'cat lib/ui/common/watched_view.dart'
 says reviewer-bash.sh 'Read tool' 'sed -n 1,60p lib/ui/common/watched_view.dart'
-says reviewer-bash.sh 'Grep tool' 'grep -rn watchActive lib'
+says reviewer-bash.sh 'Search with git grep' 'grep -rn watchActive lib'
+says reviewer-bash.sh 'list files with git ls-files' 'find lib -name "*.dart"'
+says reviewer-bash.sh 'Read tool' 'wc -l lib/app.dart'
+
+# The patterns the hints suggest are allowed.
+allows reviewer-bash.sh 'git grep -n -e "Future.void. update(" -- lib'
+allows reviewer-bash.sh 'git grep -n -e "PetHistoryScreen(." -- lib'
+allows reviewer-bash.sh 'git grep -n -e "pet.name" -- lib'
+allows reviewer-bash.sh 'git grep -n -e "end." -- lib'
+allows reviewer-bash.sh 'git grep -n -e A -e B -- lib'
+allows reviewer-bash.sh 'git ls-files -- lib'
+allows reviewer-bash.sh 'git ls-files -- "lib/*.dart"'
+
+# No hint names a tool reviewers don't have: this Claude Code build has no Grep or Glob tool.
+if grep -q -e 'Grep tool' -e 'Glob' .claude/hooks/reviewer-bash.sh; then
+  echo "FAIL: reviewer-bash.sh names the Grep or Glob tool"
+  failures=$((failures + 1))
+fi
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures hook test(s) failed"

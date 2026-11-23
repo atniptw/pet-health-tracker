@@ -1,7 +1,7 @@
 ---
 name: comment-hygiene
 description: "Reviews staged comments and doc strings for lean, timeless wording. Required before committing changes to Dart, rules, shell, JavaScript or workflow files, or to the comment allowlist."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

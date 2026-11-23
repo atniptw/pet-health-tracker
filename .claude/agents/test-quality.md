@@ -1,7 +1,7 @@
 ---
 name: test-quality
 description: "Checks that staged behavior changes have tests that would catch a regression, including allow and deny rules tests. Required before committing changes to code, rules, tests or scripts."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:

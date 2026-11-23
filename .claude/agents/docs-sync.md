@@ -1,7 +1,7 @@
 ---
 name: docs-sync
 description: "Checks that CLAUDE.md and docs/ match the staged code, rules, scripts and CI. Required before committing changes to lib/, firestore.rules, docs/, CLAUDE.md, scripts/, .github/ or .claude/."
-tools: Read, Grep, Glob, Bash
+tools: Read, Bash
 skills:
   - review-protocol
 hooks:
