@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-14
 
-**Status**: Implemented
+**Status**: Being implemented
 
 **Input**: User description: "I was inspired to make this app because I wanted to be able to log when important medical events happens to my pets. Existing pet apps are a whole diary/social media knockoff thing. I want to make it easy to remember what things a vet would want to know. Also helps us with time between events to let a vet know how often. I wanted to make it easy for my spouse and mother in law to use since we all take turns watching the animals. I want to make it easy to let the vet know."
 

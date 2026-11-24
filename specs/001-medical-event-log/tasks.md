@@ -153,6 +153,15 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 
 ---
 
+## Phase 9: Review follow-ups
+
+The security reviews of T037 found these outside Phase 8; the user asked for them as tasks.
+
+- [ ] T040 [US1] In `lib/ui/log/log_screen.dart`, when `_loadLastLogged`'s `lastLoggedPetId()` read fails, report it with `reportReadFailure` (`lib/ui/common/read_failure.dart`) without the read's own error, and leave no pet picked, with a test in `test/ui/log/log_screen_test.dart` whose failing read's error names a pet. **Covers**: 001-FR-007.
+- [ ] T041 [US4] In `lib/ui/history/event_screen.dart`, when `AppScope` holds other repositories, clear the active pets and offered types read from the earlier ones before following the new ones, so the pet and type choices hold only the event's own pet and type until the new lists arrive, with a test in `test/ui/history/event_screen_test.dart` that swaps the repositories. Then update `CLAUDE.md` *Specs and design docs* and `spec.md`'s Status to say spec 001 is implemented.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -165,6 +174,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 - **US3 archive (Phase 6)**: depends on T030, since archiving and restoring live on the pet history.
 - **US4 (Phase 7)**: depends on T032 (the event screen offers the event's own archived pet) and T021 (shared fields).
 - **Finish (Phase 8)**: after all stories.
+- **Review follow-ups (Phase 9)**: after Phase 8.
 
 ### Task chain
 
@@ -177,7 +187,7 @@ T014 → T015 → T016
 T014 → T017, T018, T020 [P];  T018 → T019;  T017 + T019 + T020 → T021 → T022 → T023
 T016 + T023 → T024 → T025
 T005..T008 → T026, T027 [P] → T028, T029 → T030 (also needs T024)
-T030 → T031 → T032 → T033 → T034 → T039 → T036 → T037 → T038 → T035
+T030 → T031 → T032 → T033 → T034 → T039 → T036 → T037 → T038 → T035 → T040 → T041
 ```
 
 ### Within each task
@@ -225,6 +235,7 @@ Task: "Create lib/domain/durations.dart" (T027)
 5. Phase 5 (US2): history and frequency.
 6. Phase 6 (US3): pets list, archive and restore.
 7. Phase 7 (US4): edit and delete.
-8. Phase 8: the smoke test fix (T039), the log sheet, log screen and start screen fixes (T036, T037, T038), then `untested.md` and strict coverage. The feature is done when `check.sh` passes with every id covered or explained.
+8. Phase 8: the smoke test fix (T039), the log sheet, log screen and start screen fixes (T036, T037, T038), then `untested.md` and strict coverage.
+9. Phase 9: the review follow-ups (T040, T041). The feature is done when `check.sh` passes with every id covered or explained.
 
 The feature merges to `main` at the end of each phase (constitution, Workflow 4), so the integration tests on `main` run on each phase's work. Deploys stay off for the rebuild period, so merging ships nothing to testers.
