@@ -17,3 +17,4 @@ One commit per task, each safe to ship on its own.
 - [x] T011 The commit gate's denial says when nothing chained with the commit ran, and `targeted-review` checks the fixes are staged before reviewers re-check them (harness review of 001 Phase 6)
 - [x] T012 Reviewers search with `git grep` and `git ls-files`: the hook's denials and `review-protocol` stop sending them to a Grep or Glob tool Claude Code doesn't give them, and say to put `.` in a `git grep` pattern in place of a character the hook refuses (harness review of 001 Phase 7)
 - [x] T013 `check.sh` checks each spec's Status line against its `tasks.md` (`scripts/spec-status.sh`): `Implemented` once every task is ticked, and not while one is open (harness review of 001 Phase 8)
+- [x] T014 `CLAUDE.md` *Implementing a task* says to update a `decisions.md` entry's Changed and To undo lines when a task changes the code it names (harness review of 001 Phase 8)
