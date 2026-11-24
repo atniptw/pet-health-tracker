@@ -7,6 +7,7 @@ import '../../domain/event_type.dart';
 import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
+import '../common/active_pets_and_types.dart';
 import '../history/pet_history_screen.dart';
 import '../pets/pets_screen.dart';
 import '../types/my_event_types_screen.dart';
@@ -38,13 +39,15 @@ class _LogScreenState extends State<LogScreen> {
   PetRepository? _petRepository;
   EventTypeRepository? _typeRepository;
   EventRepository? _eventRepository;
-  late Stream<List<Pet>> _pets;
-  late Stream<List<EventType>> _types;
+  final _following = ActivePetsAndTypes();
+  List<Pet> _pets = const [];
+  List<EventType> _types = const [];
   String? _pickedId;
 
   /// Before the first build, and whenever [AppScope] holds other
-  /// repositories than before, reads the pets, types and pick from them.
-  /// Other dependency changes keep the pick.
+  /// repositories than before, follows the pets and types in them and reads
+  /// the pick. Other dependency changes keep the pick. A failed read keeps
+  /// the last pets or types read.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -57,10 +60,21 @@ class _LogScreenState extends State<LogScreen> {
     _petRepository = scope.pets;
     _typeRepository = scope.eventTypes;
     _eventRepository = scope.events;
-    _pets = scope.pets.watchActive();
-    _types = scope.eventTypes.watchOffered();
+    _pets = const [];
+    _types = const [];
+    _following.follow(
+      scope,
+      onPets: (pets) => setState(() => _pets = pets),
+      onTypes: (types) => setState(() => _types = types),
+    );
     _pickedId = null;
     unawaited(_loadLastLogged(scope.events));
+  }
+
+  @override
+  void dispose() {
+    _following.cancel();
+    super.dispose();
   }
 
   /// Picks the pet last logged for in [events], unless a pet was picked
@@ -159,52 +173,44 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   Widget _body(List<Pet> pets) {
-    return StreamBuilder<List<EventType>>(
-      stream: _types,
-      builder: (context, types) => ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _pet(context, pets),
-          const SizedBox(height: 16),
-          TypeGrid(
-            types: types.data ?? const [],
-            onTap: (type) => _log(type, pets),
-            onSomethingElse: () => _logSomethingElse(pets),
-          ),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _pet(context, pets),
+        const SizedBox(height: 16),
+        TypeGrid(
+          types: _types,
+          onTap: (type) => _log(type, pets),
+          onSomethingElse: () => _logSomethingElse(pets),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Pet>>(
-      stream: _pets,
-      builder: (context, snapshot) {
-        final pets = snapshot.data ?? const <Pet>[];
-        final pickedId = _pickedAmong(pets);
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Log'),
-            actions: [
-              TextButton(
-                onPressed: pickedId == null
-                    ? null
-                    : () => _openHistory(pets.firstWhere((pet) => pet.id == pickedId)),
-                child: const Text('History'),
-              ),
-              PopupMenuButton<void>(
-                tooltip: 'Menu',
-                itemBuilder: (_) => [
-                  PopupMenuItem(onTap: _openPets, child: const Text('Pets')),
-                  PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
-                ],
-              ),
+    final pets = _pets;
+    final pickedId = _pickedAmong(pets);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Log'),
+        actions: [
+          TextButton(
+            onPressed: pickedId == null
+                ? null
+                : () => _openHistory(pets.firstWhere((pet) => pet.id == pickedId)),
+            child: const Text('History'),
+          ),
+          PopupMenuButton<void>(
+            tooltip: 'Menu',
+            itemBuilder: (_) => [
+              PopupMenuItem(onTap: _openPets, child: const Text('Pets')),
+              PopupMenuItem(onTap: _openMyEventTypes, child: const Text('My event types')),
             ],
           ),
-          body: _body(pets),
-        );
-      },
+        ],
+      ),
+      body: _body(pets),
     );
   }
 }

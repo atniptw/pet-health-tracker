@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pet_health_tracker/data/repositories.dart';
 import 'package:pet_health_tracker/domain/built_in_event_types.dart';
+import 'package:pet_health_tracker/domain/event_type.dart';
 import 'package:pet_health_tracker/domain/medical_event.dart';
 import 'package:pet_health_tracker/domain/pet.dart';
 import 'package:pet_health_tracker/ui/app_scope.dart';
@@ -38,6 +39,41 @@ class SlowLastLogged implements EventRepository {
   @override
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
+
+/// A [PetRepository] whose active pets are the lists and errors the test
+/// sends. Anything else is unused by these tests.
+class ControlledPets implements PetRepository {
+  final _active = StreamController<List<Pet>>.broadcast();
+
+  void send(List<Pet> active) => _active.add(active);
+
+  void fail(Object error) => _active.addError(error, StackTrace.current);
+
+  @override
+  Stream<List<Pet>> watchActive() => _active.stream;
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// An [EventTypeRepository] whose offered types are the lists and errors the
+/// test sends. Anything else is unused by these tests.
+class ControlledTypes implements EventTypeRepository {
+  final _offered = StreamController<List<EventType>>.broadcast();
+
+  void send(List<EventType> offered) => _offered.add(offered);
+
+  void fail(Object error) => _offered.addError(error, StackTrace.current);
+
+  @override
+  Stream<List<EventType>> watchOffered() => _offered.stream;
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+Pet pet(String id, String name) =>
+    Pet(id: id, name: name, species: Species.dog, createdAt: DateTime.utc(2026));
 
 void main() {
   late TestApp app;
@@ -417,5 +453,87 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PetChoices), findsOneWidget);
     await expectAccessible(tester);
+  });
+
+  group('when a read fails', () {
+    late ControlledPets pets;
+    late ControlledTypes types;
+    final vomiting = builtInEventTypes.firstWhere((type) => type.name == 'Vomiting');
+
+    setUp(() {
+      pets = ControlledPets();
+      types = ControlledTypes();
+    });
+
+    final key = GlobalKey();
+
+    Widget screenWith(ControlledPets pets, ControlledTypes types) => AppScope(
+      pets: pets,
+      eventTypes: types,
+      events: app.events,
+      child: MaterialApp(
+        home: LogScreen(key: key, clock: () => now),
+      ),
+    );
+
+    Future<void> openControlled(WidgetTester tester) async {
+      await tester.pumpWidget(screenWith(pets, types));
+      pets.send([pet('a', 'Mia'), pet('b', 'Rex')]);
+      types.send([vomiting]);
+      await tester.pumpAndSettle();
+    }
+
+    void expectReportedWithout(WidgetTester tester, String name) {
+      final error = tester.takeException();
+      expect(error, isNotNull);
+      expect(error.toString(), isNot(contains(name)));
+    }
+
+    testWidgets('001-FR-007: the pets read failing → the pets and the pick stay, and the error '
+        'is reported without the pet\'s name', (tester) async {
+      await openControlled(tester);
+      await tester.tap(chip('Rex'));
+      await tester.pump();
+
+      pets.fail(Exception('SELECT FROM pets failed for Rex'));
+      await tester.pumpAndSettle();
+
+      expectReportedWithout(tester, 'Rex');
+      expect(chip('Mia'), findsOneWidget);
+      expect(isPicked(tester, 'Rex'), isTrue);
+      expect(tester.widget<TextButton>(historyButton).onPressed, isNotNull);
+    });
+
+    testWidgets('other repositories → what the earlier ones read afterwards is not shown', (
+      tester,
+    ) async {
+      await openControlled(tester);
+      final otherPets = ControlledPets();
+      final otherTypes = ControlledTypes();
+      await tester.pumpWidget(screenWith(otherPets, otherTypes));
+      otherPets.send([pet('c', 'Bo'), pet('d', 'Ivy')]);
+      otherTypes.send([builtInEventTypes.firstWhere((type) => type.name == 'Seizure')]);
+      await tester.pumpAndSettle();
+
+      pets.send([pet('a', 'Mia'), pet('b', 'Rex')]);
+      types.send([vomiting]);
+      await tester.pumpAndSettle();
+
+      expect(chip('Bo'), findsOneWidget);
+      expect(chip('Rex'), findsNothing);
+      expect(typeButton('Seizure'), findsOneWidget);
+      expect(typeButton('Vomiting'), findsNothing);
+    });
+
+    testWidgets('the types read failing → the type buttons stay, and the error is reported '
+        'without the type\'s name', (tester) async {
+      await openControlled(tester);
+
+      types.fail(Exception('SELECT FROM event_types failed for Ear shaking'));
+      await tester.pumpAndSettle();
+
+      expectReportedWithout(tester, 'Ear shaking');
+      expect(typeButton('Vomiting'), findsOneWidget);
+    });
   });
 }
