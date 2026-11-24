@@ -16,12 +16,14 @@ echo '==> test'
 ./scripts/test-test-sh.sh
 ./scripts/test.sh --coverage
 
-echo '==> spec coverage'
+echo '==> spec coverage and status'
 ./scripts/test-spec-coverage.sh
+./scripts/test-spec-status.sh
 # A spec is checked once it has tasks, and must be fully covered once every
-# task is ticked.
+# task is ticked, when its Status must also say Implemented.
 for tasks in specs/*/tasks.md; do
   [ -e "$tasks" ] || continue
+  ./scripts/spec-status.sh "$(dirname "$tasks")"
   if grep -qE '^- \[ \] ' "$tasks"; then
     ./scripts/spec-coverage.sh "$(dirname "$tasks")"
   else
