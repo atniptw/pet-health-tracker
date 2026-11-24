@@ -20,7 +20,7 @@ Paths: `firestore.rules` `:(glob)lib/**` `pubspec.yaml` `:(glob)android/**` `:(g
 - **Production builds and new rules** (once a production release exists): a rules change that rejects writes or reads a production version still in use makes.
 - **Existing production data** (once a production release exists): code that assumes a new field exists on documents written before it (it may be missing or null), or a rename with no fallback or backfill.
 - **New data and production builds** (once a production release exists): documents written by the new build that crash or confuse production versions reading them (new enum values, changed types).
-- **Standalone commit:** the change compiles, passes and makes sense without a follow-up commit. No half-wired feature visible to testers.
+- **Standalone commit:** the change makes sense without a follow-up commit. No half-wired feature visible to testers. Whether it builds and passes its checks is `check.sh`'s to report.
 - **Release config:** version, signing, bundle ids, permissions, minimum OS versions, deploy gates and dependency upgrades that change behavior or break the build.
 
 ## Not yours
