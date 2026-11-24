@@ -46,3 +46,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T033 | 3 | test-quality 3 | 5 | 3 | answered 4 questions on the Event screen (type dropdown, Save returns to the history, full screen "Event", Delete in the app bar), and kept an archived pet's own events editable (FR-015 reworded) | — |
 | T034 | 2 | docs-sync 1, flutter-lifecycle 1, test-quality 1 | — | — | — | — |
 | T039 | 2 | docs-sync 1 | — | — | asked for the flaky smoke test to be added as a task and fixed | — |
+| T036 | 2 | clean-code 1, docs-sync 1, test-quality 1 | — | — | — | — |

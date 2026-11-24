@@ -145,7 +145,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 
 ## Phase 8: Finish
 
-- [ ] T036 [US1] In `lib/ui/log/log_sheet.dart`, save through the event repository the sheet was opened with, and when `AppScope` holds other repositories by the time "Save" is tapped, save nothing and close the sheet, with a test in `test/ui/log/log_sheet_test.dart` that swaps the repositories while the sheet is open (D-019).
+- [X] T036 [US1] In `lib/ui/log/log_sheet.dart`, save through the event repository the sheet was opened with, and when `AppScope` holds other repositories by the time "Save" is tapped, save nothing and close the sheet, with a test in `test/ui/log/log_sheet_test.dart` that swaps the repositories while the sheet is open (D-019).
 - [ ] T037 [US1] In `lib/ui/log/log_screen.dart`, keep the last pets and types read when the log screen's `watchActive` or `watchOffered` stream fails, and report the failure with `reportReadFailure` (`lib/ui/common/read_failure.dart`), with tests in `test/ui/log/log_screen_test.dart` (D-020). **Covers**: 001-FR-007.
 - [ ] T038 [US1] In `lib/app.dart`, read the active pets for the start screen through `WatchedView` (`lib/ui/common/watched_view.dart`) instead of `_StartScreenState`'s own subscription, keeping its tests in `test/app_test.dart` passing unchanged (D-027).
 - [X] T039 Make the Android smoke test, `integration_test/app_smoke_test.dart`, pass reliably: it failed on two pushes to `main` that changed nothing the app runs (b421853, 8b56006), not finding "Saved: Vomiting for Rex" after logging. Find the cause from evidence before changing it, keep what the test checks (adding Rex and logging Vomiting for him on a device, 001-FR-014), and record the cause in the commit. **Covers**: 001-FR-014.

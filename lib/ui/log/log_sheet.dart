@@ -54,6 +54,12 @@ class LogSheet extends StatefulWidget {
   State<LogSheet> createState() => _LogSheetState();
 }
 
+typedef _Repositories = ({
+  PetRepository pets,
+  EventTypeRepository eventTypes,
+  EventRepository events,
+});
+
 class _LogSheetState extends State<LogSheet> {
   late String? _petId = widget.pickedPetId;
   late final bool _choosingPet = !_isActive(widget.pickedPetId);
@@ -63,6 +69,21 @@ class _LogSheetState extends State<LogSheet> {
   var _futureOnSave = false;
   var _saving = false;
 
+  /// The repositories in [AppScope] when the sheet opened, which [pets]
+  /// and [pickedPetId] came from.
+  _Repositories? _repositories;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _repositories ??= _scopeRepositories();
+  }
+
+  _Repositories _scopeRepositories() {
+    final scope = AppScope.of(context);
+    return (pets: scope.pets, eventTypes: scope.eventTypes, events: scope.events);
+  }
+
   @override
   void dispose() {
     _note.dispose();
@@ -71,7 +92,13 @@ class _LogSheetState extends State<LogSheet> {
 
   bool _isActive(String? petId) => widget.pets.any((pet) => pet.id == petId);
 
+  /// Saves the event through the repositories the sheet opened with, or
+  /// closes without saving when [AppScope] holds other ones by now.
   Future<void> _save() async {
+    if (_scopeRepositories() != _repositories) {
+      Navigator.pop(context);
+      return;
+    }
     final occurredAt = _when ?? widget.clock();
     if (occurredAt.isAfter(widget.clock())) {
       setState(() => _futureOnSave = true);
@@ -80,7 +107,7 @@ class _LogSheetState extends State<LogSheet> {
     setState(() => _saving = true);
     final MedicalEvent event;
     try {
-      event = await AppScope.of(context).events.log(
+      event = await _repositories!.events.log(
         petId: _petId!,
         type: widget.choice,
         occurredAt: occurredAt,

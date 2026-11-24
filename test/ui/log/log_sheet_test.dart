@@ -48,6 +48,36 @@ class SlowEvents implements EventRepository {
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
+/// A button under an [AppScope] holding [app]'s repositories, or [events]
+/// in place of its events, that opens [sheet] as a bottom sheet and adds
+/// the sheet's result to [results] once it closes.
+Widget sheetOpener(
+  TestApp app,
+  LogSheet Function() sheet,
+  List<MedicalEvent?> results, {
+  EventRepository? events,
+}) => AppScope(
+  pets: app.pets,
+  eventTypes: app.eventTypes,
+  events: events ?? app.events,
+  child: MaterialApp(
+    home: Scaffold(
+      body: Builder(
+        builder: (context) => TextButton(
+          onPressed: () async => results.add(
+            await showModalBottomSheet<MedicalEvent>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => sheet(),
+            ),
+          ),
+          child: const Text('Open'),
+        ),
+      ),
+    ),
+  ),
+);
+
 void main() {
   late TestApp app;
   late Pet rex;
@@ -77,29 +107,7 @@ void main() {
     EventRepository? events,
   }) async {
     final results = <MedicalEvent?>[];
-    await tester.pumpWidget(
-      AppScope(
-        pets: app.pets,
-        eventTypes: app.eventTypes,
-        events: events ?? app.events,
-        child: MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () async => results.add(
-                  await showModalBottomSheet<MedicalEvent>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => sheet(),
-                  ),
-                ),
-                child: const Text('Open'),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(sheetOpener(app, sheet, results, events: events));
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
     return results;
@@ -321,6 +329,41 @@ void main() {
     await tester.tap(saveButton, warnIfMissed: false);
     await tester.pump();
     expect(events.logCalls, 1);
+  });
+
+  testWidgets('other repositories by the time Save is tapped → nothing saved, the sheet closes', (
+    tester,
+  ) async {
+    await addPets(tester);
+    final other = (await tester.runAsync(() => openTestApp(now: now)))!;
+    final results = await openSheet(tester, () => vomitingFor(rex.id));
+
+    await tester.pumpWidget(sheetOpener(other, () => vomitingFor(rex.id), results));
+    await tester.pumpAndSettle();
+    expect(find.byType(LogSheet), findsOneWidget);
+    await tapSave(tester);
+
+    expect(find.byType(LogSheet), findsNothing);
+    expect(results, [null]);
+    expect(await eventsFor(tester, rex), isEmpty);
+    final otherEvents = await tester.runAsync(() => other.events.watchForPet(rex.id).first);
+    expect(otherEvents, isEmpty);
+  });
+
+  testWidgets('the same repositories given again while the sheet is open → Save still logs it', (
+    tester,
+  ) async {
+    await addPets(tester);
+    final results = await openSheet(tester, () => vomitingFor(rex.id));
+
+    await tester.pumpWidget(sheetOpener(app, () => vomitingFor(rex.id), results));
+    await tester.pumpAndSettle();
+    await tapSave(tester);
+
+    expect(find.byType(LogSheet), findsNothing);
+    final events = await eventsFor(tester, rex);
+    expect(events, hasLength(1));
+    expect(results, [events.single]);
   });
 
   testWidgets(

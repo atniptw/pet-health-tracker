@@ -169,8 +169,8 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Question**: The security review of T023 found that `LogSheet._save` writes through `AppScope.of(context).events` as it is when "Save" is tapped. If `AppScope` were given other repositories while the sheet is open, an event for a pet from the first ones would be saved into the others. Nothing in spec 001 swaps the repositories while the app runs, so this can't happen yet, but the log screen and "Something else" already guard against it, and the sheet doesn't.
 - **Options**: (a) a new task that makes the sheet save through the repository it opened with and close without saving when the repositories have changed; (b) leave it until a feature swaps repositories.
 - **Chose**: (a), as T036 in Phase 8, under stop rule 4: the code is from T021, so it isn't part of T023.
-- **Changed**: tasks.md, T036
-- **To undo**: remove T036 from tasks.md.
+- **Changed**: tasks.md, T036; `LogSheet` in `lib/ui/log/log_sheet.dart`; the two tests about repositories given while the sheet is open in `test/ui/log/log_sheet_test.dart`
+- **To undo**: have `LogSheet._save` save through `AppScope.of(context).events` again, without the repositories the sheet opened with, and remove those two tests.
 - **Status**: open
 
 ## D-020 · New task · T037: the log screen keeps its pets and types when a read fails
