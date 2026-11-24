@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'data/repositories.dart';
 import 'domain/pet.dart';
 import 'ui/app_scope.dart';
-import 'ui/common/centered_message.dart';
-import 'ui/common/read_failure.dart';
+import 'ui/common/watched_view.dart';
 import 'ui/log/log_screen.dart';
 import 'ui/pets/first_pet_screen.dart';
 
@@ -59,52 +56,24 @@ class _StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<_StartScreen> {
-  StreamSubscription<List<Pet>>? _subscription;
-  List<Pet>? _active;
-  bool _failed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _listen();
-  }
+  late Stream<List<Pet>> _active = widget.pets.watchActive();
 
   @override
   void didUpdateWidget(_StartScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.pets == oldWidget.pets) return;
-    unawaited(_subscription?.cancel());
-    _active = null;
-    _failed = false;
-    _listen();
-  }
-
-  void _listen() {
-    _subscription = widget.pets.watchActive().listen(
-      (active) => setState(() {
-        _active = active;
-        _failed = false;
-      }),
-      onError: (Object _, StackTrace stack) {
-        reportReadFailure('Reading the active pets', stack);
-        setState(() => _failed = true);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    unawaited(_subscription?.cancel());
-    super.dispose();
+    if (widget.pets != oldWidget.pets) _active = widget.pets.watchActive();
   }
 
   @override
   Widget build(BuildContext context) {
-    return switch (_active) {
-      null when _failed => const Scaffold(body: CenteredMessage(App.loadFailed)),
-      null => const Scaffold(),
-      [] => FirstPetScreen(clock: widget.clock),
-      _ => LogScreen(clock: widget.clock),
-    };
+    return Material(
+      child: WatchedView(
+        stream: _active,
+        what: 'Reading the active pets',
+        loadFailed: App.loadFailed,
+        builder: (context, active) =>
+            active.isEmpty ? FirstPetScreen(clock: widget.clock) : LogScreen(clock: widget.clock),
+      ),
+    );
   }
 }
