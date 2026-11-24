@@ -13,7 +13,7 @@ Decisions for `plan.md`. The stack is fixed (Flutter + Firebase, the existing pr
 
 ## 2. How the UI sees changes
 
-- **Decision**: Repository interfaces (`contracts/repositories.md`) whose `watch…` methods return `Stream`s. The local implementations re-emit after every write they make. Screens read them with `StreamBuilder`. Repositories reach widgets through one `InheritedWidget` (`AppScope`) built in `main.dart`.
+- **Decision**: Repository interfaces (`contracts/repositories.md`) whose `watch…` methods return `Stream`s. The local implementations re-emit after every write they make. Screens listen to them and keep the last value read when a read fails, most through `WatchedView` (`lib/ui/common/watched_view.dart`). Repositories reach widgets through one `InheritedWidget` (`AppScope`) built in `main.dart`.
 - **Rationale**: Flutter's own widgets cover it with no state-management package. The interfaces are also the seam spec 002 needs: a signed-in household can be backed by another implementation without the screens changing.
 - **Alternatives considered**: `provider`, `riverpod`, `bloc`: each adds a dependency and concepts that four screens of streams don't need.
 

@@ -178,8 +178,8 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Question**: The lifecycle review of T024 found that the log screen shows `pets.data ?? const []`, so a failed `watchActive` read empties its pet list until the next good read, and a failed `watchOffered` read empties the grid. The start screen (D-017) and My event types (D-018) keep the last list and report the failure; the log screen doesn't.
 - **Options**: (a) a new task that keeps the last pets and types and reports the failure, as D-017 and D-018 do; (b) leave it.
 - **Chose**: (a), as T037 in Phase 8, under stop rule 4: the code is from T022, so it isn't part of T024.
-- **Changed**: tasks.md, T037
-- **To undo**: remove T037 from tasks.md.
+- **Changed**: tasks.md, T037; contracts/screens.md, Log; research.md §2; `LogScreen` in `lib/ui/log/log_screen.dart`, following the pets and types through `ActivePetsAndTypes` (`lib/ui/common/active_pets_and_types.dart`), which `EventScreen` now shares; the tests in the "when a read fails" group in `test/ui/log/log_screen_test.dart`
+- **To undo**: have `LogScreen` read its pets and types through `StreamBuilder`s again, showing an empty list when a read fails, remove that test group and the Log line in contracts/screens.md.
 - **Status**: open
 
 ## D-021 · Spec gap · T026: the summary lists the most recently happened type first

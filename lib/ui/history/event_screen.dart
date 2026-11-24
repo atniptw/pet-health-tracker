@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../data/repositories.dart';
@@ -7,8 +5,8 @@ import '../../domain/event_type.dart';
 import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
+import '../common/active_pets_and_types.dart';
 import '../common/event_fields.dart';
-import '../common/read_failure.dart';
 import '../log/pet_choices.dart';
 
 /// "Event": a logged event's pet, type, "When", details and note, filled in
@@ -46,8 +44,7 @@ class EventScreen extends StatefulWidget {
 
 class _EventScreenState extends State<EventScreen> {
   (PetRepository, EventTypeRepository)? _repositories;
-  StreamSubscription<List<Pet>>? _petsSubscription;
-  StreamSubscription<List<EventType>>? _typesSubscription;
+  final _following = ActivePetsAndTypes();
   List<Pet> _activePets = const [];
   List<EventType> _offeredTypes = const [];
 
@@ -72,22 +69,16 @@ class _EventScreenState extends State<EventScreen> {
     final repositories = (scope.pets, scope.eventTypes);
     if (repositories == _repositories) return;
     _repositories = repositories;
-    unawaited(_petsSubscription?.cancel());
-    unawaited(_typesSubscription?.cancel());
-    _petsSubscription = scope.pets.watchActive().listen(
-      (pets) => setState(() => _activePets = pets),
-      onError: (Object _, StackTrace stack) => reportReadFailure('Reading the pets', stack),
-    );
-    _typesSubscription = scope.eventTypes.watchOffered().listen(
-      (types) => setState(() => _offeredTypes = types),
-      onError: (Object _, StackTrace stack) => reportReadFailure('Reading the event types', stack),
+    _following.follow(
+      scope,
+      onPets: (pets) => setState(() => _activePets = pets),
+      onTypes: (types) => setState(() => _offeredTypes = types),
     );
   }
 
   @override
   void dispose() {
-    unawaited(_petsSubscription?.cancel());
-    unawaited(_typesSubscription?.cancel());
+    _following.cancel();
     _note.dispose();
     super.dispose();
   }
