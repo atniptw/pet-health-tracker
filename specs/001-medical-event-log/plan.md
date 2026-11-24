@@ -24,7 +24,7 @@ Everything is stored in a local SQLite database on the phone (`sqflite`), so it 
 
 **Project Type**: Mobile app (Flutter, single package)
 
-**Performance Goals**: Log a common event in under 10 seconds and at most 3 taps from opening the app (SC-001); history and summary for a pet with hundreds of events shown without a visible wait
+**Performance Goals**: Log a common event in under 10 seconds and at most 3 taps from opening the app (SC-001)
 
 **Constraints**: Works fully offline and signed out (FR-012, FR-014); no logged event lost (SC-004); usable by people not comfortable with apps (SC-002: large tap targets, words not icons alone, font scaling, screen-reader labels); 100% line coverage, 300 lines per file and 40 per function in `lib/`
 
@@ -59,7 +59,7 @@ specs/001-medical-event-log/
 │   ├── repositories.md  # data interfaces the screens use
 │   └── screens.md       # what each screen shows and does
 ├── checklists/requirements.md
-├── untested.md          # spec ids no automated test can check, with reasons
+├── untested.md          # spec ids, or parts of them, no automated test can check, with reasons
 └── tasks.md             # written by /speckit-tasks
 ```
 
@@ -92,7 +92,7 @@ lib/
     ├── history/                  # pet history, summary, event tile, event screen
     ├── pets/                     # first pet, pet form, pets, archived pets
     ├── types/                    # my event types
-    └── common/                   # date/time field, duration field, detail questions
+    └── common/                   # shared fields (date/time, duration, detail questions, event fields), WatchedView and ActivePetsAndTypes for reads, read-failure reporting, centered message
 
 test/
 ├── domain/                       # pure unit tests
