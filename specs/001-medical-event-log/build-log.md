@@ -48,3 +48,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T039 | 2 | docs-sync 1 | — | — | asked for the flaky smoke test to be added as a task and fixed | — |
 | T036 | 2 | clean-code 1, docs-sync 1, test-quality 1 | — | — | — | — |
 | T037 | 3 | clean-code 1, comment-hygiene 1, docs-sync 2, release-safety 1, test-quality 1 | — | — | — | — |
+| T038 | 2 | docs-sync 1 | — | — | — | — |

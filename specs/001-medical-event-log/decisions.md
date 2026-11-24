@@ -151,8 +151,8 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Question**: The spec and contracts choose the start screen from the active pets, but don't say what shows when they can't be read. After a list has been read, keeping the screen shown (and the log screen's pick) is the least for the user. Before any has been read, something has to show.
 - **Options**: (a) a blank screen; (b) a message, "Your pets couldn't be loaded. Close the app and open it again."; (c) the message with a "Try again" button; (d) the first pet screen.
 - **Chose**: (b). A blank screen leaves the caregiver with no way to tell what's wrong, and the first pet screen would make them add pets they already have. A "Try again" button adds more than the spec asks for. The error is reported to the app's error handler (Crashlytics in release builds) without the read's own message, which can hold a pet's name.
-- **Changed**: contracts/screens.md, App start; `App.loadFailed` and `_StartScreen` in `lib/app.dart`; the tests under "when reading the active pets fails" in `test/app_test.dart`
-- **To undo**: show a blank `Scaffold` for the failed case in `_StartScreen.build`, drop `App.loadFailed`, and change the test "before any list, says the pets couldn't be loaded (D-017)…" and the contracts line.
+- **Changed**: contracts/screens.md, App start; `App.loadFailed` and `_StartScreen` in `lib/app.dart`, through `WatchedView`; the tests under "when reading the active pets fails" in `test/app_test.dart`
+- **To undo**: have `_StartScreen` show nothing when its read fails instead of passing `App.loadFailed` to `WatchedView`, drop `App.loadFailed`, and change the test "before any list, says the pets couldn't be loaded (D-017)…" and the contracts line.
 - **Status**: open
 
 ## D-018 · Choice · T025: a failed read of the custom types says so
@@ -241,8 +241,8 @@ Choices made in autonomous runs, for review (`docs/dev-workflow/autonomous-runs.
 - **Question**: The clean-code review of T030 found the same read handling in three places: keep the last value, report a failed read and show a "couldn't be loaded" message before any value, and start over when the repository changes. T030 moved it into `WatchedView` (`lib/ui/common/watched_view.dart`) for Pet history and My event types, but the start screen in `lib/app.dart` still has its own copy.
 - **Options**: (a) a new task that moves the start screen onto `WatchedView`; (b) leave the copy in `lib/app.dart`.
 - **Chose**: (a), as T038 in Phase 8, under stop rule 4: the start screen is from T024, so it isn't part of T030.
-- **Changed**: tasks.md, T038
-- **To undo**: remove T038 from tasks.md.
+- **Changed**: tasks.md, T038; `_StartScreen` in `lib/app.dart`
+- **To undo**: give `_StartScreen` its own subscription to the active pets again, keeping the last pets read and showing `App.loadFailed` when none have been.
 - **Status**: open
 
 ## D-028 · Contract gap · T031: "Add pet" is a text button in the Pets app bar, and a failed read of the pets says so
