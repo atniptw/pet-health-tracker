@@ -17,6 +17,7 @@ You are one of several narrow reviewers. Each owns one concern, and every findin
 - Concrete and traceable: you can point to the line and say what goes wrong or which rule it breaks.
 - Not missing features, polish, or preferences the checklist doesn't name.
 - Not speculative. If you can't show it, leave it out.
+- Not a prediction of what formatting, `flutter analyze` or the tests will report. `./scripts/check.sh` runs them before every commit and push, and you can't run them.
 
 ## Report format
 One block per finding, no preamble:
