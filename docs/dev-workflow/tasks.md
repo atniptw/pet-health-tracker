@@ -16,3 +16,4 @@ One commit per task, each safe to ship on its own.
 - [x] T010 Reviewer Bash denials say what to send instead: one command per call, no `git -C`, `git grep -e` per alternative, the Grep or Read tool (harness review of 001 Phase 6)
 - [x] T011 The commit gate's denial says when nothing chained with the commit ran, and `targeted-review` checks the fixes are staged before reviewers re-check them (harness review of 001 Phase 6)
 - [x] T012 Reviewers search with `git grep` and `git ls-files`: the hook's denials and `review-protocol` stop sending them to a Grep or Glob tool Claude Code doesn't give them, and say to put `.` in a `git grep` pattern in place of a character the hook refuses (harness review of 001 Phase 7)
+- [x] T013 `check.sh` checks each spec's Status line against its `tasks.md` (`scripts/spec-status.sh`): `Implemented` once every task is ticked, and not while one is open (harness review of 001 Phase 8)
