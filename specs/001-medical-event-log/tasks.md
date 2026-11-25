@@ -157,7 +157,7 @@ Every screen task in Phases 3–7 calls `expectAccessible` in its screen's tests
 
 The security reviews of T037 found these outside Phase 8; the user asked for them as tasks.
 
-- [ ] T040 [US1] In `lib/ui/log/log_screen.dart`, when `_loadLastLogged`'s `lastLoggedPetId()` read fails, report it with `reportReadFailure` (`lib/ui/common/read_failure.dart`) without the read's own error, and leave no pet picked, with a test in `test/ui/log/log_screen_test.dart` whose failing read's error names a pet. **Covers**: 001-FR-007.
+- [X] T040 [US1] In `lib/ui/log/log_screen.dart`, when `_loadLastLogged`'s `lastLoggedPetId()` read fails, report it with `reportReadFailure` (`lib/ui/common/read_failure.dart`) without the read's own error, and leave no pet picked, with a test in `test/ui/log/log_screen_test.dart` whose failing read's error names a pet. **Covers**: 001-FR-007.
 - [ ] T041 [US4] In `lib/ui/history/event_screen.dart`, when `AppScope` holds other repositories, clear the active pets and offered types read from the earlier ones before following the new ones, so the pet and type choices hold only the event's own pet and type until the new lists arrive, with a test in `test/ui/history/event_screen_test.dart` that swaps the repositories. Then update `CLAUDE.md` *Specs and design docs* and `spec.md`'s Status to say spec 001 is implemented, and `plan.md`'s *Docs this feature keeps true* to name T041 as the task that does.
 
 ---

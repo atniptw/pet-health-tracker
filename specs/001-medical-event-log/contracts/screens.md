@@ -31,6 +31,7 @@ App start
 - **Types**: a grid of large buttons, one per offered type (`watchOffered`), and a last button "Something else", outlined rather than filled since it is not a type (D-015).
 - "History", a text button in the app bar next to the menu, opens Pet history for the picked pet; it is disabled when none is picked (D-026).
 - If the pets or the types can't be read, the error is reported and the pets and types shown stay (D-020).
+- If the pet last logged for can't be read, the error is reported and no pet is picked (FR-007).
 - Menu: "Pets", "My event types".
 - After a save, a "Saved: <type> for <pet>" message, which replaces any earlier one at once (D-013), and the saved event's pet becomes the picked one.
 
