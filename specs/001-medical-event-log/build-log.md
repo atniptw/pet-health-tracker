@@ -50,3 +50,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T037 | 3 | clean-code 1, comment-hygiene 1, docs-sync 2, release-safety 1, test-quality 1 | — | — | — | — |
 | T038 | 2 | docs-sync 1 | — | — | — | — |
 | T035 | 2 | docs-sync 1 | — | — | — | — |
+| T040 | 2 | comment-hygiene 1 | — | — | — | — |

@@ -40,6 +40,16 @@ class SlowLastLogged implements EventRepository {
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
+/// An [EventRepository] whose `lastLoggedPetId` fails with an error naming
+/// the pet; anything else is unused by the screen.
+class FailingLastLogged implements EventRepository {
+  @override
+  Future<String?> lastLoggedPetId() => Future.error(Exception('SELECT FROM events failed for Rex'));
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
 /// A [PetRepository] whose active pets are the lists and errors the test
 /// sends. Anything else is unused by these tests.
 class ControlledPets implements PetRepository {
@@ -467,14 +477,15 @@ void main() {
 
     final key = GlobalKey();
 
-    Widget screenWith(ControlledPets pets, ControlledTypes types) => AppScope(
-      pets: pets,
-      eventTypes: types,
-      events: app.events,
-      child: MaterialApp(
-        home: LogScreen(key: key, clock: () => now),
-      ),
-    );
+    Widget screenWith(ControlledPets pets, ControlledTypes types, {EventRepository? events}) =>
+        AppScope(
+          pets: pets,
+          eventTypes: types,
+          events: events ?? app.events,
+          child: MaterialApp(
+            home: LogScreen(key: key, clock: () => now),
+          ),
+        );
 
     Future<void> openControlled(WidgetTester tester) async {
       await tester.pumpWidget(screenWith(pets, types));
@@ -523,6 +534,19 @@ void main() {
       expect(chip('Rex'), findsNothing);
       expect(typeButton('Seizure'), findsOneWidget);
       expect(typeButton('Vomiting'), findsNothing);
+    });
+
+    testWidgets('001-FR-007: the last logged pet read failing → no pet picked, and the error '
+        'is reported without the pet\'s name', (tester) async {
+      await tester.pumpWidget(screenWith(pets, types, events: FailingLastLogged()));
+      pets.send([pet('a', 'Mia'), pet('b', 'Rex')]);
+      types.send([vomiting]);
+      await tester.pumpAndSettle();
+
+      expectReportedWithout(tester, 'Rex');
+      expect(chip('Rex'), findsOneWidget);
+      expect(pickedInChoices(tester), isNull);
+      expect(tester.widget<TextButton>(historyButton).onPressed, isNull);
     });
 
     testWidgets('the types read failing → the type buttons stay, and the error is reported '

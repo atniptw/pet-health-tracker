@@ -8,6 +8,7 @@ import '../../domain/medical_event.dart';
 import '../../domain/pet.dart';
 import '../app_scope.dart';
 import '../common/active_pets_and_types.dart';
+import '../common/read_failure.dart';
 import '../history/pet_history_screen.dart';
 import '../pets/pets_screen.dart';
 import '../types/my_event_types_screen.dart';
@@ -24,8 +25,8 @@ import 'type_grid.dart';
 ///
 /// With one active pet, that pet is picked and shown as a heading. With
 /// several, the pet choices show, with the pet last logged for picked if it
-/// is active and none otherwise (FR-007); a saved event's pet becomes the
-/// picked one.
+/// is active; none is picked otherwise, or when that read fails (FR-007). A
+/// saved event's pet becomes the picked one.
 class LogScreen extends StatefulWidget {
   const LogScreen({super.key, required this.clock});
 
@@ -78,9 +79,16 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   /// Picks the pet last logged for in [events], unless a pet was picked
-  /// meanwhile or the screen has moved to other repositories.
+  /// meanwhile or the screen has moved to other repositories. A failed read
+  /// is reported and picks no pet.
   Future<void> _loadLastLogged(EventRepository events) async {
-    final id = await events.lastLoggedPetId();
+    final String? id;
+    try {
+      id = await events.lastLoggedPetId();
+    } on Object catch (_, stack) {
+      reportReadFailure('Reading the last logged pet', stack);
+      return;
+    }
     if (mounted && _pickedId == null && events == _eventRepository) {
       setState(() => _pickedId = id);
     }
