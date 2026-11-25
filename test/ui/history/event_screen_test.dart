@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pet_health_tracker/data/repositories.dart';
+import 'package:pet_health_tracker/domain/built_in_event_types.dart';
 import 'package:pet_health_tracker/domain/event_type.dart';
 import 'package:pet_health_tracker/domain/medical_event.dart';
 import 'package:pet_health_tracker/domain/pet.dart';
@@ -101,6 +102,34 @@ class UnreadablePets implements PetRepository {
 class UnreadableTypes implements EventTypeRepository {
   @override
   Stream<List<EventType>> watchOffered() => Stream.error(Exception('SELECT failed for Limping'));
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// A [PetRepository] whose active pets are the lists the test sends;
+/// anything else is unused by the event screen.
+class ControlledPets implements PetRepository {
+  final _active = StreamController<List<Pet>>.broadcast();
+
+  void send(List<Pet> active) => _active.add(active);
+
+  @override
+  Stream<List<Pet>> watchActive() => _active.stream;
+
+  @override
+  Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// An [EventTypeRepository] whose offered types are the lists the test
+/// sends; anything else is unused by the event screen.
+class ControlledTypes implements EventTypeRepository {
+  final _offered = StreamController<List<EventType>>.broadcast();
+
+  void send(List<EventType> offered) => _offered.add(offered);
+
+  @override
+  Stream<List<EventType>> watchOffered() => _offered.stream;
 
   @override
   Never noSuchMethod(Invocation invocation) => throw UnimplementedError();
@@ -398,6 +427,7 @@ void main() {
     Pet pet, {
     PetRepository? pets,
     EventTypeRepository? eventTypes,
+    Key? key,
   }) async {
     final type = (await tester.runAsync(() => app.eventTypes.byId(event.typeId)))!;
     await tester.pumpWidget(
@@ -406,12 +436,98 @@ void main() {
         eventTypes: eventTypes ?? app.eventTypes,
         events: app.events,
         child: MaterialApp(
-          home: EventScreen(event: event, pet: pet, type: type, clock: app.clock),
+          home: EventScreen(key: key, event: event, pet: pet, type: type, clock: app.clock),
         ),
       ),
     );
     await tester.pumpAndSettle();
   }
+
+  /// Opens the "Type" dropdown and returns the names in its menu, then closes
+  /// it by picking Vomiting.
+  Future<List<String>> offeredTypeNames(WidgetTester tester) async {
+    await tester.tap(typeField);
+    await tester.pumpAndSettle();
+    final names = [
+      for (final item in tester.widgetList<DropdownMenuItem<String>>(
+        find.byType(DropdownMenuItem<String>),
+      ))
+        if (item.child case Text(:final data?)) data,
+    ];
+    await tester.tap(find.text('Vomiting').last);
+    await tester.pumpAndSettle();
+    return names.toSet().toList();
+  }
+
+  testWidgets('other repositories → only the event\'s own pet and type are offered until the new '
+      'ones\' lists arrive, then theirs', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await addPet(tester, 'Mia');
+    final event = await log(tester, rex, ExistingType('vomiting'), DateTime(2026, 11, 10, 8));
+    final key = GlobalKey();
+    await openEventScreen(tester, event, rex, key: key);
+    expect(petChips(tester), {'Mia': false, 'Rex': true});
+
+    final pets = ControlledPets();
+    final types = ControlledTypes();
+    await openEventScreen(tester, event, rex, pets: pets, eventTypes: types, key: key);
+
+    expect(petChips(tester), {'Rex': true});
+    expect(await offeredTypeNames(tester), ['Vomiting']);
+
+    final bo = Pet(id: 'bo', name: 'Bo', species: Species.cat, createdAt: DateTime.utc(2026));
+    pets.send([rex, bo]);
+    types.send(
+      builtInEventTypes.where((type) => {'vomiting', 'seizure'}.contains(type.id)).toList(),
+    );
+    await tester.pumpAndSettle();
+
+    expect(petChips(tester), {'Rex': true, 'Bo': false});
+    expect(await offeredTypeNames(tester), ['Vomiting', 'Seizure']);
+  });
+
+  testWidgets('other repositories → a pet and type picked from the earlier ones go back to the '
+      'event\'s own, and "Save" keeps only the details its questions share', (tester) async {
+    final rex = await addPet(tester, 'Rex');
+    await addPet(tester, 'Mia');
+    final event = await log(tester, rex, ExistingType('coughing'), DateTime(2026, 11, 10, 8));
+    final coughing = (await tester.runAsync(() => app.eventTypes.byId('coughing')))!;
+    final navigator = GlobalKey<NavigatorState>();
+    Widget appWith(PetRepository pets, EventTypeRepository types) => AppScope(
+      pets: pets,
+      eventTypes: types,
+      events: app.events,
+      child: MaterialApp(navigatorKey: navigator, home: const Scaffold()),
+    );
+    await tester.pumpWidget(appWith(app.pets, app.eventTypes));
+    unawaited(
+      navigator.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) => EventScreen(event: event, pet: rex, type: coughing, clock: app.clock),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(PetChoices), matching: find.text('Mia')));
+    await tester.pump();
+    await pickType(tester, 'Seizure');
+    await tester.ensureVisible(find.text('Grand mal'));
+    await tester.tap(find.text('Grand mal'));
+    await tester.enterText(find.widgetWithText(TextField, 'Minutes'), '2');
+    await tester.pump();
+    expect(petChips(tester), {'Mia': true, 'Rex': false});
+
+    await tester.pumpWidget(appWith(ControlledPets(), ControlledTypes()));
+    await tester.pumpAndSettle();
+
+    expect(petChips(tester), {'Rex': true});
+    expect(pickedTypeId(tester), 'coughing');
+    expect(find.text('Kind'), findsNothing);
+    await save(tester);
+    final saved = (await tester.runAsync(() => app.events.watchForPet(rex.id).first))!;
+    expect(saved.map((event) => event.typeId), ['coughing']);
+    expect(saved.single.details, {'duration': 120});
+  });
 
   testWidgets('a failed read of the pets is reported without its message, and the event\'s own '
       'pet stays offered', (tester) async {
