@@ -61,7 +61,9 @@ class _EventScreenState extends State<EventScreen> {
 
   /// Before the first build, and whenever [AppScope] holds other
   /// repositories than before, follows the active pets and offered types in
-  /// them.
+  /// them. Until their lists arrive, only the event's own pet and type are
+  /// offered, so a pet or type picked from the earlier ones goes back to the
+  /// event's own, keeping the details that type's questions share.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -69,6 +71,13 @@ class _EventScreenState extends State<EventScreen> {
     final repositories = (scope.pets, scope.eventTypes);
     if (repositories == _repositories) return;
     _repositories = repositories;
+    _activePets = const [];
+    _offeredTypes = const [];
+    _petId = widget.event.petId;
+    if (_type.id != widget.type.id) {
+      _type = widget.type;
+      _details = detailsKeptFor(widget.type, _details);
+    }
     _following.follow(
       scope,
       onPets: (pets) => setState(() => _activePets = pets),
@@ -146,6 +155,8 @@ class _EventScreenState extends State<EventScreen> {
   }
 
   Widget _typeField() => DropdownButtonFormField<String>(
+    // A type set without the dropdown starts its field over.
+    key: ValueKey(('type', _type.id)),
     initialValue: _type.id,
     decoration: const InputDecoration(labelText: 'Type'),
     isExpanded: true,

@@ -51,3 +51,4 @@ The rebuild is a test of how far the specs alone get (constitution III). From T0
 | T038 | 2 | docs-sync 1 | — | — | — | — |
 | T035 | 2 | docs-sync 1 | — | — | — | — |
 | T040 | 2 | comment-hygiene 1 | — | — | — | — |
+| T041 | 3 | comment-hygiene 1, flutter-lifecycle 1, security 1, test-quality 1 | — | — | — | — |

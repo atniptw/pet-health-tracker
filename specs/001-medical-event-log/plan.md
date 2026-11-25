@@ -115,7 +115,7 @@ integration_test/
 
 ## Docs this feature keeps true
 
-- `CLAUDE.md` *Project state* and *Specs and design docs*: updated by the task that replaces the placeholder screen (T024), and *Specs and design docs* again as the feature completes (T035).
+- `CLAUDE.md` *Project state* and *Specs and design docs*: updated by the task that replaces the placeholder screen (T024), and *Specs and design docs* again as the feature completes (T041).
 - `specs/001-medical-event-log/tasks.md`: each task ticked in its own commit.
 - The integration smoke test and `test/app_test.dart` change with the start screen.
 
