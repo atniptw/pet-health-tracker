@@ -19,7 +19,7 @@ Each commit is staged exactly, reviewed with the `targeted-review` skill, and ma
 Each task in a feature's `tasks.md` is one commit. For a task in `specs/<feature>/`:
 
 1. **Read** the task, and the spec sentences behind each id on its **Covers** line.
-2. **Test first**: write the tests, putting each covered id in a test's name, for example `testWidgets('001-US1-S3: several pets, none logged for → no pet picked', …)`. Use the wording in the feature's `contracts/screens.md` and the helpers in `test/support/`. Run `./scripts/test.sh <test files>` and see each new test fail for the reason the spec gives.
+2. **Test first**: write the tests, putting each covered id in a test's name, for example `testWidgets('001-US1-S3: several pets, none logged for → no pet picked', …)`. Use the wording in the feature's `contracts/screens.md` and the helpers in `test/support/`. Run `./scripts/test.sh <test files>` and see each new test fail for the reason the spec gives. When the fix is already written, `./scripts/fails-without-fix.sh <test files>` runs them against `HEAD`'s `lib/` in a temporary worktree instead, without stashing or changing this checkout.
 3. **Build** until `./scripts/test.sh <test files>` passes, then run `./scripts/check.sh`.
 4. **Done** when `./scripts/spec-coverage.sh specs/<feature>` lists each id on the task's Covers line as covered, `check.sh` passes, and the `targeted-review` skill passes on the staged task. If the task changes code that a `decisions.md` entry names, update that entry's Changed and To undo lines to match. Tick the task in `tasks.md` and add its row to the feature's `build-log.md` before staging, since the commit gate accepts only the diff that was reviewed. Then commit with `git commit -q -m "<type>: <subject>"`.
 5. **Merge** after the last task of each phase: push the branch and open a pull request with `gh`, and rebase-merge it to `main`, where CI runs `check.sh` and the integration tests.
@@ -53,10 +53,11 @@ The rebuild is specified in `specs/001-medical-event-log`, `specs/002-shared-hou
 git config core.hooksPath .githooks      # once per clone: run checks before every push
 flutter pub get                          # install dependencies
 flutter run                              # run on a connected device/emulator
-./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), spec coverage, spec status, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, git hook tests, rules tests
+./scripts/check.sh                       # everything CI checks: format, analyze, tests (through scripts/test.sh), fails-without-fix tests, spec coverage, spec status, size limits, comment phrases, tests changed with lib/, coverage, hook tests, reviewer-mapping tests, review-gate tests, git hook tests, rules tests
 ./scripts/test.sh                        # run all tests in test/, in the America/Chicago time zone, printing only failures; use it instead of flutter test for test/
 ./scripts/test.sh test/app_test.dart     # run a single test file
 ./scripts/test.sh --plain-name "<test name>"  # run a single test by name
+./scripts/fails-without-fix.sh <test files>  # see the tests fail with HEAD's lib/ and the working tree's test/
 ./scripts/spec-coverage.sh [--strict] <spec dir>…  # spec ids (NNN-US<n>-S<m>, NNN-FR-NNN, NNN-EC-NN, NNN-SC-NNN) that no test name or untested.md line covers; fails on unknown ids, and with --strict on missing ones
 ./scripts/spec-status.sh <spec dir>     # spec.md's Status says Implemented exactly when every task in tasks.md is ticked
 npm --prefix firestore-tests test        # security rules tests (starts the Firestore emulator on 8180)

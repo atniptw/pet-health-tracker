@@ -14,6 +14,7 @@ flutter analyze --fatal-infos
 
 echo '==> test'
 ./scripts/test-test-sh.sh
+./scripts/test-fails-without-fix.sh
 ./scripts/test.sh --coverage
 
 echo '==> spec coverage and status'
