@@ -201,6 +201,77 @@ if grep -q -e 'Grep tool' -e 'Glob' .claude/hooks/reviewer-bash.sh; then
   failures=$((failures + 1))
 fi
 
+# merged-branch.sh, in a scratch repository with a stand-in for gh that answers
+# with the number of a merged pull request (empty for none) or fails.
+hook="$PWD/.claude/hooks/merged-branch.sh"
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+git init -q -b main "$scratch/repo"
+git -C "$scratch/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+cat >"$scratch/gh" <<'GH'
+#!/usr/bin/env bash
+echo "$*" >"$(dirname "$0")/gh-args"
+[ "$GH_ANSWER" = fail ] && { echo 99; echo 'gh: error' >&2; exit 1; }
+printf '%s' "$GH_ANSWER"
+GH
+chmod +x "$scratch/gh"
+
+# Runs the hook on branch $1 ("detached": a detached HEAD) with gh answering $2; sets $status and $output.
+session_start() {
+  if [ "$1" = detached ]; then
+    git -C "$scratch/repo" checkout -q --detach
+  else
+    git -C "$scratch/repo" checkout -q -B "$1"
+  fi
+  status=0
+  output=$(cd "$scratch/repo" && echo '{"hook_event_name":"SessionStart"}' \
+    | GH="$scratch/gh" GH_ANSWER=$2 "$hook" 2>&1) || status=$?
+}
+
+# Checks the hook's last run exited 0 and printed text containing $2 (empty: nothing).
+says_at_start() {
+  local name=$1 want=$2
+  if [ "$status" != 0 ]; then
+    echo "FAIL merged-branch.sh: $name: exit $status"
+    failures=$((failures + 1))
+  elif [ -z "$want" ] && [ -n "$output" ]; then
+    echo "FAIL merged-branch.sh: $name: expected no output, got: $output"
+    failures=$((failures + 1))
+  elif [ -n "$want" ]; then
+    case "$output" in *"$want"*) ;; *)
+      echo "FAIL merged-branch.sh: $name: expected '$want', got: $output"
+      failures=$((failures + 1))
+      ;;
+    esac
+  fi
+}
+
+session_start 001-feature-p9 33
+says_at_start 'merged branch names its pull request' "Branch 001-feature-p9's pull request #33 has already merged"
+says_at_start 'merged branch says how to get onto main' 'git checkout main && git pull --ff-only'
+case "$(cat "$scratch/gh-args" 2>/dev/null)" in *'--head 001-feature-p9'*'--state merged'*) ;; *)
+  echo "FAIL merged-branch.sh: asks gh for other than the branch's merged pull requests: $(cat "$scratch/gh-args" 2>/dev/null)"
+  failures=$((failures + 1))
+  ;;
+esac
+session_start 001-feature-p10 ''
+says_at_start 'unmerged branch prints nothing' ''
+session_start 001-feature-p9 fail
+says_at_start 'gh failing prints nothing' ''
+rm -f "$scratch/gh-args"
+session_start main 33
+says_at_start 'main prints nothing' ''
+if [ -e "$scratch/gh-args" ]; then
+  echo 'FAIL merged-branch.sh: asks gh about main'
+  failures=$((failures + 1))
+fi
+session_start detached 33
+says_at_start 'detached HEAD prints nothing' ''
+if [ -e "$scratch/gh-args" ]; then
+  echo 'FAIL merged-branch.sh: asks gh about a detached HEAD'
+  failures=$((failures + 1))
+fi
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures hook test(s) failed"
   exit 1
