@@ -29,6 +29,9 @@ After each phase merges, the session that starts the next phase runs the `harnes
 - **Coverage ratchet:** `scripts/coverage.sh` fails if actual coverage is more than 0.2% above the minimum, so the minimum has to be raised.
 - **Tests present:** `scripts/tests-changed.sh` fails on a commit that changes `lib/` (other than the generated `lib/firebase_options.dart`) without changing `test/` or `integration_test/`, unless its subject is a `refactor:` (with or without a scope). `check.sh` checks the commits not yet on `origin/main`. In CI that range is empty, so the test job runs the script on the pushed commits and checks out full history for it. After a force-push it fetches the old tip by id, and fails if it can't rather than skip commits.
 
+## Tests that fail without the fix
+`scripts/fails-without-fix.sh <test files>` runs the given tests with `HEAD`'s `lib/` and the working tree's `test/`, in a temporary worktree it removes afterwards, and passes only if they fail there. It shows that a test written alongside its fix would catch the fix being undone, without stashing or reverting anything in the checkout. `check.sh` runs its tests, `scripts/test-fails-without-fix.sh`.
+
 ## Hooks (`.claude/settings.json`)
 1. **No skipping git hooks:** a PreToolUse hook on Bash (`.claude/hooks/block-no-verify.sh`) denies these, quoted or not:
    - `git commit` or `git push` with `--no-verify` or a prefix of it (`--no-veri`), including inside `bash -c`, outside a commit message

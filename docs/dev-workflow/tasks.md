@@ -20,3 +20,4 @@ One commit per task, each safe to ship on its own.
 - [x] T014 `CLAUDE.md` *Implementing a task* says to update a `decisions.md` entry's Changed and To undo lines when a task changes the code it names (harness review of 001 Phase 8)
 - [x] T015 `review-protocol` tells reviewers not to report what they predict formatting, `flutter analyze` or the tests will say, since `check.sh` runs them, and release-safety's *Standalone commit* item leaves that to `check.sh` (harness review of 001 Phase 8)
 - [x] T016 A SessionStart hook (`.claude/hooks/merged-branch.sh`) says when the checked-out branch's pull request has already merged, and how to get onto `main` (harness review of 001 Phase 9)
+- [x] T017 `scripts/fails-without-fix.sh` runs the given tests against `HEAD`'s `lib/` in a temporary worktree, so a test can be seen failing without its fix without stashing, and `CLAUDE.md` step 2 points to it (harness review of 001 Phase 9)
